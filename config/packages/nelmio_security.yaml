@@ -1,0 +1,40 @@
+nelmio_security:
+    # Interdit l'affichage du site dans une iframe (clickjacking)
+    clickjacking:
+        paths:
+            '^/.*': DENY
+
+    content_type:
+        nosniff: true
+
+    referrer_policy:
+        enabled: true
+        policies:
+            - 'no-referrer'
+            - 'strict-origin-when-cross-origin'
+
+when@prod:
+    nelmio_security:
+        # Force HTTPS et HSTS (1 an)
+        forced_ssl:
+            hsts_max_age: 31536000
+            hsts_subdomains: true
+
+        # Scripts inline autorisés uniquement via nonce : {{ csp_nonce('script') }}
+        # Stripe : https://docs.stripe.com/security/guide#content-security-policy
+        csp:
+            enabled: true
+            enforce:
+                level1_fallback: false
+                default-src: ["'self'"]
+                script-src: ["'self'", 'https://js.stripe.com']
+                style-src: ["'self'"]
+                img-src: ["'self'", 'data:', 'https://*.stripe.com']
+                font-src: ["'self'"]
+                connect-src: ["'self'", 'https://api.stripe.com']
+                frame-src: ['https://js.stripe.com', 'https://hooks.stripe.com']
+                form-action: ["'self'"]
+                frame-ancestors: ["'none'"]
+                base-uri: ["'self'"]
+                object-src: ["'none'"]
+                upgrade-insecure-requests: true
