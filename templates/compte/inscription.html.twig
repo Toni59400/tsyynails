@@ -21,6 +21,7 @@
                     </li>
                     <li>Vos rendez-vous et votre solde au même endroit.</li>
                     <li>Réservation plus rapide : vos coordonnées sont déjà remplies.</li>
+                    <li>Parrainez vos amies : des points pour elles et pour vous.</li>
                 </ul>
                 <p class="page__note">Déjà cliente ? Utilisez l'adresse email donnée lors de vos rendez-vous pour retrouver automatiquement vos points.</p>
             </section>
@@ -30,7 +31,7 @@
                     <div class="alerte alerte--erreur" role="alert">Vérifiez les champs signalés ci-dessous.</div>
                 {% endif %}
 
-                {% for champ in [formulaire.prenom, formulaire.nom, formulaire.telephone, formulaire.email, formulaire.motDePasse] %}
+                {% for champ in [formulaire.prenom, formulaire.nom, formulaire.telephone, formulaire.email, formulaire.motDePasse, formulaire.codeParrainage] %}
                     <div class="champ{{ champ.vars.valid ? '' : ' champ--erreur' }}">
                         {{ form_label(champ) }}
                         {{ form_widget(champ) }}

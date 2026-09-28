@@ -55,6 +55,14 @@
                 Les points expirent {{ expiration_mois }} mois après le dernier gain de points ; un email prévient 30 jours avant.
                 Chaque visite prolonge la validité de tout le solde.
             </li>
+            {% if parrainage_marraine > 0 or parrainage_filleule > 0 %}
+            <li>
+                Parrainage : une cliente avec un compte partage son lien ou son code. Au premier rendez-vous honoré
+                de la nouvelle cliente, celle-ci reçoit {{ parrainage_filleule }} points et sa marraine {{ parrainage_marraine }} points,
+                une seule fois, dans la limite de {{ parrainage_max }} filleules récompensées par an et par marraine.
+                Le parrainage est réservé aux personnes qui ne sont jamais venues au salon ; on ne peut pas se parrainer soi-même.
+            </li>
+            {% endif %}
             <li>
                 Après {{ fidele_visites }} visites sur 12 mois, le statut « Cliente fidèle » permet de réserver plus longtemps à l'avance.
             </li>

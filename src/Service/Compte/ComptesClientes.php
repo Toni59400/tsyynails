@@ -9,6 +9,7 @@ use App\Entity\Reservation;
 use App\Entity\User;
 use App\Repository\ClientRepository;
 use App\Repository\UserRepository;
+use App\Service\Fidelite\Parrainage;
 use App\Service\Fidelite\ProgrammeFidelite;
 use App\Service\Reservation\CoordonneesCliente;
 use Doctrine\ORM\EntityManagerInterface;
@@ -43,6 +44,7 @@ final class ComptesClientes
         private readonly UrlGeneratorInterface $urlGenerator,
         private readonly NotificationsCompte $notifications,
         private readonly ProgrammeFidelite $fidelite,
+        private readonly Parrainage $parrainage,
         private readonly ClockInterface $clock,
         private readonly LoggerInterface $logger,
         #[Autowire('%kernel.secret%')] private readonly string $secret,
@@ -67,12 +69,18 @@ final class ComptesClientes
         // téléphone) n'est jamais rattachée ici : seulement après confirmation de l'email (voir confirmer()).
         $existeDeja = null !== $this->clientes->findOneBy(['email' => $user->getEmail()])
             || null !== $this->clientes->findOneBy(['telephone' => $telephone]);
+        $nouvelleFiche = null;
         if (!$existeDeja) {
-            $client = (new Client($inscription->prenom, $inscription->nom, $telephone))->setEmail($user->getEmail());
-            $client->setUser($user);
-            $this->entityManager->persist($client);
+            $nouvelleFiche = (new Client($inscription->prenom, $inscription->nom, $telephone))->setEmail($user->getEmail());
+            $nouvelleFiche->setUser($user);
+            $this->entityManager->persist($nouvelleFiche);
         }
         $this->entityManager->flush();
+
+        // Seule une nouvelle fiche peut être parrainée (voir Client::peutEtreParraineePar()).
+        if (null !== $nouvelleFiche) {
+            $this->parrainage->rattacher($nouvelleFiche, $inscription->codeParrainage ?: $this->parrainage->codeMemorise());
+        }
 
         $this->notifications->confirmation($user, $this->lienConfirmation($user));
     }
@@ -91,6 +99,8 @@ final class ComptesClientes
         }
 
         $this->entityManager->flush();
+        // Arrivée par un lien de parrainage : la fiche de la réservation est parrainée si elle est nouvelle.
+        $this->parrainage->rattacher($reservation->getClient(), $this->parrainage->codeMemorise());
         $this->notifications->confirmation($user, $this->lienConfirmation($user));
 
         return true;

@@ -140,6 +140,9 @@ final class SiteController extends AbstractController
             'bonus_inscription' => $this->parametres->valeur(Parametre::BONUS_INSCRIPTION_POINTS),
             'reduction_max' => $this->parametres->valeur(Parametre::REDUCTION_MAX_POURCENTAGE),
             'fidele_visites' => $this->parametres->valeur(Parametre::FIDELE_VISITES),
+            'parrainage_marraine' => $this->parametres->valeur(Parametre::PARRAINAGE_POINTS_MARRAINE),
+            'parrainage_filleule' => $this->parametres->valeur(Parametre::PARRAINAGE_POINTS_FILLEULE),
+            'parrainage_max' => $this->parametres->valeur(Parametre::PARRAINAGE_MAX_PAR_AN),
         ]);
     }
 }

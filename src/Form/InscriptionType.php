@@ -38,6 +38,12 @@ final class InscriptionType extends AbstractType
                 'help' => '12 caractères minimum. Une phrase facile à retenir fonctionne très bien.',
                 'attr' => ['autocomplete' => 'new-password', 'minlength' => 12],
             ])
+            ->add('codeParrainage', TextType::class, [
+                'label' => 'Code de parrainage (facultatif)',
+                'required' => false,
+                'help' => 'Une cliente vous a recommandé le salon ? Vous recevrez toutes les deux des points à votre premier rendez-vous.',
+                'attr' => ['autocomplete' => 'off', 'maxlength' => 12, 'autocapitalize' => 'characters'],
+            ])
             ->add('accepteConditions', CheckboxType::class, [
                 'label' => 'J\'accepte le règlement du programme de fidélité.',
             ]);

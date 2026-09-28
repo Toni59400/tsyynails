@@ -18,6 +18,8 @@ enum MotifMouvementPoints: string
     case INSCRIPTION = 'inscription';
     /** Points perdus après la période d'inactivité. */
     case EXPIRATION = 'expiration';
+    /** Parrainage : marraine et filleule, au premier rendez-vous honoré de la filleule. */
+    case PARRAINAGE = 'parrainage';
 
     public function libelle(): string
     {
@@ -28,6 +30,7 @@ enum MotifMouvementPoints: string
             self::CORRECTION => 'Correction',
             self::INSCRIPTION => 'Bienvenue',
             self::EXPIRATION => 'Expiration',
+            self::PARRAINAGE => 'Parrainage',
         };
     }
 }

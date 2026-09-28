@@ -57,6 +57,19 @@ class Client
     #[ORM\JoinColumn(unique: true, nullable: true, onDelete: 'SET NULL')]
     private ?User $user = null;
 
+    /** Code personnel à partager (lien /parrainage/CODE). Aucune donnée personnelle. */
+    #[ORM\Column(length: 12, unique: true, nullable: true)]
+    private ?string $codeParrainage = null;
+
+    /** Cliente qui l'a parrainée (nouvelle cliente uniquement). */
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?Client $marraine = null;
+
+    /** Points de parrainage versés (premier rendez-vous honoré) : une seule fois. */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $parrainageRecompenseAt = null;
+
     #[ORM\Column]
     private \DateTimeImmutable $createdAt;
 
@@ -226,6 +239,7 @@ class Client
         $this->email = null;
         $this->supprimerNotesSante();
         $this->user = null;
+        $this->codeParrainage = null;
         $this->anonymiseAt = $at;
 
         return $this;
@@ -239,5 +253,52 @@ class Client
     public function marquerAvertissementPoints(\DateTimeImmutable $at): void
     {
         $this->avertissementPointsAt = $at;
+    }
+
+    public function getCodeParrainage(): ?string
+    {
+        return $this->codeParrainage;
+    }
+
+    public function attribuerCodeParrainage(string $code): void
+    {
+        $this->codeParrainage ??= $code;
+    }
+
+    public function getMarraine(): ?Client
+    {
+        return $this->marraine;
+    }
+
+    /**
+     * Seule une nouvelle cliente (jamais venue, pas encore parrainée) peut être parrainée, et pas par elle-même.
+     */
+    public function peutEtreParraineePar(Client $marraine): bool
+    {
+        return null === $this->marraine
+            && null === $this->derniereVisiteAt
+            && $marraine !== $this
+            && !$marraine->estAnonymise()
+            && (null === $this->telephone || $this->telephone !== $marraine->getTelephone())
+            && (null === $this->email || $this->email !== $marraine->getEmail());
+    }
+
+    public function definirMarraine(Client $marraine): void
+    {
+        if (!$this->peutEtreParraineePar($marraine)) {
+            throw new \LogicException('Parrainage impossible pour cette cliente.');
+        }
+
+        $this->marraine = $marraine;
+    }
+
+    public function getParrainageRecompenseAt(): ?\DateTimeImmutable
+    {
+        return $this->parrainageRecompenseAt;
+    }
+
+    public function marquerParrainageRecompense(\DateTimeImmutable $at): void
+    {
+        $this->parrainageRecompenseAt = $at;
     }
 }

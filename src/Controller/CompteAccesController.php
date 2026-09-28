@@ -10,6 +10,7 @@ use App\Form\InscriptionType;
 use App\Form\NouveauMotDePasseType;
 use App\Service\Compte\ComptesClientes;
 use App\Service\Compte\InscriptionClient;
+use App\Service\Fidelite\Parrainage;
 use App\Service\Fidelite\ProgrammeFidelite;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -27,6 +28,7 @@ final class CompteAccesController extends AbstractController
     public function __construct(
         private readonly ComptesClientes $comptes,
         private readonly ProgrammeFidelite $fidelite,
+        private readonly Parrainage $parrainage,
         #[Autowire(service: 'limiter.compte_email')] private readonly RateLimiterFactory $limiteur,
     ) {
     }
@@ -39,6 +41,7 @@ final class CompteAccesController extends AbstractController
         }
 
         $inscription = new InscriptionClient();
+        $inscription->codeParrainage = $this->parrainage->codeMemorise();
         $formulaire = $this->createForm(InscriptionType::class, $inscription);
         $formulaire->handleRequest($request);
 
@@ -58,6 +61,28 @@ final class CompteAccesController extends AbstractController
             'formulaire' => $formulaire,
             'paliers' => $this->fidelite->paliers(),
         ], new Response(status: $formulaire->isSubmitted() ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK));
+    }
+
+    /** Lien partagé par une cliente : le code est mémorisé pour l'inscription ou la réservation. */
+    #[Route('/parrainage/{code<[A-Za-z0-9]{4,12}>}', name: 'app_parrainage', methods: ['GET'])]
+    public function parrainage(string $code): Response
+    {
+        $marraine = $this->parrainage->marraineParCode($code);
+        if (null === $marraine || !$this->parrainage->estActif()) {
+            $this->addFlash('erreur', 'Ce lien de parrainage n\'est pas valable.');
+
+            return $this->redirectToRoute('app_accueil');
+        }
+        if ($this->getUser() instanceof User) {
+            $this->addFlash('erreur', 'Le parrainage est réservé aux nouvelles clientes.');
+
+            return $this->redirectToRoute('app_compte');
+        }
+
+        $this->parrainage->memoriser($code);
+        $this->addFlash('succes', \sprintf('%s vous recommande le salon : créez votre compte (ou réservez en cochant « Créer mon compte ») pour recevoir vos points de bienvenue à votre premier rendez-vous.', $marraine->getPrenom()));
+
+        return $this->redirectToRoute('app_inscription');
     }
 
     #[Route('/inscription/confirmer', name: 'app_inscription_confirmer', methods: ['GET'])]

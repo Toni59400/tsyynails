@@ -13,6 +13,7 @@ use App\Repository\MouvementPointsRepository;
 use App\Repository\ReservationRepository;
 use App\Service\Compte\ComptesClientes;
 use App\Service\Compte\CoordonneesCompte;
+use App\Service\Fidelite\Parrainage;
 use App\Service\Fidelite\ProgrammeFidelite;
 use App\Service\Reservation\CoordonneesCliente;
 use App\Service\Securite\ChiffrementDonnees;
@@ -75,7 +76,7 @@ final class CompteController extends AbstractController
     }
 
     #[Route('/fidelite', name: 'app_compte_fidelite', methods: ['GET'])]
-    public function fidelite(): Response
+    public function fidelite(Parrainage $parrainage): Response
     {
         $client = $this->fiche();
 
@@ -83,6 +84,7 @@ final class CompteController extends AbstractController
             'client' => $client,
             'fidelite' => null === $client ? null : $this->fidelite->etat($client),
             'mouvements' => null === $client ? [] : $this->mouvements->historiquePour($client),
+            'parrainage' => null !== $client && $parrainage->estActif() ? $parrainage->etat($client) : null,
         ]);
     }
 

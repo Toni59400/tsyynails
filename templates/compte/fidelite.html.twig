@@ -18,6 +18,10 @@
             <div class="compte-grille">
                 {{ include('compte/_carte_fidelite.html.twig') }}
 
+                {% if parrainage %}
+                    {{ include('compte/_parrainage.html.twig') }}
+                {% endif %}
+
                 <section class="compte-bloc" aria-labelledby="titre-historique">
                     <h2 id="titre-historique" class="compte-bloc__titre">Historique</h2>
                     {% if mouvements is empty %}

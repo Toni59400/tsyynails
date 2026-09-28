@@ -10,6 +10,7 @@ use App\Entity\User;
 use App\Enum\MotifMouvementPoints;
 use App\Enum\StatutReservation;
 use App\Repository\CarteFideliteRepository;
+use App\Repository\ClientRepository;
 use App\Repository\MouvementPointsRepository;
 use App\Repository\RecompenseFideliteRepository;
 use App\Repository\ReservationRepository;
@@ -47,6 +48,7 @@ final class ClientCrudController extends AbstractCrudController
 
     public function __construct(
         private readonly MouvementPointsRepository $mouvements,
+        private readonly ClientRepository $clientes,
         private readonly ReservationRepository $reservations,
         private readonly CarteFideliteRepository $cartes,
         private readonly ProgrammeFidelite $fidelite,
@@ -130,6 +132,7 @@ final class ClientCrudController extends AbstractCrudController
                 'recompenses' => array_filter($this->recompenses->findActives(), static fn ($r): bool => $r->getSeuilPoints() <= $etat['solde']),
             ],
             'reservations' => $reservations,
+            'filleules' => $this->clientes->findFilleules($client),
             'visites' => \count($honorees),
             'non_honorees' => \count(array_filter($reservations, static fn ($r): bool => StatutReservation::NON_HONOREE === $r->getStatut())),
             'correction_max' => self::CORRECTION_MAX,

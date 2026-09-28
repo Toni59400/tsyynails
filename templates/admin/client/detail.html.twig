@@ -40,6 +40,8 @@
                 <span class="tdb-tuile__detail">
                     {% if client.derniereVisiteAt %}Dernière le {{ client.derniereVisiteAt|date('d/m/Y') }}{% else %}Aucune visite{% endif %}
                     {% if non_honorees > 0 %} · {{ non_honorees }} absence{{ non_honorees > 1 ? 's' }}{% endif %}
+                    {% if client.marraine %}<br>Parrainée par <a href="{{ path('admin_client_detail', {entityId: client.marraine.id}) }}">{{ client.marraine.nomComplet }}</a>{% endif %}
+                    {% if filleules is not empty %}<br>{{ filleules|length }} filleule{{ filleules|length > 1 ? 's' }} : {% for f in filleules %}<a href="{{ path('admin_client_detail', {entityId: f.id}) }}">{{ f.prenom }}</a>{{ not loop.last ? ', ' }}{% endfor %}{% endif %}
                 </span>
             </div>
         </div>

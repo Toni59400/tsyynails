@@ -1,0 +1,36 @@
+{# Parrainage : lien personnel, partage, filleules. #}
+{% set lien = url('app_parrainage', {code: parrainage.code}) %}
+{% set message = 'Je te recommande ' ~ salon.nom ~ ', ma prothésiste ongulaire à ' ~ salon.ville ~ ' ! Avec mon lien, on gagne toutes les deux des points de fidélité à ton premier rendez-vous : ' ~ lien %}
+<section class="compte-bloc parrainage" id="parrainage" aria-labelledby="titre-parrainage">
+    <h2 id="titre-parrainage" class="compte-bloc__titre">Parrainer une amie</h2>
+    <p>
+        Partagez votre lien : à son premier rendez-vous, votre amie reçoit <strong>{{ parrainage.points_filleule }} points</strong>
+        et vous <strong>{{ parrainage.points_marraine }} points</strong>.
+    </p>
+
+    <div class="champ">
+        <label for="lien-parrainage">Votre lien personnel</label>
+        <input type="text" id="lien-parrainage" value="{{ lien }}" readonly>
+        <p class="champ__aide">Ou votre code : <strong class="parrainage__code">{{ parrainage.code }}</strong></p>
+    </div>
+
+    <ul class="parrainage__partage">
+        <li><a class="bouton" href="https://wa.me/?text={{ message|url_encode }}" target="_blank" rel="noopener">Partager sur WhatsApp</a></li>
+        <li><a class="bouton bouton--secondaire" href="sms:?&amp;body={{ message|url_encode }}">Par SMS</a></li>
+        <li><a class="bouton bouton--secondaire" href="mailto:?subject={{ ('Je te recommande ' ~ salon.nom)|url_encode }}&amp;body={{ message|url_encode }}">Par email</a></li>
+    </ul>
+
+    {% if parrainage.filleules is not empty %}
+        <h3>Mes filleules</h3>
+        <ul class="parrainage__filleules">
+            {% for filleule in parrainage.filleules %}
+                <li>
+                    {{ filleule.prenom }}
+                    <span class="parrainage__statut{{ filleule.recompensee ? ' parrainage__statut--ok' }}">
+                        {{ filleule.recompensee ? 'Points reçus' : 'En attente de son premier rendez-vous' }}
+                    </span>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</section>

@@ -12,6 +12,7 @@ use App\Entity\Reservation;
 use App\Enum\MotifMouvementPoints;
 use App\Enum\StatutReservation;
 use App\Repository\ClientRepository;
+use App\Service\Fidelite\Parrainage;
 use App\Service\Fidelite\ProgrammeFidelite;
 use App\Service\Paiement\PaiementGateway;
 use App\Service\Planning\CalculateurCreneaux;
@@ -37,6 +38,7 @@ final class ReservationWorkflow
         private readonly PaiementGateway $paiement,
         private readonly NotificationsReservation $notifications,
         private readonly ProgrammeFidelite $fidelite,
+        private readonly Parrainage $parrainage,
         private readonly ClockInterface $clock,
         private readonly LoggerInterface $logger,
     ) {
@@ -192,6 +194,7 @@ final class ReservationWorkflow
         $reservation->getClient()->enregistrerVisite($reservation->getFin());
         $this->fidelite->crediterVisite($reservation, $auteur);
         $this->entityManager->flush();
+        $this->parrainage->recompenser($reservation);
     }
 
     public function nonHonorer(Reservation $reservation, string $auteur): void

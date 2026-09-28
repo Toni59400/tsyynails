@@ -34,6 +34,10 @@ final class InscriptionClient
     #[Assert\NotCompromisedPassword(message: 'Ce mot de passe a fuité lors d\'un piratage connu : choisissez-en un autre.', skipOnError: true)]
     public string $motDePasse = '';
 
+    /** Code donné par une cliente qui vous a recommandé le salon (facultatif). */
+    #[Assert\Length(max: 12)]
+    public ?string $codeParrainage = null;
+
     #[Assert\IsTrue(message: 'Vous devez accepter le règlement du programme de fidélité.')]
     public bool $accepteConditions = false;
 }

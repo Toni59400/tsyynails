@@ -86,7 +86,7 @@ class MouvementPointsRepository extends ServiceEntityRepository
             ->select('IDENTITY(m.client) AS client', 'MAX(m.createdAt) AS dernier')
             ->andWhere('m.delta > 0')
             ->andWhere('m.motif IN (:gains)')
-            ->setParameter('gains', [MotifMouvementPoints::VISITE, MotifMouvementPoints::INSCRIPTION, MotifMouvementPoints::CORRECTION])
+            ->setParameter('gains', [MotifMouvementPoints::VISITE, MotifMouvementPoints::INSCRIPTION, MotifMouvementPoints::CORRECTION, MotifMouvementPoints::PARRAINAGE])
             ->groupBy('m.client');
         if (null !== $client) {
             $requete->andWhere('m.client = :client')->setParameter('client', $client);
