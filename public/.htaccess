@@ -1,0 +1,49 @@
+# Apache (hébergement OVH) : toutes les URL sont servies par Symfony (index.php),
+# sauf les fichiers qui existent réellement (assets compilés, photos).
+DirectoryIndex index.php
+
+<IfModule mod_negotiation.c>
+    Options -MultiViews
+</IfModule>
+
+# Pas de liste des fichiers d'un dossier
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # HTTPS obligatoire
+    RewriteCond %{HTTPS} off
+    RewriteCond %{HTTP:X-Forwarded-Proto} !https
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Adresse unique sans « www »
+    RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+    RewriteRule ^ https://%1%{REQUEST_URI} [L,R=301]
+
+    # Transmet l'en-tête Authorization à PHP (protection de préproduction)
+    RewriteCond %{HTTP:Authorization} .+
+    RewriteRule ^ - [E=HTTP_AUTHORIZATION:%0]
+
+    RewriteCond %{REQUEST_URI}::$0 ^(/.+)/(.*)::\2$
+    RewriteRule .* - [E=BASE:%1]
+
+    # /index.php/... redirigé vers l'URL propre
+    RewriteCond %{ENV:REDIRECT_STATUS} =""
+    RewriteRule ^index\.php(?:/(.*)|$) %{ENV:BASE}/$1 [R=301,L]
+
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^ - [L]
+
+    RewriteRule ^ %{ENV:BASE}/index.php [L]
+</IfModule>
+
+# Les photos envoyées ne doivent jamais être exécutées comme du code
+<IfModule mod_php.c>
+    <If "%{REQUEST_URI} =~ m#^/uploads/#">
+        php_flag engine off
+    </If>
+</IfModule>
+<FilesMatch "^(?!index\.php$).*\.(php|phtml|phar|php\d)$">
+    Require all denied
+</FilesMatch>
