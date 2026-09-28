@@ -8,7 +8,11 @@
             <div class="tdb-tuile tdb-tuile--principale">
                 <span class="tdb-tuile__libelle">Points fidélité</span>
                 <span class="tdb-tuile__valeur">{{ fidelite.solde }}</span>
-                <span class="tdb-tuile__detail">soit {{ (fidelite.solde * fidelite.valeur_point)|euros }} de réduction</span>
+                <span class="tdb-tuile__detail">
+                    {% if fidelite.etat.prochain %}Prochain palier : {{ fidelite.etat.prochain.nom }} ({{ fidelite.etat.prochain.seuilPoints }} pts){% else %}Tous les paliers atteints{% endif %}
+                    {% if fidelite.etat.expiration %}<br>Valables jusqu'au {{ fidelite.etat.expiration|date('d/m/Y') }}{% endif %}
+                    {% if fidelite.etat.fidele %}<br><strong>Cliente fidèle</strong>{% endif %}
+                </span>
             </div>
             <div class="tdb-tuile">
                 <span class="tdb-tuile__libelle">Carte fidélité</span>
@@ -18,6 +22,16 @@
                 {% else %}
                     <span class="tdb-tuile__valeur tdb-tuile__valeur--texte">Aucune</span>
                     <span class="tdb-tuile__detail">À associer en scannant une carte au salon</span>
+                {% endif %}
+            </div>
+            <div class="tdb-tuile">
+                <span class="tdb-tuile__libelle">Compte en ligne</span>
+                {% if client.user %}
+                    <span class="tdb-tuile__valeur tdb-tuile__valeur--texte">{{ client.user.emailVerifie ? 'Actif' : 'Email non confirmé' }}</span>
+                    <span class="tdb-tuile__detail">{{ client.user.email }}</span>
+                {% else %}
+                    <span class="tdb-tuile__valeur tdb-tuile__valeur--texte">Aucun</span>
+                    <span class="tdb-tuile__detail">Rattachement possible via « Modifier »</span>
                 {% endif %}
             </div>
             <div class="tdb-tuile">
@@ -34,6 +48,27 @@
             <section class="tdb-carte" aria-labelledby="titre-coordonnees">
                 <h2 id="titre-coordonnees" class="tdb-carte__titre">Coordonnées</h2>
                 {{ parent() }}
+            </section>
+
+            <section class="tdb-carte" aria-labelledby="titre-remise">
+                <h2 id="titre-remise" class="tdb-carte__titre">Remettre une récompense au salon</h2>
+                {% if fidelite.recompenses is empty %}
+                    <p class="tdb-vide">Pas assez de points pour une récompense ({{ fidelite.solde }} points).</p>
+                {% else %}
+                    <form method="post" action="{{ path('admin_client_recompense', {entityId: client.id}) }}"
+                          data-confirmation="Remettre cette récompense et déduire les points ?">
+                        <div class="mb-3">
+                            <label class="form-label" for="recompense">Récompense</label>
+                            <select class="form-select" id="recompense" name="recompense" required>
+                                {% for r in fidelite.recompenses %}
+                                    <option value="{{ r.id }}">{{ r.nom }} — {{ r.seuilPoints }} points ({{ r.type.libelle|lower }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <input type="hidden" name="_token" value="{{ csrf_token('recompense_client_' ~ client.id) }}">
+                        <button type="submit" class="btn btn-success">Remettre et déduire les points</button>
+                    </form>
+                {% endif %}
             </section>
 
             <section class="tdb-carte" aria-labelledby="titre-correction">

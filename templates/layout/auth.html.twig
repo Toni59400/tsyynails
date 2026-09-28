@@ -8,7 +8,7 @@
     <main class="auth">
         <div class="auth__carte">
             <p class="auth__marque">Tsyynails</p>
-            {% for message in app.flashes('success') %}
+            {% for message in app.flashes(['success', 'succes'])|reduce((tous, liste) => tous|merge(liste), []) %}
                 <div class="alerte alerte--succes" role="status">{{ message }}</div>
             {% endfor %}
             {% block contenu %}{% endblock %}

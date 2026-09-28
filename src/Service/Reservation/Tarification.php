@@ -13,20 +13,19 @@ use App\Repository\ParametreRepository;
  */
 final class Tarification
 {
-    public const ACOMPTE_POURCENTAGE_PAR_DEFAUT = 30;
-
     public function __construct(private readonly ParametreRepository $parametres)
     {
     }
 
     public function acomptePourcentage(): int
     {
-        return $this->parametres->entier(Parametre::ACOMPTE_POURCENTAGE, self::ACOMPTE_POURCENTAGE_PAR_DEFAUT);
+        return $this->parametres->valeur(Parametre::ACOMPTE_POURCENTAGE);
     }
 
-    public function acompteCentimes(Prestation $prestation): int
+    /** Acompte calculé sur le prix restant après la réduction fidélité. */
+    public function acompteCentimes(Prestation $prestation, int $reductionCentimes = 0): int
     {
-        return self::calculerAcompte($prestation->getPrixCentimes(), $this->acomptePourcentage());
+        return self::calculerAcompte($prestation->getPrixCentimes() - $reductionCentimes, $this->acomptePourcentage());
     }
 
     /** Arrondi à l'euro supérieur, sans dépasser le prix. */

@@ -6,6 +6,11 @@ framework:
             policy: sliding_window
             limit: 5
             interval: '1 hour'
+        # Inscription, mot de passe oublié, renvoi du lien : envoient un email.
+        compte_email:
+            policy: sliding_window
+            limit: 5
+            interval: '1 hour'
 
 when@test:
     framework:
@@ -16,7 +21,15 @@ when@test:
                 interval: '1 hour'
                 # Compteur en mémoire : chaque test repart de zéro.
                 cache_pool: cache.limiteur_test
+            compte_email:
+                policy: sliding_window
+                limit: 5
+                interval: '1 hour'
+                cache_pool: cache.limiteur_test
         cache:
             pools:
                 cache.limiteur_test:
+                    adapter: cache.adapter.array
+                # Limitation des tentatives de connexion (login_throttling) : en mémoire aussi.
+                cache.rate_limiter:
                     adapter: cache.adapter.array

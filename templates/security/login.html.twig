@@ -5,9 +5,16 @@
 {% block contenu %}
     <h1>Connexion</h1>
 
+    {% for message in app.flashes('erreur') %}
+        <div class="alerte alerte--erreur" role="alert">{{ message }}</div>
+    {% endfor %}
+
     {% if erreur %}
         <div class="alerte alerte--erreur" role="alert" id="erreur-connexion">
             {{ erreur.messageKey|trans(erreur.messageData, 'security') }}
+            {% if erreur.messageKey == constant('App\\Security\\EmailVerifieUserChecker::MESSAGE') %}
+                <br><a href="{{ path('app_inscription_renvoyer') }}">Recevoir un nouveau lien</a>
+            {% endif %}
         </div>
     {% endif %}
 
@@ -25,7 +32,16 @@
         </div>
 
         <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+        {% if cible %}
+            <input type="hidden" name="_target_path" value="{{ cible }}">
+        {% endif %}
 
         <button type="submit" class="bouton">Se connecter</button>
     </form>
+
+    <p class="lien-secondaire"><a href="{{ path('app_mot_de_passe_oublie') }}">Mot de passe oublié ?</a></p>
+    <p class="auth__aide auth__inscription">
+        Pas encore de compte ? <a href="{{ path('app_inscription') }}">Créez-le</a> pour cumuler des points de fidélité.
+    </p>
+    <p class="lien-secondaire"><a href="{{ path('app_accueil') }}">Retour au site</a></p>
 {% endblock %}

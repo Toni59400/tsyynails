@@ -1,0 +1,49 @@
+{# Carte de fidélité : solde, progression vers le prochain palier, paliers, expiration, statut. #}
+<section class="carte-fidelite" aria-labelledby="titre-carte-fidelite">
+    <div class="carte-fidelite__entete">
+        <h2 id="titre-carte-fidelite" class="carte-fidelite__titre">Ma fidélité</h2>
+        {% if fidelite.fidele %}
+            <span class="badge-fidele">Cliente fidèle</span>
+        {% endif %}
+    </div>
+
+    <p class="carte-fidelite__solde"><strong>{{ fidelite.solde }}</strong> points</p>
+
+    {% if fidelite.prochain %}
+        <div class="progression" role="progressbar" aria-valuemin="0" aria-valuemax="{{ fidelite.prochain.seuilPoints }}"
+             aria-valuenow="{{ fidelite.solde }}" aria-label="Progression vers {{ fidelite.prochain.nom }}">
+            <span class="progression__barre progression__barre--{{ (fidelite.progression / 10)|round(0, 'floor') * 10 }}"></span>
+        </div>
+        <p class="carte-fidelite__prochain">
+            Plus que <strong>{{ fidelite.prochain.seuilPoints - fidelite.solde }} points</strong> pour : {{ fidelite.prochain.nom }}
+        </p>
+    {% elseif fidelite.paliers is not empty %}
+        <p class="carte-fidelite__prochain">Tous les paliers sont atteints : profitez-en à votre prochaine réservation !</p>
+    {% endif %}
+
+    <ul class="paliers">
+        {% for palier in fidelite.paliers %}
+            <li class="palier{{ palier.atteint ? ' palier--atteint' }}">
+                <span class="palier__seuil">{{ palier.recompense.seuilPoints }} pts</span>
+                <span class="palier__nom">
+                    {{ palier.recompense.nom }}
+                    <small>{{ palier.recompense.estUtilisableEnLigne ? 'à utiliser en réservant en ligne' : 'à demander au salon' }}</small>
+                </span>
+                <span class="palier__etat">{{ palier.atteint ? 'Disponible' : 'Encore ' ~ palier.manque ~ ' pts' }}</span>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <p class="carte-fidelite__regles">
+        {{ fidelite.points_par_euro }} point{{ fidelite.points_par_euro > 1 ? 's' }} par euro payé, crédité{{ fidelite.points_par_euro > 1 ? 's' }} après chaque rendez-vous.
+        {% if fidelite.expiration %}
+            Vos points sont valables jusqu'au {{ fidelite.expiration|date_fr('d MMMM yyyy') }} : chaque visite prolonge ce délai.
+        {% endif %}
+        {% if not fidelite.fidele %}
+            Statut « Cliente fidèle » après {{ fidelite.visites_requises }} visites en 12 mois ({{ fidelite.visites }} pour l'instant) : réservation ouverte plus longtemps à l'avance.
+        {% else %}
+            Statut « Cliente fidèle » : vous pouvez réserver plus longtemps à l'avance.
+        {% endif %}
+        <a href="{{ path('app_conditions') }}#fidelite">Règlement du programme</a>
+    </p>
+</section>

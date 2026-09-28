@@ -1,0 +1,13 @@
+<nav class="compte-navigation" aria-label="Mon compte">
+    <ul class="navigation__liste">
+        {% for route, libelle in {
+            app_compte: 'Accueil',
+            app_compte_fidelite: 'Fidélité',
+            app_compte_rendez_vous: 'Rendez-vous',
+            app_compte_donnees: 'Mes données',
+        } %}
+            <li><a class="navigation__lien" href="{{ path(route) }}" {% if app.current_route == route %}aria-current="page"{% endif %}>{{ libelle }}</a></li>
+        {% endfor %}
+        <li><a class="navigation__lien" href="{{ path('app_logout') }}">Se déconnecter</a></li>
+    </ul>
+</nav>

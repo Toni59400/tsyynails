@@ -21,7 +21,6 @@ use Psr\Clock\ClockInterface;
 final class CalculateurCreneaux
 {
     public const PAS_MINUTES = 15;
-    public const DELAI_MIN_HEURES_PAR_DEFAUT = 24;
 
     public function __construct(
         private readonly HoraireOuvertureRepository $horaires,
@@ -48,7 +47,7 @@ final class CalculateurCreneaux
             $occupations[] = [$reservation->getDebut(), $reservation->getFin()];
         }
 
-        $delaiHeures = $this->parametres->entier(Parametre::DELAI_MIN_RESERVATION_HEURES, self::DELAI_MIN_HEURES_PAR_DEFAUT);
+        $delaiHeures = $this->parametres->valeur(Parametre::DELAI_MIN_RESERVATION_HEURES);
         $pasAvant = $this->clock->now()->modify(\sprintf('+%d hours', $delaiHeures));
 
         return self::calculer($this->horaires->findToutesOrdonnees(), $occupations, $prestation->getDureeMinutes(), $debut, $nombreJours, $pasAvant);

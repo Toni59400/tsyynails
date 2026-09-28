@@ -1,0 +1,7 @@
+{% extends 'emails/_base.html.twig' %}
+{% block contenu %}
+    <p>Bonjour,</p>
+    <p>Vous avez demandé à changer votre mot de passe :</p>
+    {{ include('emails/compte/_bouton.html.twig', {libelle: 'Choisir un nouveau mot de passe'}) }}
+    <p style="font-size:13px;color:#6f625e;">Ce lien est valable une heure et ne fonctionne qu'une fois. Si vous n'êtes pas à l'origine de cette demande, ignorez cet email : votre mot de passe reste inchangé.</p>
+{% endblock %}

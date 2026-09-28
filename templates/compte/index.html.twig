@@ -1,0 +1,33 @@
+{% extends 'layout/public.html.twig' %}
+
+{% block title %}Mon compte · {{ salon.nom }}{% endblock %}
+
+{% block meta %}
+    {{ parent() }}
+    <meta name="robots" content="noindex">
+{% endblock %}
+
+{% block contenu %}
+    <div class="conteneur page">
+        <h1>Bonjour{{ client ? ' ' ~ client.prenom }}</h1>
+        {{ include('compte/_navigation.html.twig') }}
+
+        {% if client is null %}
+            {{ include('compte/_fiche_en_attente.html.twig') }}
+        {% else %}
+            <div class="compte-grille">
+                {{ include('compte/_carte_fidelite.html.twig') }}
+
+                <section class="compte-bloc" aria-labelledby="titre-prochains">
+                    <h2 id="titre-prochains" class="compte-bloc__titre">Mes prochains rendez-vous</h2>
+                    {% if prochains is empty %}
+                        <p>Aucun rendez-vous prévu.</p>
+                    {% else %}
+                        {{ include('compte/_liste_rendez_vous.html.twig', {reservations: prochains}) }}
+                    {% endif %}
+                    <p><a class="bouton" href="{{ path('app_reservation') }}">Réserver un rendez-vous</a></p>
+                </section>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

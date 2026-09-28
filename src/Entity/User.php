@@ -51,6 +51,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TwoFact
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $totpActiveAt = null;
 
+    /** Adresse email confirmée par le lien envoyé à l'inscription. */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $emailVerifieAt = null;
+
     public function __construct(string $email)
     {
         $this->email = mb_strtolower(trim($email));
@@ -177,5 +181,25 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TwoFact
     public function eraseCredentials(): void
     {
         // Aucun mot de passe en clair n'est stocké sur l'entité.
+    }
+
+    public function getEmailVerifieAt(): ?\DateTimeImmutable
+    {
+        return $this->emailVerifieAt;
+    }
+
+    public function isEmailVerifie(): bool
+    {
+        return null !== $this->emailVerifieAt;
+    }
+
+    public function verifierEmail(\DateTimeImmutable $at): void
+    {
+        $this->emailVerifieAt ??= $at;
+    }
+
+    public function __toString(): string
+    {
+        return $this->email;
     }
 }

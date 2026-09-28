@@ -67,6 +67,10 @@ class Client
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $anonymiseAt = null;
 
+    /** Dernier email « vos points vont expirer », pour ne l'envoyer qu'une fois. */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $avertissementPointsAt = null;
+
     public function __construct(string $prenom, string $nom, string $telephone)
     {
         $this->prenom = trim($prenom);
@@ -225,5 +229,15 @@ class Client
         $this->anonymiseAt = $at;
 
         return $this;
+    }
+
+    public function getAvertissementPointsAt(): ?\DateTimeImmutable
+    {
+        return $this->avertissementPointsAt;
+    }
+
+    public function marquerAvertissementPoints(\DateTimeImmutable $at): void
+    {
+        $this->avertissementPointsAt = $at;
     }
 }

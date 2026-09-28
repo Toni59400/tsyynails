@@ -1,0 +1,21 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block content_title %}Réglages{% endblock %}
+
+{% block main %}
+    <form method="post" class="tdb-carte reglages">
+        <p class="tdb-aide">Les modifications s'appliquent immédiatement aux nouvelles réservations et aux prochains points crédités.</p>
+        {% for reglage in reglages %}
+            <div class="mb-3">
+                <label class="form-label" for="reglage-{{ reglage.nom }}">{{ reglage.libelle }}</label>
+                <input class="form-control{{ reglage.erreur ? ' is-invalid' }}" type="number" id="reglage-{{ reglage.nom }}"
+                       name="reglages[{{ reglage.nom }}]" value="{{ reglage.valeur }}" min="{{ reglage.min }}" max="{{ reglage.max }}" step="1" required
+                       aria-describedby="aide-{{ reglage.nom }}">
+                <div class="form-text" id="aide-{{ reglage.nom }}">{{ reglage.aide }}</div>
+                {% if reglage.erreur %}<div class="invalid-feedback">{{ reglage.erreur }}</div>{% endif %}
+            </div>
+        {% endfor %}
+        <input type="hidden" name="_token" value="{{ csrf_token('reglages') }}">
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+    </form>
+{% endblock %}

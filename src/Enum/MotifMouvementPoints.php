@@ -8,20 +8,26 @@ enum MotifMouvementPoints: string
 {
     /** Points gagnés pour une prestation réalisée. */
     case VISITE = 'visite';
-    /** Points utilisés comme réduction sur une réservation. */
+    /** Points échangés contre une récompense (en ligne ou au salon). */
     case UTILISATION = 'utilisation';
     /** Points rendus quand une réservation utilisant des points est annulée ou refusée. */
     case RESTITUTION = 'restitution';
     /** Ajustement manuel par l'admin. */
     case CORRECTION = 'correction';
+    /** Bonus de bienvenue, une seule fois par cliente. */
+    case INSCRIPTION = 'inscription';
+    /** Points perdus après la période d'inactivité. */
+    case EXPIRATION = 'expiration';
 
     public function libelle(): string
     {
         return match ($this) {
             self::VISITE => 'Visite',
-            self::UTILISATION => 'Utilisation',
+            self::UTILISATION => 'Récompense',
             self::RESTITUTION => 'Restitution',
             self::CORRECTION => 'Correction',
+            self::INSCRIPTION => 'Bienvenue',
+            self::EXPIRATION => 'Expiration',
         };
     }
 }

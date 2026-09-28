@@ -1,0 +1,25 @@
+{% extends 'layout/public.html.twig' %}
+
+{% block title %}Mes rendez-vous · {{ salon.nom }}{% endblock %}
+
+{% block meta %}
+    {{ parent() }}
+    <meta name="robots" content="noindex">
+{% endblock %}
+
+{% block contenu %}
+    <div class="conteneur page">
+        <h1>Mes rendez-vous</h1>
+        {{ include('compte/_navigation.html.twig') }}
+
+        {% if client is null %}
+            {{ include('compte/_fiche_en_attente.html.twig') }}
+        {% elseif reservations is empty %}
+            <p>Aucun rendez-vous pour l'instant.</p>
+            <p><a class="bouton" href="{{ path('app_reservation') }}">Réserver</a></p>
+        {% else %}
+            {{ include('compte/_liste_rendez_vous.html.twig') }}
+            <p class="page__note">Pour annuler ou déplacer un rendez-vous, <a href="{{ path('app_infos') }}#contact">contactez-moi</a>.</p>
+        {% endif %}
+    </div>
+{% endblock %}

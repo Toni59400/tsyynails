@@ -1,0 +1,60 @@
+{% extends 'layout/public.html.twig' %}
+
+{% block title %}Mes données · {{ salon.nom }}{% endblock %}
+
+{% block meta %}
+    {{ parent() }}
+    <meta name="robots" content="noindex">
+{% endblock %}
+
+{% block contenu %}
+    <div class="conteneur page">
+        <h1>Mes données</h1>
+        {{ include('compte/_navigation.html.twig') }}
+
+        <div class="compte-grille">
+            <section class="compte-bloc" aria-labelledby="titre-coordonnees">
+                <h2 id="titre-coordonnees" class="compte-bloc__titre">Mes coordonnées</h2>
+                <p>Email de connexion : <strong>{{ app.user.email }}</strong>. Pour le changer, contactez le salon.</p>
+                {% if formulaire %}
+                    {{ form_start(formulaire, {attr: {novalidate: 'novalidate'}}) }}
+                        {% for champ in formulaire %}
+                            {% if champ.vars.name != '_token' %}
+                                <div class="champ{{ champ.vars.valid ? '' : ' champ--erreur' }}">
+                                    {{ form_label(champ) }}
+                                    {{ form_widget(champ) }}
+                                    {{ form_errors(champ) }}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                        <button type="submit" class="bouton">Enregistrer</button>
+                    {{ form_end(formulaire) }}
+                {% else %}
+                    {{ include('compte/_fiche_en_attente.html.twig') }}
+                {% endif %}
+            </section>
+
+            <section class="compte-bloc" aria-labelledby="titre-rgpd">
+                <h2 id="titre-rgpd" class="compte-bloc__titre">Mes droits</h2>
+                <p>Téléchargez toutes les données que le salon conserve sur vous (coordonnées, rendez-vous, points).</p>
+                <p><a class="bouton bouton--secondaire" href="{{ path('app_compte_export') }}">Télécharger mes données</a></p>
+
+                <h3>Supprimer mon compte</h3>
+                <p>
+                    Votre compte est supprimé et votre fiche anonymisée ; vos points sont perdus.
+                    Les rendez-vous passés restent dans la comptabilité du salon, sans votre nom.
+                </p>
+                <form method="post" action="{{ path('app_compte_supprimer') }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('supprimer_compte') }}">
+                    <div class="champ champ--case">
+                        <input type="checkbox" id="confirmation-suppression" name="confirmation" value="1" required>
+                        <label for="confirmation-suppression">Je confirme vouloir supprimer définitivement mon compte.</label>
+                    </div>
+                    <button type="submit" class="bouton bouton--danger">Supprimer mon compte</button>
+                </form>
+            </section>
+        </div>
+
+        <p class="page__note"><a href="{{ path('app_confidentialite') }}">Politique de confidentialité</a></p>
+    </div>
+{% endblock %}

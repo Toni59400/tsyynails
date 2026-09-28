@@ -20,6 +20,7 @@ security:
         main:
             lazy: true
             provider: app_user_provider
+            user_checker: App\Security\EmailVerifieUserChecker
 
             form_login:
                 login_path: app_login
@@ -47,6 +48,8 @@ security:
     # Note: Only the *first* matching rule is applied
     access_control:
         - { path: ^/connexion, roles: PUBLIC_ACCESS }
+        - { path: ^/inscription, roles: PUBLIC_ACCESS }
+        - { path: ^/mot-de-passe-oublie, roles: PUBLIC_ACCESS }
         - { path: ^/deconnexion, roles: PUBLIC_ACCESS }
         - { path: ^/2fa, roles: IS_AUTHENTICATED_2FA_IN_PROGRESS }
         - { path: ^/admin, roles: ROLE_ADMIN }

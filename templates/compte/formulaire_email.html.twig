@@ -1,0 +1,21 @@
+{% extends 'layout/auth.html.twig' %}
+
+{% block title %}{{ titre }} · Tsyynails{% endblock %}
+
+{% block contenu %}
+    <h1>{{ titre }}</h1>
+    {% for message in app.flashes('erreur') %}
+        <div class="alerte alerte--erreur" role="alert">{{ message }}</div>
+    {% endfor %}
+
+    {{ form_start(formulaire, {attr: {novalidate: 'novalidate'}}) }}
+        <div class="champ{{ formulaire.email.vars.valid ? '' : ' champ--erreur' }}">
+            {{ form_label(formulaire.email) }}
+            {{ form_widget(formulaire.email) }}
+            {{ form_errors(formulaire.email) }}
+        </div>
+        <button type="submit" class="bouton">Envoyer</button>
+    {{ form_end(formulaire) }}
+
+    <p class="lien-secondaire"><a href="{{ path('app_login') }}">Retour à la connexion</a></p>
+{% endblock %}

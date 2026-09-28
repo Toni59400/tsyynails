@@ -65,8 +65,19 @@
     grid-area: marque;
 }
 
-.entete__reserver {
+.entete__actions {
     grid-area: reserver;
+    display: flex;
+    align-items: center;
+    gap: calc(var(--space) * 1.5);
+}
+
+.entete__compte {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    color: var(--color-primary-ink);
+    font-size: 0.95rem;
 }
 
 .navigation {
@@ -816,4 +827,272 @@ a.jour:hover {
 
 .paiement__element {
     margin-bottom: calc(var(--space) * 2);
+}
+
+/* Bouton de suppression (espace cliente) */
+.bouton--danger {
+    background: var(--color-danger);
+}
+
+.bouton--danger:hover {
+    background: var(--color-text);
+}
+
+/* Espace cliente */
+.compte-navigation {
+    margin-bottom: calc(var(--space) * 3);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.compte-grille {
+    display: grid;
+    gap: calc(var(--space) * 3);
+    align-items: start;
+}
+
+@media (min-width: 56rem) {
+    .compte-grille {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.compte-bloc,
+.carte-fidelite {
+    padding: calc(var(--space) * 3);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+}
+
+.compte-bloc__titre,
+.carte-fidelite__titre {
+    margin: 0 0 calc(var(--space) * 2);
+    font-size: 1.4rem;
+}
+
+.carte-fidelite {
+    background: linear-gradient(160deg, var(--color-surface) 40%, var(--color-surface-douce));
+}
+
+.carte-fidelite__entete {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space);
+}
+
+.badge-fidele {
+    padding: calc(var(--space) / 2) calc(var(--space) * 1.5);
+    border-radius: 999px;
+    background: var(--color-primary-ink);
+    color: var(--color-on-primary);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.carte-fidelite__solde {
+    margin: 0 0 var(--space);
+    color: var(--color-primary-ink);
+    font-family: var(--font-heading);
+    font-size: 1.4rem;
+}
+
+.carte-fidelite__solde strong {
+    font-size: 2.6rem;
+    font-weight: 400;
+}
+
+.carte-fidelite__prochain,
+.carte-fidelite__regles {
+    color: var(--color-muted);
+    font-size: 0.95rem;
+}
+
+.progression {
+    height: 12px;
+    margin: var(--space) 0;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--color-surface-douce);
+}
+
+.progression__barre {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--color-primary-ink);
+}
+.progression__barre--0 { width: 0%; }
+.progression__barre--10 { width: 10%; }
+.progression__barre--20 { width: 20%; }
+.progression__barre--30 { width: 30%; }
+.progression__barre--40 { width: 40%; }
+.progression__barre--50 { width: 50%; }
+.progression__barre--60 { width: 60%; }
+.progression__barre--70 { width: 70%; }
+.progression__barre--80 { width: 80%; }
+.progression__barre--90 { width: 90%; }
+.progression__barre--100 { width: 100%; }
+
+.paliers {
+    display: grid;
+    gap: var(--space);
+    margin: calc(var(--space) * 2) 0;
+    padding: 0;
+    list-style: none;
+}
+
+.palier {
+    display: grid;
+    grid-template-columns: 4.5rem 1fr auto;
+    align-items: center;
+    gap: var(--space);
+    padding: var(--space) calc(var(--space) * 1.5);
+    border: 1px solid var(--color-border);
+    border-radius: calc(var(--radius) / 2);
+    background: var(--color-surface);
+}
+
+.palier--atteint {
+    border-color: var(--color-success);
+    background: var(--color-success-bg);
+}
+
+.palier__seuil {
+    color: var(--color-primary-ink);
+    font-weight: 600;
+}
+
+.palier__nom small {
+    display: block;
+    color: var(--color-muted);
+    font-size: 0.8rem;
+}
+
+.palier__etat {
+    color: var(--color-muted);
+    font-size: 0.85rem;
+    text-align: right;
+}
+
+.palier--atteint .palier__etat {
+    color: var(--color-success);
+    font-weight: 600;
+}
+
+.liste-rendez-vous,
+.historique-points {
+    margin: 0 0 calc(var(--space) * 2);
+    padding: 0;
+    list-style: none;
+}
+
+.rendez-vous {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: calc(var(--space) / 2) var(--space);
+    padding-block: calc(var(--space) * 1.5);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.rendez-vous__date {
+    font-weight: 600;
+}
+
+.rendez-vous__prestation {
+    grid-column: 1;
+    color: var(--color-muted);
+}
+
+.rendez-vous__statut {
+    grid-column: 2;
+    grid-row: 1;
+    font-size: 0.85rem;
+}
+
+.rendez-vous__lien {
+    grid-column: 2;
+    grid-row: 2;
+    text-align: right;
+}
+
+.historique-points li {
+    display: grid;
+    grid-template-columns: 6rem 1fr auto;
+    gap: var(--space);
+    padding-block: var(--space);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.historique-points__date {
+    color: var(--color-muted);
+}
+
+.historique-points__delta {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.historique-points__delta--gain {
+    color: var(--color-success);
+}
+
+.historique-points__delta--perte {
+    color: var(--color-danger);
+}
+
+.fidelite-tunnel {
+    margin-bottom: calc(var(--space) * 2);
+    padding: calc(var(--space) * 2);
+    border-radius: calc(var(--radius) / 2);
+    background: var(--color-surface-douce);
+}
+
+.fidelite-tunnel__solde {
+    margin-top: 0;
+}
+
+.fidelite-tunnel fieldset {
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.fidelite-tunnel legend {
+    margin-bottom: var(--space);
+}
+
+.fidelite-tunnel input[type="radio"] {
+    width: auto;
+    min-height: 0;
+    margin-right: var(--space);
+}
+
+.fidelite-tunnel label {
+    display: inline;
+    font-weight: 400;
+}
+
+.fidelite-tunnel .champ > div > div {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+}
+
+.creation-compte {
+    margin-bottom: calc(var(--space) * 2);
+    padding: calc(var(--space) * 2);
+    border: 1px dashed var(--color-primary);
+    border-radius: calc(var(--radius) / 2);
+}
+
+.avantages {
+    padding-left: calc(var(--space) * 2.5);
+    line-height: 1.8;
+}
+
+.auth__inscription {
+    margin-top: calc(var(--space) * 3);
+    text-align: center;
 }

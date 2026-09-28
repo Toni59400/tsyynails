@@ -1,0 +1,59 @@
+{% extends 'layout/public.html.twig' %}
+
+{% block title %}Créer mon compte fidélité · {{ salon.nom }}{% endblock %}
+{% block description %}Créez votre compte {{ salon.nom }} : cumulez des points à chaque rendez-vous et profitez de récompenses.{% endblock %}
+
+{% block contenu %}
+    <div class="conteneur page">
+        <h1>Créer mon compte</h1>
+
+        <div class="tunnel-colonnes">
+            <section aria-labelledby="titre-avantages">
+                <h2 id="titre-avantages">Vos avantages</h2>
+                <ul class="avantages">
+                    <li>Des points à chaque rendez-vous, et des points de bienvenue.</li>
+                    <li>Des récompenses à échanger quand vous voulez :
+                        <ul>
+                            {% for palier in paliers %}
+                                <li><strong>{{ palier.seuilPoints }} points</strong> : {{ palier.nom }}</li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                    <li>Vos rendez-vous et votre solde au même endroit.</li>
+                    <li>Réservation plus rapide : vos coordonnées sont déjà remplies.</li>
+                </ul>
+                <p class="page__note">Déjà cliente ? Utilisez l'adresse email donnée lors de vos rendez-vous pour retrouver automatiquement vos points.</p>
+            </section>
+
+            {{ form_start(formulaire, {attr: {class: 'formulaire', novalidate: 'novalidate'}}) }}
+                {% if not formulaire.vars.valid %}
+                    <div class="alerte alerte--erreur" role="alert">Vérifiez les champs signalés ci-dessous.</div>
+                {% endif %}
+
+                {% for champ in [formulaire.prenom, formulaire.nom, formulaire.telephone, formulaire.email, formulaire.motDePasse] %}
+                    <div class="champ{{ champ.vars.valid ? '' : ' champ--erreur' }}">
+                        {{ form_label(champ) }}
+                        {{ form_widget(champ) }}
+                        {{ form_help(champ) }}
+                        {{ form_errors(champ) }}
+                    </div>
+                {% endfor %}
+
+                <div class="champ champ--case{{ formulaire.accepteConditions.vars.valid ? '' : ' champ--erreur' }}">
+                    {{ form_widget(formulaire.accepteConditions) }}
+                    {{ form_label(formulaire.accepteConditions) }}
+                    {{ form_errors(formulaire.accepteConditions) }}
+                    <p class="champ__aide"><a href="{{ path('app_conditions') }}#fidelite" target="_blank" rel="noopener">Lire le règlement</a> (nouvel onglet)</p>
+                </div>
+
+                <p class="formulaire__note">
+                    Vos données servent uniquement à gérer vos rendez-vous et vos points.
+                    <a href="{{ path('app_confidentialite') }}">Politique de confidentialité</a>.
+                </p>
+
+                <button type="submit" class="bouton">Créer mon compte</button>
+                <p class="formulaire__note">Déjà un compte ? <a href="{{ path('app_login') }}">Connectez-vous</a></p>
+            {{ form_end(formulaire) }}
+        </div>
+    </div>
+{% endblock %}

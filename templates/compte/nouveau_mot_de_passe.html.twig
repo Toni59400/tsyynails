@@ -1,0 +1,20 @@
+{% extends 'layout/auth.html.twig' %}
+
+{% block title %}Nouveau mot de passe · Tsyynails{% endblock %}
+
+{% block contenu %}
+    <h1>Nouveau mot de passe</h1>
+
+    {{ form_start(formulaire, {attr: {novalidate: 'novalidate'}}) }}
+        {% for champ in [formulaire.motDePasse.first, formulaire.motDePasse.second] %}
+            <div class="champ{{ champ.vars.valid ? '' : ' champ--erreur' }}">
+                {{ form_label(champ) }}
+                {{ form_widget(champ) }}
+                {{ form_help(champ) }}
+                {{ form_errors(champ) }}
+            </div>
+        {% endfor %}
+        {{ form_errors(formulaire.motDePasse) }}
+        <button type="submit" class="bouton">Enregistrer</button>
+    {{ form_end(formulaire) }}
+{% endblock %}

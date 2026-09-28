@@ -6,6 +6,7 @@ namespace App\Repository;
 
 use App\Entity\Client;
 use App\Entity\MouvementPoints;
+use App\Enum\MotifMouvementPoints;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -63,5 +64,46 @@ class MouvementPointsRepository extends ServiceEntityRepository
         }
 
         return $soldes;
+    }
+
+    /**
+     * Date du dernier gain de points (visite, bienvenue, correction positive) :
+     * point de départ de l'expiration.
+     */
+    public function dernierGainPour(Client $client): ?\DateTimeImmutable
+    {
+        return $this->derniersGains($client)[$client->getId()] ?? null;
+    }
+
+    /**
+     * Dernier gain de points par cliente (toutes, ou une seule).
+     *
+     * @return array<int, \DateTimeImmutable>
+     */
+    public function derniersGains(?Client $client = null): array
+    {
+        $requete = $this->createQueryBuilder('m')
+            ->select('IDENTITY(m.client) AS client', 'MAX(m.createdAt) AS dernier')
+            ->andWhere('m.delta > 0')
+            ->andWhere('m.motif IN (:gains)')
+            ->setParameter('gains', [MotifMouvementPoints::VISITE, MotifMouvementPoints::INSCRIPTION, MotifMouvementPoints::CORRECTION])
+            ->groupBy('m.client');
+        if (null !== $client) {
+            $requete->andWhere('m.client = :client')->setParameter('client', $client);
+        }
+
+        /** @var list<array{client: int|string, dernier: string}> $lignes */
+        $lignes = $requete->getQuery()->getArrayResult();
+        $gains = [];
+        foreach ($lignes as $ligne) {
+            $gains[(int) $ligne['client']] = new \DateTimeImmutable($ligne['dernier']);
+        }
+
+        return $gains;
+    }
+
+    public function existePour(Client $client, MotifMouvementPoints $motif): bool
+    {
+        return null !== $this->findOneBy(['client' => $client, 'motif' => $motif]);
     }
 }

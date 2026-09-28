@@ -205,4 +205,18 @@ class ReservationRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    public function countHonoreesDepuis(Client $client, \DateTimeImmutable $depuis): int
+    {
+        return (int) $this->createQueryBuilder('r')
+            ->select('COUNT(r.id)')
+            ->andWhere('r.client = :client')
+            ->andWhere('r.statut = :statut')
+            ->andWhere('r.debut >= :depuis')
+            ->setParameter('client', $client)
+            ->setParameter('statut', StatutReservation::HONOREE)
+            ->setParameter('depuis', $depuis)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
 }

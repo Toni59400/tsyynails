@@ -1,0 +1,10 @@
+{% extends 'emails/_base.html.twig' %}
+{% block contenu %}
+    <p>Bonjour {{ client.prenom }},</p>
+    <p>Vos <strong>{{ points }} points de fidélité</strong> expireront le <strong>{{ expiration|date_fr('d MMMM yyyy') }}</strong>.</p>
+    <p>Un rendez-vous d'ici là suffit à les conserver, et vous pouvez peut-être déjà les échanger contre une récompense.</p>
+    <p style="margin:20px 0;">
+        <a href="{{ url('app_reservation') }}" style="display:inline-block;padding:12px 22px;border-radius:999px;background:#7a4747;color:#ffffff;text-decoration:none;font-weight:bold;">Réserver un rendez-vous</a>
+    </p>
+    <p style="font-size:13px;color:#6f625e;"><a href="{{ url('app_compte_fidelite') }}" style="color:#7a4747;">Voir mes points et mes récompenses</a></p>
+{% endblock %}

@@ -68,7 +68,7 @@ final class NotificationsReservation
 
     private function envoyerALaCliente(Reservation $reservation, string $sujet, string $gabarit): void
     {
-        $email = $reservation->getClient()->getEmail();
+        $email = $reservation->getEmailNotification();
         if (null === $email) {
             return;
         }

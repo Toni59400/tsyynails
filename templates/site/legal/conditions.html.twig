@@ -30,10 +30,42 @@
             seront précisés ici avant l'ouverture de la réservation en ligne.
         </p>
 
-        <h2>Points de fidélité</h2>
-        <p>
-            Chaque prestation réalisée vous rapporte des points. Vous pouvez les utiliser
-            comme réduction lors d'une prochaine réservation en ligne.
-        </p>
+        <h2 id="fidelite">Programme de fidélité</h2>
+        <ul>
+            <li>Le programme est gratuit et réservé aux clientes ayant créé un compte avec une adresse email confirmée.</li>
+            <li>
+                Chaque rendez-vous honoré rapporte {{ points_par_euro }} point{{ points_par_euro > 1 ? 's' }} par euro payé,
+                calculés sur le prix après réduction, crédités après le rendez-vous. Aucun point pour un rendez-vous annulé ou non honoré.
+            </li>
+            {% if bonus_inscription > 0 %}
+                <li>{{ bonus_inscription }} points de bienvenue sont offerts une seule fois, à la confirmation de l'email.</li>
+            {% endif %}
+            <li>Récompenses disponibles :
+                <ul>
+                    {% for palier in paliers %}
+                        <li>{{ palier.seuilPoints }} points : {{ palier.nom }} ({{ palier.type.libelle|lower }})</li>
+                    {% endfor %}
+                </ul>
+            </li>
+            <li>
+                Une seule récompense par rendez-vous, dans la limite de {{ reduction_max }} % du prix de la prestation.
+                Les points utilisés pour une demande refusée, annulée ou expirée sont rendus.
+            </li>
+            <li>
+                Les points expirent {{ expiration_mois }} mois après le dernier gain de points ; un email prévient 30 jours avant.
+                Chaque visite prolonge la validité de tout le solde.
+            </li>
+            <li>
+                Après {{ fidele_visites }} visites sur 12 mois, le statut « Cliente fidèle » permet de réserver plus longtemps à l'avance.
+            </li>
+            <li>
+                Les points n'ont aucune valeur monétaire : ils ne sont ni remboursables, ni échangeables contre de l'argent,
+                ni cessibles. La suppression du compte entraîne la perte des points.
+            </li>
+            <li>
+                Le salon peut modifier ou arrêter le programme en prévenant les clientes au moins 30 jours à l'avance ;
+                les points acquis restent alors utilisables pendant ce délai.
+            </li>
+        </ul>
     </div>
 {% endblock %}

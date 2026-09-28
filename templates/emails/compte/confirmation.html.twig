@@ -1,0 +1,7 @@
+{% extends 'emails/_base.html.twig' %}
+{% block contenu %}
+    <p>Bonjour,</p>
+    <p>Merci d'avoir créé votre compte ! Confirmez votre adresse email pour l'activer et recevoir vos points de bienvenue.</p>
+    {{ include('emails/compte/_bouton.html.twig', {libelle: 'Confirmer mon adresse'}) }}
+    <p style="font-size:13px;color:#6f625e;">Ce lien est valable 3 jours. Si vous n'êtes pas à l'origine de cette demande, ignorez simplement cet email.</p>
+{% endblock %}

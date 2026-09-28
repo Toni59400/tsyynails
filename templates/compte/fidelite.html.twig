@@ -1,0 +1,43 @@
+{% extends 'layout/public.html.twig' %}
+
+{% block title %}Ma fidélité · {{ salon.nom }}{% endblock %}
+
+{% block meta %}
+    {{ parent() }}
+    <meta name="robots" content="noindex">
+{% endblock %}
+
+{% block contenu %}
+    <div class="conteneur page">
+        <h1>Ma fidélité</h1>
+        {{ include('compte/_navigation.html.twig') }}
+
+        {% if client is null %}
+            {{ include('compte/_fiche_en_attente.html.twig') }}
+        {% else %}
+            <div class="compte-grille">
+                {{ include('compte/_carte_fidelite.html.twig') }}
+
+                <section class="compte-bloc" aria-labelledby="titre-historique">
+                    <h2 id="titre-historique" class="compte-bloc__titre">Historique</h2>
+                    {% if mouvements is empty %}
+                        <p>Vos points apparaîtront ici après votre premier rendez-vous.</p>
+                    {% else %}
+                        <ul class="historique-points">
+                            {% for m in mouvements %}
+                                <li>
+                                    <span class="historique-points__date">{{ m.createdAt|date('d/m/Y') }}</span>
+                                    <span class="historique-points__motif">
+                                        {{ m.motif.libelle }}
+                                        {% if m.reservation %}· {{ m.reservation.prestation.nom }}{% elseif m.commentaire %}· {{ m.commentaire }}{% endif %}
+                                    </span>
+                                    <span class="historique-points__delta historique-points__delta--{{ m.delta > 0 ? 'gain' : 'perte' }}">{{ m.delta > 0 ? '+' }}{{ m.delta }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </section>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

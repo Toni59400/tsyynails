@@ -13,9 +13,11 @@ use App\Entity\MouvementPoints;
 use App\Entity\Parametre;
 use App\Entity\Photo;
 use App\Entity\Prestation;
+use App\Entity\RecompenseFidelite;
 use App\Entity\Reservation;
 use App\Enum\MotifMouvementPoints;
 use App\Enum\StatutReservation;
+use App\Enum\TypeRecompense;
 use App\Service\Reservation\Tarification;
 use App\Service\Securite\ChiffrementDonnees;
 use Doctrine\ORM\EntityManagerInterface;
@@ -42,20 +44,28 @@ final class ChargerDonneesDemoCommand extends Command
     private const GRAINE = 20260928;
     private const JOURS_PASSES = 70;
     private const JOURS_FUTURS = 28;
-    private const VALEUR_POINT_CENTIMES = 10;
     private const ACOMPTE_POURCENTAGE = 30;
-    private const POINTS_PAR_UTILISATION = 100;
+    /**
+     * Paliers par défaut : points, nom, type, valeur (identiques à la migration).
+     *
+     * @var list<array{0: int, 1: string, 2: TypeRecompense, 3: int}>
+     */
+    public const PALIERS = [
+        [100, '5 € de réduction', TypeRecompense::REDUCTION, 500],
+        [150, 'Nail art offert', TypeRecompense::EN_SALON, 1000],
+        [300, '18 € de réduction', TypeRecompense::REDUCTION, 1800],
+    ];
 
     private const PRESTATIONS = [
-        ['Pose complète gel', 'Allongement au gel sur chablon, forme et longueur au choix, couleur unie ou french.', 5500, 120, 55],
-        ['Remplissage gel', 'Entretien d\'une pose gel toutes les 3 à 4 semaines, avec changement de couleur.', 4500, 90, 45],
-        ['Semi-permanent mains', 'Vernis semi-permanent sur ongles naturels, tenue jusqu\'à 3 semaines.', 3000, 60, 30],
-        ['Gainage gel sur ongles naturels', 'Renforce les ongles fragiles sans rallonger, finition couleur au choix.', 4000, 75, 40],
-        ['Capsules américaines', 'Capsules en gel souple posées en une fois : légères, naturelles et rapides.', 5000, 105, 50],
-        ['Manucure russe', 'Soin complet des cuticules à la ponceuse, finition vernis ou huile nourrissante.', 3500, 60, 35],
-        ['Semi-permanent pieds', 'Beauté des pieds avec pose de vernis semi-permanent.', 3500, 60, 35],
-        ['Nail art (10 ongles)', 'Décor à main levée, strass, effets chrome ou french fantaisie, en complément d\'une pose.', 1000, 15, 10],
-        ['Dépose complète et soin', 'Retrait en douceur du gel ou du semi-permanent, puis soin des ongles.', 2000, 45, 20],
+        ['Pose complète gel', 'Allongement au gel sur chablon, forme et longueur au choix, couleur unie ou french.', 5500, 120],
+        ['Remplissage gel', 'Entretien d\'une pose gel toutes les 3 à 4 semaines, avec changement de couleur.', 4500, 90],
+        ['Semi-permanent mains', 'Vernis semi-permanent sur ongles naturels, tenue jusqu\'à 3 semaines.', 3000, 60],
+        ['Gainage gel sur ongles naturels', 'Renforce les ongles fragiles sans rallonger, finition couleur au choix.', 4000, 75],
+        ['Capsules américaines', 'Capsules en gel souple posées en une fois : légères, naturelles et rapides.', 5000, 105],
+        ['Manucure russe', 'Soin complet des cuticules à la ponceuse, finition vernis ou huile nourrissante.', 3500, 60],
+        ['Semi-permanent pieds', 'Beauté des pieds avec pose de vernis semi-permanent.', 3500, 60],
+        ['Nail art (10 ongles)', 'Décor à main levée, strass, effets chrome ou french fantaisie, en complément d\'une pose.', 1000, 15],
+        ['Dépose complète et soin', 'Retrait en douceur du gel ou du semi-permanent, puis soin des ongles.', 2000, 45],
     ];
 
     /** Plages d'ouverture : jour ISO, début, fin. */
@@ -156,6 +166,9 @@ final class ChargerDonneesDemoCommand extends Command
         $maintenant = $this->clock->now();
 
         $this->creerParametres();
+        foreach (self::PALIERS as [$seuil, $nom, $type, $valeur]) {
+            $this->entityManager->persist(new RecompenseFidelite($nom, $seuil, $type, $valeur));
+        }
         $horaires = $this->creerHoraires();
         $indisponibilites = $this->creerIndisponibilites($maintenant);
         $prestations = $this->creerPrestations();
@@ -186,7 +199,7 @@ final class ChargerDonneesDemoCommand extends Command
     private function purger(): void
     {
         foreach ([MouvementPoints::class, CarteFidelite::class, Reservation::class, Client::class, Photo::class, Inspiration::class,
-            Prestation::class, HoraireOuverture::class, Indisponibilite::class, Parametre::class] as $classe) {
+            RecompenseFidelite::class, Prestation::class, HoraireOuverture::class, Indisponibilite::class, Parametre::class] as $classe) {
             $this->entityManager->createQuery(\sprintf('DELETE FROM %s e', $classe))->execute();
         }
 
@@ -199,7 +212,6 @@ final class ChargerDonneesDemoCommand extends Command
     private function creerParametres(): void
     {
         foreach ([
-            Parametre::VALEUR_POINT_CENTIMES => self::VALEUR_POINT_CENTIMES,
             Parametre::ACOMPTE_POURCENTAGE => self::ACOMPTE_POURCENTAGE,
             Parametre::DELAI_MIN_RESERVATION_HEURES => 24,
         ] as $cle => $valeur) {
@@ -250,10 +262,9 @@ final class ChargerDonneesDemoCommand extends Command
     private function creerPrestations(): array
     {
         $prestations = [];
-        foreach (self::PRESTATIONS as $ordre => [$nom, $description, $prix, $duree, $points]) {
+        foreach (self::PRESTATIONS as $ordre => [$nom, $description, $prix, $duree]) {
             $prestation = (new Prestation($nom, $prix, $duree))
                 ->setDescription($description)
-                ->setPoints($points)
                 ->setOrdre($ordre);
             $this->entityManager->persist($prestation);
             $prestations[] = $prestation;
@@ -434,12 +445,17 @@ final class ChargerDonneesDemoCommand extends Command
         // La demande est faite entre 2 et 20 jours avant le rendez-vous, jamais dans le futur.
         $demandeeAt = min($debut->modify(\sprintf('-%d days', mt_rand(2, 20)))->setTime(mt_rand(8, 22), mt_rand(0, 59)), $maintenant->modify('-1 hour'));
 
+        // Certaines clientes échangent leurs points en réservant (palier le plus haut possible, plafond 50 % du prix).
         $pointsUtilises = 0;
         $reduction = 0;
-        $reductionPossible = self::POINTS_PAR_UTILISATION * self::VALEUR_POINT_CENTIMES;
-        if ($solde >= self::POINTS_PAR_UTILISATION && $reductionPossible <= $prestation->getPrixCentimes() && mt_rand(1, 10) <= 4) {
-            $pointsUtilises = self::POINTS_PAR_UTILISATION;
-            $reduction = $reductionPossible;
+        if (mt_rand(1, 10) <= 4) {
+            foreach (array_reverse(self::PALIERS) as $palier) {
+                if (TypeRecompense::REDUCTION === $palier[2] && $solde >= $palier[0] && $palier[3] * 2 <= $prestation->getPrixCentimes()) {
+                    $pointsUtilises = $palier[0];
+                    $reduction = $palier[3];
+                    break;
+                }
+            }
         }
 
         $acompte = Tarification::calculerAcompte($prestation->getPrixCentimes() - $reduction, self::ACOMPTE_POURCENTAGE);
@@ -472,8 +488,10 @@ final class ChargerDonneesDemoCommand extends Command
         }
 
         if (StatutReservation::HONOREE === $statut) {
-            $this->mouvement($cliente, $prestation->getPoints(), MotifMouvementPoints::VISITE, $reservation, $reservation->getFin());
-            $solde += $prestation->getPoints();
+            // 1 point par euro payé (réglage par défaut).
+            $points = intdiv($prestation->getPrixCentimes() - $reduction, 100);
+            $this->mouvement($cliente, $points, MotifMouvementPoints::VISITE, $reservation, $reservation->getFin());
+            $solde += $points;
             $cliente->enregistrerVisite($reservation->getFin());
         }
 

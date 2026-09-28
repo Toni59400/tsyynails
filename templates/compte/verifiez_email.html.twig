@@ -1,0 +1,22 @@
+{% extends 'layout/public.html.twig' %}
+
+{% block title %}Vérifiez vos emails · {{ salon.nom }}{% endblock %}
+
+{% block meta %}
+    {{ parent() }}
+    <meta name="robots" content="noindex">
+{% endblock %}
+
+{% block contenu %}
+    <div class="conteneur page page--texte">
+        <h1>Plus qu'une étape</h1>
+        <p class="alerte alerte--succes" role="status">
+            Un lien de confirmation vient d'être envoyé à <strong>{{ email }}</strong>. Il est valable 3 jours.
+        </p>
+        <p>Cliquez dessus pour activer votre compte et recevoir vos points de bienvenue.</p>
+        <p class="page__note">
+            Rien reçu ? Vérifiez les courriers indésirables, puis
+            <a href="{{ path('app_inscription_renvoyer') }}">demandez un nouveau lien</a>.
+        </p>
+    </div>
+{% endblock %}

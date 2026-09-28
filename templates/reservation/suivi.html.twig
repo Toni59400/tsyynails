@@ -28,6 +28,12 @@
                         Merci {{ reservation.client.prenom }} ! Votre demande est bien reçue et l'acompte est bloqué sur votre carte, sans être débité.
                     </p>
                     <p>Je vous réponds par email au plus vite, en général sous 24 heures.</p>
+                    {% if not app.user %}
+                        <p class="alerte alerte--info">
+                            Ce rendez-vous vous rapportera <strong>{{ points_pour(reservation.prixCentimes - reservation.reductionCentimes) }} points de fidélité</strong> :
+                            <a href="{{ path('app_inscription') }}">créez votre compte</a> avec l'adresse utilisée pour cette réservation pour les recevoir.
+                        </p>
+                    {% endif %}
                 {% elseif statut == 'confirmee' %}
                     <p class="alerte alerte--succes" role="status">À très vite, {{ reservation.client.prenom }} !</p>
                     <p>Reste à régler au salon : <strong>{{ reservation.resteAPayerCentimes|euros }}</strong>.</p>
@@ -41,7 +47,7 @@
 
             {{ include('reservation/_recap.html.twig', {
                 prestation: reservation.prestation, debut: reservation.debut, fin: reservation.fin,
-                prix: reservation.prixCentimes, acompte: reservation.acompteCentimes,
+                prix: reservation.prixCentimes, acompte: reservation.acompteCentimes, reduction: reservation.reductionCentimes,
             }) }}
         </div>
     </div>

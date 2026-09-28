@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Entity\Parametre;
 use App\Entity\Prestation;
 use App\Repository\InspirationRepository;
+use App\Repository\ParametreRepository;
 use App\Repository\PhotoRepository;
 use App\Repository\PrestationRepository;
+use App\Repository\RecompenseFideliteRepository;
 use App\Service\Reservation\Tarification;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -24,6 +27,8 @@ final class SiteController extends AbstractController
         private readonly PhotoRepository $photos,
         private readonly InspirationRepository $inspirations,
         private readonly Tarification $tarification,
+        private readonly RecompenseFideliteRepository $recompenses,
+        private readonly ParametreRepository $parametres,
     ) {
     }
 
@@ -96,6 +101,12 @@ final class SiteController extends AbstractController
     {
         return $this->render('site/legal/conditions.html.twig', [
             'acompte_pourcentage' => $this->tarification->acomptePourcentage(),
+            'paliers' => $this->recompenses->findActives(),
+            'points_par_euro' => $this->parametres->valeur(Parametre::POINTS_PAR_EURO),
+            'expiration_mois' => $this->parametres->valeur(Parametre::EXPIRATION_POINTS_MOIS),
+            'bonus_inscription' => $this->parametres->valeur(Parametre::BONUS_INSCRIPTION_POINTS),
+            'reduction_max' => $this->parametres->valeur(Parametre::REDUCTION_MAX_POURCENTAGE),
+            'fidele_visites' => $this->parametres->valeur(Parametre::FIDELE_VISITES),
         ]);
     }
 }

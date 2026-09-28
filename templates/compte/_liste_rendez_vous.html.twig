@@ -1,0 +1,10 @@
+<ul class="liste-rendez-vous">
+    {% for r in reservations %}
+        <li class="rendez-vous">
+            <span class="rendez-vous__date">{{ r.debut|date_fr('EEEE d MMMM yyyy')|capitalize }}, {{ r.debut|heure }}</span>
+            <span class="rendez-vous__prestation">{{ r.prestation.nom }}</span>
+            <span class="rendez-vous__statut rendez-vous__statut--{{ r.statut.value }}">{{ r.statut.libelle }}</span>
+            <a class="rendez-vous__lien" href="{{ path('app_reservation_suivi', {jeton: r.jetonSuivi}) }}">Détail<span class="visuellement-cache"> du rendez-vous du {{ r.debut|date('d/m/Y') }}</span></a>
+        </li>
+    {% endfor %}
+</ul>

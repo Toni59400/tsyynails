@@ -43,7 +43,6 @@ final class PrestationCrudController extends AbstractCrudController
         yield TextareaField::new('description')->hideOnIndex();
         yield MoneyField::new('prixCentimes', 'Prix')->setCurrency('EUR')->setStoredAsCents();
         yield IntegerField::new('dureeMinutes', 'Durée (min)')->setHelp('Multiple de 15 minutes.');
-        yield IntegerField::new('points', 'Points fidélité')->setHelp('Points gagnés par la cliente quand la prestation est réalisée.');
         yield IntegerField::new('ordre', 'Ordre d\'affichage')->hideOnIndex();
         yield BooleanField::new('active', 'Visible sur le site');
     }

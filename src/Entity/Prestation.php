@@ -34,11 +34,6 @@ class Prestation
     #[Assert\DivisibleBy(value: 15, message: 'La durée doit être un multiple de 15 minutes.')]
     private int $dureeMinutes;
 
-    /** Points de fidélité gagnés quand la prestation est honorée. */
-    #[ORM\Column]
-    #[Assert\PositiveOrZero]
-    private int $points = 0;
-
     #[ORM\Column]
     private bool $active = true;
 
@@ -102,18 +97,6 @@ class Prestation
     public function setDureeMinutes(int $dureeMinutes): static
     {
         $this->dureeMinutes = $dureeMinutes;
-
-        return $this;
-    }
-
-    public function getPoints(): int
-    {
-        return $this->points;
-    }
-
-    public function setPoints(int $points): static
-    {
-        $this->points = $points;
 
         return $this;
     }

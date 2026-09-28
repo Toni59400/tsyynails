@@ -11,7 +11,16 @@
     <header class="entete">
         <div class="entete__interieur conteneur">
             <a class="entete__marque" href="{{ path('app_accueil') }}">{{ salon.nom }}</a>
-            <a class="entete__reserver bouton bouton--compact" href="{{ path('app_reservation') }}">Réserver</a>
+            <div class="entete__actions">
+                {% if is_granted('ROLE_ADMIN') %}
+                    <a class="entete__compte" href="{{ path('admin') }}">Admin</a>
+                {% elseif app.user %}
+                    <a class="entete__compte" href="{{ path('app_compte') }}">Mon compte</a>
+                {% else %}
+                    <a class="entete__compte" href="{{ path('app_login') }}">Connexion</a>
+                {% endif %}
+                <a class="entete__reserver bouton bouton--compact" href="{{ path('app_reservation') }}">Réserver</a>
+            </div>
             <nav class="navigation" aria-label="Navigation principale">
                 <ul class="navigation__liste">
                     {% for route, libelle in {

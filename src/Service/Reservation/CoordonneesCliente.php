@@ -32,6 +32,26 @@ final class CoordonneesCliente
     #[Assert\IsTrue(message: 'Vous devez accepter les conditions de réservation.')]
     public bool $accepteConditions = false;
 
+    /** Case « Créer mon compte pour cumuler des points » (facultatif). */
+    public bool $creerCompte = false;
+
+    /** Obligatoire seulement si la case « Créer mon compte » est cochée (voir validerMotDePasse()). */
+    public ?string $motDePasse = null;
+
+    #[Assert\Callback]
+    public function validerMotDePasse(\Symfony\Component\Validator\Context\ExecutionContextInterface $contexte): void
+    {
+        if (!$this->creerCompte) {
+            return;
+        }
+
+        $contexte->getValidator()->inContext($contexte)->atPath('motDePasse')->validate($this->motDePasse, [
+            new Assert\NotBlank(message: 'Choisissez un mot de passe pour votre compte.'),
+            new Assert\Length(min: 12, max: 4096, minMessage: 'Le mot de passe doit contenir au moins {{ limit }} caractères.'),
+            new Assert\NotCompromisedPassword(message: 'Ce mot de passe a fuité lors d\'un piratage connu : choisissez-en un autre.', skipOnError: true),
+        ]);
+    }
+
     /**
      * Numéro français (06…, 07…, 01…) ou international (+32…), converti au format E.164.
      */

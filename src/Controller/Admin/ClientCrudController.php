@@ -6,14 +6,14 @@ namespace App\Controller\Admin;
 
 use App\Entity\Client;
 use App\Entity\MouvementPoints;
-use App\Entity\Parametre;
 use App\Entity\User;
 use App\Enum\MotifMouvementPoints;
 use App\Enum\StatutReservation;
 use App\Repository\CarteFideliteRepository;
 use App\Repository\MouvementPointsRepository;
-use App\Repository\ParametreRepository;
+use App\Repository\RecompenseFideliteRepository;
 use App\Repository\ReservationRepository;
+use App\Service\Fidelite\ProgrammeFidelite;
 use Doctrine\ORM\EntityManagerInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
@@ -22,6 +22,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\KeyValueStore;
 use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
+use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\EmailField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
@@ -39,7 +40,6 @@ use Symfony\Component\HttpFoundation\Request;
  */
 final class ClientCrudController extends AbstractCrudController
 {
-    public const VALEUR_POINT_PAR_DEFAUT = 10;
     private const CORRECTION_MAX = 10000;
 
     /** @var array<int, int>|null soldes chargés une seule fois pour toute la liste */
@@ -49,7 +49,8 @@ final class ClientCrudController extends AbstractCrudController
         private readonly MouvementPointsRepository $mouvements,
         private readonly ReservationRepository $reservations,
         private readonly CarteFideliteRepository $cartes,
-        private readonly ParametreRepository $parametres,
+        private readonly ProgrammeFidelite $fidelite,
+        private readonly RecompenseFideliteRepository $recompenses,
         private readonly EntityManagerInterface $entityManager,
         private readonly LoggerInterface $logger,
     ) {
@@ -96,6 +97,12 @@ final class ClientCrudController extends AbstractCrudController
             ->setSortable(false)
             ->formatValue(fn ($id, ?Client $client): int => null === $client ? 0 : $this->solde($client));
         yield DateTimeField::new('derniereVisiteAt', 'Dernière visite')->hideOnForm()->setFormat('dd/MM/yyyy');
+        // Rattachement manuel d'un compte en ligne (fiche existante avec une autre adresse email).
+        yield AssociationField::new('user', 'Compte en ligne')
+            ->onlyOnForms()
+            ->setRequired(false)
+            ->setQueryBuilder(static fn ($qb) => $qb->andWhere('entity.roles NOT LIKE :admin')->setParameter('admin', '%ROLE_ADMIN%'))
+            ->setHelp('Uniquement si la cliente vous l\'a demandé en personne : elle accède alors à ses points et rendez-vous.');
         yield DateTimeField::new('createdAt', 'Fiche créée le')->onlyOnDetail()->setFormat('dd/MM/yyyy HH:mm');
     }
 
@@ -113,12 +120,14 @@ final class ClientCrudController extends AbstractCrudController
         $reservations = $this->reservations->findPourClient($client, 15);
         $honorees = array_filter($reservations, static fn ($r): bool => StatutReservation::HONOREE === $r->getStatut());
 
+        $etat = $this->fidelite->etat($client);
         $responseParameters->setAll([
             'fidelite' => [
-                'solde' => $this->mouvements->soldePour($client),
-                'valeur_point' => $this->valeurPoint(),
+                'solde' => $etat['solde'],
+                'etat' => $etat,
                 'carte' => $this->cartes->findActivePour($client),
                 'mouvements' => $this->mouvements->historiquePour($client),
+                'recompenses' => array_filter($this->recompenses->findActives(), static fn ($r): bool => $r->getSeuilPoints() <= $etat['solde']),
             ],
             'reservations' => $reservations,
             'visites' => \count($honorees),
@@ -184,8 +193,36 @@ final class ClientCrudController extends AbstractCrudController
         return $this->soldes[$client->getId()] ?? 0;
     }
 
-    private function valeurPoint(): int
+    /**
+     * Récompense remise au salon (avantage en nature ou réduction sur place). Route : admin_client_recompense.
+     *
+     * @param AdminContext<Client> $context
+     */
+    #[AdminRoute('/{entityId}/recompense', name: 'recompense', options: ['methods' => ['POST']])]
+    public function remettreRecompense(AdminContext $context, Request $request): RedirectResponse
     {
-        return $this->parametres->entier(Parametre::VALEUR_POINT_CENTIMES, self::VALEUR_POINT_PAR_DEFAUT);
+        $client = $context->getEntity()->getInstance();
+        if (!$client instanceof Client) {
+            throw $this->createNotFoundException();
+        }
+        if (!$this->isCsrfTokenValid('recompense_client_'.$client->getId(), $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException('Jeton CSRF invalide.');
+        }
+
+        $recompense = $this->recompenses->find($request->request->getInt('recompense'));
+        /** @var User $admin */
+        $admin = $this->getUser();
+
+        try {
+            if (null === $recompense) {
+                throw new \LogicException('Choisissez une récompense.');
+            }
+            $this->fidelite->echangerAuSalon($client, $recompense, $admin->getUserIdentifier());
+            $this->addFlash('success', \sprintf('« %s » remise : %d points déduits.', $recompense->getNom(), $recompense->getSeuilPoints()));
+        } catch (\LogicException $erreur) {
+            $this->addFlash('danger', $erreur->getMessage());
+        }
+
+        return $this->redirectToRoute('admin_client_detail', ['entityId' => $client->getId()]);
     }
 }

@@ -68,6 +68,10 @@ final class DashboardController extends AbstractDashboardController
         yield MenuItem::linkTo(PhotoCrudController::class, 'Photos', 'fa fa-images');
         yield MenuItem::linkTo(InspirationCrudController::class, 'Thèmes d\'inspiration', 'fa fa-wand-magic-sparkles');
 
+        yield MenuItem::section('Fidélité');
+        yield MenuItem::linkTo(RecompenseFideliteCrudController::class, 'Paliers de récompenses', 'fa fa-gift');
+        yield MenuItem::linkToRoute('Réglages', 'fa fa-sliders', 'admin_reglages_index');
+
         yield MenuItem::section('Planning');
         yield MenuItem::linkTo(HoraireOuvertureCrudController::class, 'Horaires d\'ouverture', 'fa fa-clock');
         yield MenuItem::linkTo(IndisponibiliteCrudController::class, 'Congés et fermetures', 'fa fa-umbrella-beach');

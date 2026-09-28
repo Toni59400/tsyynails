@@ -1,0 +1,8 @@
+{% extends 'emails/_base.html.twig' %}
+{% block contenu %}
+    <p>Bonjour,</p>
+    <p>Quelqu'un (sans doute vous) a essayé de créer un compte avec cette adresse, mais vous en avez déjà un.</p>
+    <p>Mot de passe oublié ? Choisissez-en un nouveau :</p>
+    {{ include('emails/compte/_bouton.html.twig', {libelle: 'Choisir un nouveau mot de passe'}) }}
+    <p style="font-size:13px;color:#6f625e;">Ce lien est valable une heure. Si vous n'êtes pas à l'origine de cette demande, ignorez cet email : votre compte n'a pas changé.</p>
+{% endblock %}

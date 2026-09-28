@@ -11,6 +11,9 @@
     <div class="conteneur page">
         {{ include('reservation/_etapes.html.twig', {etape: 2}) }}
         <h1>Choisissez votre créneau</h1>
+        {% if horizon_fidele %}
+            <p class="alerte alerte--succes">Cliente fidèle : vous pouvez réserver plus longtemps à l'avance.</p>
+        {% endif %}
         <p class="recap-court">
             <strong>{{ prestation.nom }}</strong> · {{ prestation.dureeMinutes|duree }} · {{ prestation.prixCentimes|euros }}
             · <a href="{{ path('app_reservation') }}">changer</a>

@@ -24,4 +24,16 @@ class ParametreRepository extends ServiceEntityRepository
 
         return null === $parametre ? $parDefaut : (int) $parametre->getValeur();
     }
+
+    /**
+     * Valeur d'un réglage connu (Parametre::DEFINITIONS), ou sa valeur par défaut.
+     */
+    public function valeur(string $cle): int
+    {
+        if (!isset(Parametre::DEFINITIONS[$cle])) {
+            throw new \InvalidArgumentException(\sprintf('Réglage inconnu : %s', $cle));
+        }
+
+        return $this->entier($cle, Parametre::DEFINITIONS[$cle][2]);
+    }
 }

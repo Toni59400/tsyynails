@@ -15,7 +15,7 @@
         <div class="tunnel-colonnes">
             {{ include('reservation/_recap.html.twig', {
                 prestation: reservation.prestation, debut: reservation.debut, fin: reservation.fin,
-                prix: reservation.prixCentimes, acompte: reservation.acompteCentimes,
+                prix: reservation.prixCentimes, acompte: reservation.acompteCentimes, reduction: reservation.reductionCentimes,
             }) }}
 
             <div class="formulaire">

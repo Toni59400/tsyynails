@@ -12,8 +12,8 @@
     <ul class="carte-prestation__details" aria-label="Détails">
         <li><span class="visuellement-cache">Prix : </span><strong>{{ prestation.prixCentimes|euros }}</strong></li>
         <li><span class="visuellement-cache">Durée : </span>{{ prestation.dureeMinutes|duree }}</li>
-        {% if prestation.points > 0 %}
-            <li>{{ prestation.points }} points fidélité</li>
+        {% if points_pour(prestation.prixCentimes) > 0 %}
+            <li>{{ points_pour(prestation.prixCentimes) }} points fidélité</li>
         {% endif %}
     </ul>
     <div class="carte-prestation__actions">

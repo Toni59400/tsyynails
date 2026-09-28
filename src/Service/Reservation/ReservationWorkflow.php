@@ -7,10 +7,12 @@ namespace App\Service\Reservation;
 use App\Entity\Client;
 use App\Entity\MouvementPoints;
 use App\Entity\Prestation;
+use App\Entity\RecompenseFidelite;
 use App\Entity\Reservation;
 use App\Enum\MotifMouvementPoints;
 use App\Enum\StatutReservation;
 use App\Repository\ClientRepository;
+use App\Service\Fidelite\ProgrammeFidelite;
 use App\Service\Paiement\PaiementGateway;
 use App\Service\Planning\CalculateurCreneaux;
 use Doctrine\ORM\EntityManagerInterface;
@@ -34,6 +36,7 @@ final class ReservationWorkflow
         private readonly Tarification $tarification,
         private readonly PaiementGateway $paiement,
         private readonly NotificationsReservation $notifications,
+        private readonly ProgrammeFidelite $fidelite,
         private readonly ClockInterface $clock,
         private readonly LoggerInterface $logger,
     ) {
@@ -42,12 +45,25 @@ final class ReservationWorkflow
     /**
      * Crée la demande (statut « paiement en cours », créneau bloqué) et son empreinte bancaire.
      *
+     * @param Client|null             $clienteConnectee fiche de la cliente connectée (sinon retrouvée ou créée depuis les coordonnées)
+     * @param RecompenseFidelite|null $recompense       réduction fidélité choisie : réservée pour une cliente connectée uniquement
+     *
      * @throws CreneauIndisponibleException
+     * @throws \LogicException              récompense non utilisable sur ce rendez-vous
      */
-    public function demander(Prestation $prestation, \DateTimeImmutable $debut, CoordonneesCliente $coordonnees): Reservation
-    {
-        $telephone = CoordonneesCliente::normaliserTelephone($coordonnees->telephone)
-            ?? throw new \InvalidArgumentException('Téléphone invalide.');
+    public function demander(
+        Prestation $prestation,
+        \DateTimeImmutable $debut,
+        CoordonneesCliente $coordonnees,
+        ?Client $clienteConnectee = null,
+        ?RecompenseFidelite $recompense = null,
+    ): Reservation {
+        if (null !== $recompense && null === $clienteConnectee) {
+            throw new \LogicException('Les points ne s\'utilisent qu\'avec un compte.');
+        }
+        $telephone = null === $clienteConnectee
+            ? (CoordonneesCliente::normaliserTelephone($coordonnees->telephone) ?? throw new \InvalidArgumentException('Téléphone invalide.'))
+            : null;
         $connexion = $this->entityManager->getConnection();
 
         if (1 !== (int) $connexion->fetchOne('SELECT GET_LOCK(?, ?)', [self::VERROU, self::ATTENTE_VERROU_SECONDES])) {
@@ -60,14 +76,31 @@ final class ReservationWorkflow
                 throw new CreneauIndisponibleException();
             }
 
+            $cliente = $clienteConnectee ?? $this->cliente($coordonnees, (string) $telephone);
+
+            // Revérifiée sous verrou : le solde a pu changer depuis l'affichage.
+            $reduction = 0;
+            if (null !== $recompense) {
+                if (!\in_array($recompense, $this->fidelite->utilisablesEnLigne($cliente, $prestation), true)) {
+                    throw new \LogicException('Cette récompense n\'est pas utilisable sur ce rendez-vous.');
+                }
+                $reduction = $recompense->getValeurCentimes();
+            }
+
             $reservation = new Reservation(
-                $this->cliente($coordonnees, $telephone),
+                $cliente,
                 $prestation,
                 $debut,
-                $this->tarification->acompteCentimes($prestation),
+                $this->tarification->acompteCentimes($prestation, $reduction),
+                $reduction,
+                $recompense?->getSeuilPoints() ?? 0,
             );
+            $reservation->setEmailContact($coordonnees->email);
             $reservation->accepterConditions($this->clock->now());
             $this->entityManager->persist($reservation);
+            if (null !== $recompense) {
+                $this->entityManager->persist(new MouvementPoints($cliente, -$recompense->getSeuilPoints(), MotifMouvementPoints::UTILISATION, $reservation, null, $recompense->getNom()));
+            }
             $this->entityManager->flush();
         } finally {
             $connexion->fetchOne('SELECT RELEASE_LOCK(?)', [self::VERROU]);
@@ -156,11 +189,8 @@ final class ReservationWorkflow
         $this->exigerRendezVousPasse($reservation);
         $this->changer($reservation, StatutReservation::HONOREE, $auteur, flush: false);
 
-        $client = $reservation->getClient();
-        $client->enregistrerVisite($reservation->getFin());
-        if ($reservation->getPrestation()->getPoints() > 0) {
-            $this->entityManager->persist(new MouvementPoints($client, $reservation->getPrestation()->getPoints(), MotifMouvementPoints::VISITE, $reservation, $auteur));
-        }
+        $reservation->getClient()->enregistrerVisite($reservation->getFin());
+        $this->fidelite->crediterVisite($reservation, $auteur);
         $this->entityManager->flush();
     }
 
@@ -187,17 +217,15 @@ final class ReservationWorkflow
     }
 
     /**
-     * Une cliente existante est retrouvée par son téléphone. Ses coordonnées enregistrées
-     * ne sont pas modifiées par une saisie anonyme ; seul un email manquant est complété.
+     * Une cliente existante est retrouvée par son téléphone. Sa fiche n'est jamais modifiée
+     * par une saisie anonyme (pas même un email manquant) : sinon, en tapant le numéro d'une autre
+     * cliente, on pourrait rattacher sa fiche et ses points à son propre compte. L'email saisi
+     * est gardé sur la réservation pour les confirmations.
      */
     private function cliente(CoordonneesCliente $coordonnees, string $telephone): Client
     {
         $cliente = $this->clientes->findOneBy(['telephone' => $telephone]);
         if ($cliente instanceof Client) {
-            if (null === $cliente->getEmail()) {
-                $cliente->setEmail($coordonnees->email);
-            }
-
             return $cliente;
         }
 

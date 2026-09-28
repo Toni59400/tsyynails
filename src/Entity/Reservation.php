@@ -70,6 +70,13 @@ class Reservation
     #[ORM\Column(length: 32, unique: true)]
     private string $jetonSuivi;
 
+    /**
+     * Email saisi pour cette demande : les confirmations y sont envoyées.
+     * Il ne modifie jamais la fiche cliente (une saisie anonyme ne prouve pas l'identité).
+     */
+    #[ORM\Column(length: 180, nullable: true)]
+    private ?string $emailContact = null;
+
     /** Acceptation des conditions de réservation (acompte, annulation) au moment de la demande. */
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $conditionsAccepteesAt = null;
@@ -207,5 +214,23 @@ class Reservation
         $this->conditionsAccepteesAt = $at;
 
         return $this;
+    }
+
+    public function getEmailContact(): ?string
+    {
+        return $this->emailContact;
+    }
+
+    public function setEmailContact(?string $email): static
+    {
+        $this->emailContact = null === $email ? null : mb_strtolower(trim($email));
+
+        return $this;
+    }
+
+    /** Adresse des emails de cette réservation : celle saisie, sinon celle de la fiche. */
+    public function getEmailNotification(): ?string
+    {
+        return $this->emailContact ?? $this->client->getEmail();
     }
 }

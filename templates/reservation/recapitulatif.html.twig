@@ -19,19 +19,66 @@
             </div>
 
             {{ form_start(formulaire, {attr: {class: 'formulaire', novalidate: 'novalidate'}}) }}
-                <h2 class="formulaire__titre">Vos coordonnées</h2>
                 {% if not formulaire.vars.valid %}
                     <div class="alerte alerte--erreur" role="alert">Vérifiez les champs signalés ci-dessous.</div>
                 {% endif %}
 
-                {% for champ in [formulaire.prenom, formulaire.nom, formulaire.telephone, formulaire.email] %}
-                    <div class="champ{{ champ.vars.valid ? '' : ' champ--erreur' }}">
-                        {{ form_label(champ) }}
-                        {{ form_widget(champ) }}
-                        {{ form_help(champ) }}
-                        {{ form_errors(champ) }}
+                {% if cliente %}
+                    <h2 class="formulaire__titre">Bonjour {{ cliente.prenom }}</h2>
+                    <p class="formulaire__note">
+                        Réservation au nom de {{ cliente.nomComplet }}, confirmation envoyée à {{ app.user.email }}.
+                        <a href="{{ path('app_compte_donnees') }}">Modifier</a>
+                    </p>
+
+                    <div class="fidelite-tunnel">
+                        <p class="fidelite-tunnel__solde">Vous avez <strong>{{ solde }} points</strong>.
+                            Ce rendez-vous vous en rapportera environ {{ points_gagnes }}.</p>
+                        {% if formulaire.recompense.vars.choices is not empty %}
+                            <fieldset class="champ">
+                                <legend>{{ form_label(formulaire.recompense) }}</legend>
+                                {{ form_widget(formulaire.recompense) }}
+                                <p class="champ__aide">La réduction est déduite du prix et de l'acompte. Vos points vous sont rendus si la demande n'aboutit pas.</p>
+                            </fieldset>
+                        {% else %}
+                            {% do formulaire.recompense.setRendered %}
+                            <p class="champ__aide"><a href="{{ path('app_compte_fidelite') }}">Voir les paliers de récompenses</a></p>
+                        {% endif %}
                     </div>
-                {% endfor %}
+                {% else %}
+                    <h2 class="formulaire__titre">Vos coordonnées</h2>
+
+                    {% if not app.user %}
+                        <p class="alerte alerte--info">
+                            Ce rendez-vous vous rapportera <strong>{{ points_gagnes }} points de fidélité</strong> avec un compte.
+                            <a href="{{ path('app_login', {cible: cible_connexion}) }}">Déjà un compte ? Connectez-vous</a>
+                        </p>
+                    {% endif %}
+
+                    {% for champ in [formulaire.prenom, formulaire.nom, formulaire.telephone, formulaire.email] %}
+                        <div class="champ{{ champ.vars.valid ? '' : ' champ--erreur' }}">
+                            {{ form_label(champ) }}
+                            {{ form_widget(champ) }}
+                            {{ form_help(champ) }}
+                            {{ form_errors(champ) }}
+                        </div>
+                    {% endfor %}
+
+                    {% if formulaire.creerCompte is defined %}
+                        <div class="creation-compte" data-controller="afficher-si-coche">
+                            <div class="champ champ--case">
+                                {{ form_widget(formulaire.creerCompte) }}
+                                {{ form_label(formulaire.creerCompte) }}
+                            </div>
+                            <div class="champ{{ formulaire.motDePasse.vars.valid ? '' : ' champ--erreur' }}" data-afficher-si-coche-target="bloc">
+                                {{ form_label(formulaire.motDePasse) }}
+                                {{ form_widget(formulaire.motDePasse) }}
+                                {{ form_help(formulaire.motDePasse) }}
+                                {{ form_errors(formulaire.motDePasse) }}
+                                <p class="champ__aide">+ des points de bienvenue, et vos rendez-vous au même endroit.</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endif %}
 
                 <div class="champ champ--case{{ formulaire.accepteConditions.vars.valid ? '' : ' champ--erreur' }}">
                     {{ form_widget(formulaire.accepteConditions) }}
