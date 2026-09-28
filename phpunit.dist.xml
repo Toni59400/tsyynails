@@ -40,5 +40,7 @@
     </source>
 
     <extensions>
+        <!-- Chaque test tourne dans une transaction annulée à la fin : la base de test reste propre -->
+        <bootstrap class="DAMA\DoctrineTestBundle\PHPUnit\PHPUnitExtension"/>
     </extensions>
 </phpunit>
