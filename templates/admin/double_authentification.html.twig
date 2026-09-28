@@ -1,0 +1,39 @@
+{% extends 'layout/auth.html.twig' %}
+
+{% block title %}Activer la double authentification · Tsyynails{% endblock %}
+
+{% block contenu %}
+    <h1>Activer la double authentification</h1>
+    <p class="auth__aide">
+        Pour protéger les données des clientes, l'administration demande un code à chaque connexion.
+    </p>
+    <ol class="auth__aide">
+        <li>Installez une application d'authentification (Google Authenticator, Microsoft Authenticator…).</li>
+        <li>Dans l'application, ajoutez un compte en scannant ce QR code.</li>
+        <li>Saisissez le code à 6 chiffres affiché.</li>
+    </ol>
+
+    <img class="auth__qr" src="{{ qr_code }}" alt="QR code à scanner avec l'application d'authentification" width="240" height="240">
+
+    <details class="auth__aide">
+        <summary>Impossible de scanner ? Saisir la clé à la main</summary>
+        <p class="auth__secret">{{ secret }}</p>
+    </details>
+
+    {% if erreur %}
+        <div class="alerte alerte--erreur" role="alert" id="erreur-code">{{ erreur }}</div>
+    {% endif %}
+
+    <form method="post">
+        <div class="champ">
+            <label for="code">Code à 6 chiffres</label>
+            <input id="code" type="text" name="code" autocomplete="one-time-code"
+                   inputmode="numeric" pattern="[0-9 ]*" maxlength="7" required
+                   {% if erreur %}aria-describedby="erreur-code"{% endif %}>
+        </div>
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('admin_2fa_configurer') }}">
+        <button type="submit" class="bouton">Activer</button>
+    </form>
+
+    <a class="lien-secondaire" href="{{ path('app_logout') }}">Se déconnecter</a>
+{% endblock %}

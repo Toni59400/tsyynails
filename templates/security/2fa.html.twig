@@ -1,0 +1,32 @@
+{% extends 'layout/auth.html.twig' %}
+
+{% block title %}Vérification · Tsyynails{% endblock %}
+
+{% block contenu %}
+    <h1>Code de vérification</h1>
+    <p class="auth__aide">Ouvrez votre application d'authentification et saisissez le code à 6 chiffres affiché pour Tsyynails.</p>
+
+    {% if authenticationError %}
+        <div class="alerte alerte--erreur" role="alert" id="erreur-2fa">
+            {{ authenticationError|trans(authenticationErrorData, 'SchebTwoFactorBundle') }}
+        </div>
+    {% endif %}
+
+    <form method="post" action="{{ checkPathUrl ? checkPathUrl : path(checkPathRoute) }}">
+        <div class="champ">
+            <label for="_auth_code">Code</label>
+            <input id="_auth_code" type="text" name="{{ authCodeParameterName }}"
+                   autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]*" maxlength="6"
+                   required autofocus
+                   {% if authenticationError %}aria-describedby="erreur-2fa"{% endif %}>
+        </div>
+
+        {% if isCsrfProtectionEnabled %}
+            <input type="hidden" name="{{ csrfParameterName }}" value="{{ csrf_token(csrfTokenId) }}">
+        {% endif %}
+
+        <button type="submit" class="bouton">Valider</button>
+    </form>
+
+    <a class="lien-secondaire" href="{{ logoutPath }}">Annuler et se déconnecter</a>
+{% endblock %}

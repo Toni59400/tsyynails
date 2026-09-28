@@ -109,6 +109,11 @@ class Client
         return $this->prenom.' '.$this->nom;
     }
 
+    public function __toString(): string
+    {
+        return $this->getNomComplet();
+    }
+
     public function getTelephone(): ?string
     {
         return $this->telephone;

@@ -19,6 +19,14 @@ php bin/console doctrine:migrations:migrate
 symfony serve -d
 ```
 
+## Compte administrateur
+
+```bash
+php bin/console app:admin:creer adresse@example.com   # le mot de passe est demandé (saisie masquée)
+```
+
+Se connecter ensuite sur `/connexion`. À la première connexion, l'admin doit activer la double authentification en scannant un QR code avec une application (Google Authenticator, Microsoft Authenticator…). Le code est ensuite demandé à chaque connexion.
+
 ## Qualité
 
 ```bash

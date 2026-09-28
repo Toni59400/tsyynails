@@ -3,3 +3,12 @@ scheb_two_factor:
     security_tokens:
         - Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken
         - Symfony\Component\Security\Http\Authenticator\Token\PostAuthenticationToken
+
+    totp:
+        enabled: true
+        server_name: Tsyynails
+        issuer: Tsyynails
+        # Tolère un décalage d'horloge de 15 s entre le téléphone et le serveur
+        # (doit rester inférieur à la période de 30 s d'un code)
+        leeway: 15
+        template: security/2fa.html.twig

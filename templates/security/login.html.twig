@@ -1,0 +1,31 @@
+{% extends 'layout/auth.html.twig' %}
+
+{% block title %}Connexion · Tsyynails{% endblock %}
+
+{% block contenu %}
+    <h1>Connexion</h1>
+
+    {% if erreur %}
+        <div class="alerte alerte--erreur" role="alert" id="erreur-connexion">
+            {{ erreur.messageKey|trans(erreur.messageData, 'security') }}
+        </div>
+    {% endif %}
+
+    <form method="post" action="{{ path('app_login') }}">
+        <div class="champ">
+            <label for="email">Adresse email</label>
+            <input type="email" id="email" name="email" value="{{ dernier_email }}"
+                   autocomplete="email" required autofocus
+                   {% if erreur %}aria-describedby="erreur-connexion"{% endif %}>
+        </div>
+
+        <div class="champ">
+            <label for="password">Mot de passe</label>
+            <input type="password" id="password" name="password" autocomplete="current-password" required>
+        </div>
+
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+        <button type="submit" class="bouton">Se connecter</button>
+    </form>
+{% endblock %}

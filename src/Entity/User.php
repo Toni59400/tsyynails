@@ -7,6 +7,9 @@ namespace App\Entity;
 use App\Repository\UserRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Scheb\TwoFactorBundle\Model\Totp\TotpConfiguration;
+use Scheb\TwoFactorBundle\Model\Totp\TotpConfigurationInterface;
+use Scheb\TwoFactorBundle\Model\Totp\TwoFactorInterface;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -15,7 +18,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
 #[UniqueEntity(fields: ['email'], message: 'Un compte existe déjà avec cette adresse email.')]
-class User implements UserInterface, PasswordAuthenticatedUserInterface
+class User implements UserInterface, PasswordAuthenticatedUserInterface, TwoFactorInterface
 {
     public const ROLE_CLIENT = 'ROLE_CLIENT';
     public const ROLE_ADMIN = 'ROLE_ADMIN';
@@ -40,6 +43,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column]
     private \DateTimeImmutable $createdAt;
+
+    /** Secret TOTP (base32) de l'application d'authentification. */
+    #[ORM\Column(length: 64, nullable: true)]
+    private ?string $totpSecret = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $totpActiveAt = null;
 
     public function __construct(string $email)
     {
@@ -115,6 +125,41 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->createdAt;
     }
 
+    public static function configurationTotp(string $secret): TotpConfiguration
+    {
+        return new TotpConfiguration($secret, TotpConfiguration::ALGORITHM_SHA1, 30, 6);
+    }
+
+    public function isTotpAuthenticationEnabled(): bool
+    {
+        return null !== $this->totpSecret && null !== $this->totpActiveAt;
+    }
+
+    public function getTotpAuthenticationUsername(): string
+    {
+        return $this->email;
+    }
+
+    public function getTotpAuthenticationConfiguration(): ?TotpConfigurationInterface
+    {
+        return null === $this->totpSecret ? null : self::configurationTotp($this->totpSecret);
+    }
+
+    /**
+     * Le secret n'est enregistré qu'après vérification d'un premier code.
+     */
+    public function activerTotp(string $secret, \DateTimeImmutable $at): void
+    {
+        $this->totpSecret = $secret;
+        $this->totpActiveAt = $at;
+    }
+
+    public function desactiverTotp(): void
+    {
+        $this->totpSecret = null;
+        $this->totpActiveAt = null;
+    }
+
     /**
      * Évite de stocker le vrai hash dans la session (Symfony 7.3+).
      *
@@ -131,5 +176,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[\Deprecated]
     public function eraseCredentials(): void
     {
+        // Aucun mot de passe en clair n'est stocké sur l'entité.
     }
 }

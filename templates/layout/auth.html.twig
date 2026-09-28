@@ -1,0 +1,17 @@
+{% extends 'base.html.twig' %}
+
+{% block meta %}
+    <meta name="robots" content="noindex">
+{% endblock %}
+
+{% block body %}
+    <main class="auth">
+        <div class="auth__carte">
+            <p class="auth__marque">Tsyynails</p>
+            {% for message in app.flashes('success') %}
+                <div class="alerte alerte--succes" role="status">{{ message }}</div>
+            {% endfor %}
+            {% block contenu %}{% endblock %}
+        </div>
+    </main>
+{% endblock %}
