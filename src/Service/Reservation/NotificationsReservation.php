@@ -26,6 +26,8 @@ final class NotificationsReservation
         private readonly MailerInterface $mailer,
         private readonly LoggerInterface $logger,
         #[Autowire('%app.salon%')] private readonly array $salon,
+        /** Adresse du domaine du site : un envoi « de la part » d'une adresse Gmail finirait en spam. */
+        #[Autowire(env: 'MAILER_EXPEDITEUR')] private readonly string $expediteur,
     ) {
     }
 
@@ -84,7 +86,10 @@ final class NotificationsReservation
 
     private function envoyer(TemplatedEmail $email, Reservation $reservation, string $type): void
     {
-        $email->from(new Address((string) $this->salon['email'], (string) $this->salon['nom']));
+        $email
+            ->from(new Address($this->expediteur, (string) $this->salon['nom']))
+            // Les réponses des clientes arrivent dans la boîte de la prothésiste.
+            ->replyTo((string) $this->salon['email']);
 
         try {
             $this->mailer->send($email);
