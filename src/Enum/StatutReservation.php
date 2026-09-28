@@ -6,6 +6,9 @@ namespace App\Enum;
 
 enum StatutReservation: string
 {
+    /** Créneau bloqué pendant que la cliente saisit sa carte ; expire au bout de 30 minutes sans empreinte. */
+    case PAIEMENT_EN_COURS = 'paiement_en_cours';
+    /** Empreinte autorisée : la demande attend la décision de la prothésiste. */
     case EN_ATTENTE = 'en_attente';
     case CONFIRMEE = 'confirmee';
     case REFUSEE = 'refusee';
@@ -25,6 +28,7 @@ enum StatutReservation: string
     public function transitionsPossibles(): array
     {
         return match ($this) {
+            self::PAIEMENT_EN_COURS => [self::EN_ATTENTE, self::EXPIREE, self::ANNULEE],
             self::EN_ATTENTE => [self::CONFIRMEE, self::REFUSEE, self::EXPIREE, self::ANNULEE],
             self::CONFIRMEE => [self::ANNULEE, self::HONOREE, self::NON_HONOREE],
             self::REFUSEE, self::EXPIREE, self::ANNULEE, self::HONOREE, self::NON_HONOREE => [],
@@ -38,12 +42,13 @@ enum StatutReservation: string
      */
     public static function bloquantLeCreneau(): array
     {
-        return [self::EN_ATTENTE, self::CONFIRMEE];
+        return [self::PAIEMENT_EN_COURS, self::EN_ATTENTE, self::CONFIRMEE];
     }
 
     public function libelle(): string
     {
         return match ($this) {
+            self::PAIEMENT_EN_COURS => 'Paiement en cours',
             self::EN_ATTENTE => 'En attente de validation',
             self::CONFIRMEE => 'Confirmée',
             self::REFUSEE => 'Refusée',

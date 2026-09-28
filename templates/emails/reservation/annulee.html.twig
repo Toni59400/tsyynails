@@ -1,0 +1,7 @@
+{% extends 'emails/_base.html.twig' %}
+{% block contenu %}
+    <p>Bonjour {{ reservation.client.prenom }},</p>
+    <p>Votre rendez-vous ci-dessous est annulé. Pour toute question sur l'acompte, répondez simplement à cet email
+        ou appelez-moi au {{ salon.telephone|telephone }}.</p>
+    {{ include('emails/reservation/_recap.html.twig') }}
+{% endblock %}

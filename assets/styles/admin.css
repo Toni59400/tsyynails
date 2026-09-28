@@ -983,3 +983,19 @@ a.tdb-tuile:hover {
         display: block;
     }
 }
+
+/* Fiche réservation : actions selon le statut */
+.actions-reservation__boutons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.actions-reservation__boutons .btn {
+    min-height: 48px;
+}
+
+.liste-rdv__statut--paiement_en_cours {
+    --statut: var(--adm-texte-doux);
+    --statut-fond: var(--adm-fermeture-fond);
+}

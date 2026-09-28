@@ -1,0 +1,10 @@
+{% extends 'emails/_base.html.twig' %}
+{% block contenu %}
+    <p>Bonjour {{ reservation.client.prenom }},</p>
+    <p>Bonne nouvelle : votre rendez-vous est <strong>confirmé</strong>. L'acompte de {{ reservation.acompteCentimes|euros }}
+        a été débité et sera déduit du prix le jour J.</p>
+    {{ include('emails/reservation/_recap.html.twig') }}
+    <p>Reste à régler au salon : <strong>{{ reservation.resteAPayerCentimes|euros }}</strong>.</p>
+    {{ include('emails/reservation/_lien_suivi.html.twig') }}
+    <p>À très vite !</p>
+{% endblock %}

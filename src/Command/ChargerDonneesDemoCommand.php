@@ -445,6 +445,8 @@ final class ChargerDonneesDemoCommand extends Command
         $acompte = Tarification::calculerAcompte($prestation->getPrixCentimes() - $reduction, self::ACOMPTE_POURCENTAGE);
         $reservation = new Reservation($cliente, $prestation, $debut, $acompte, $reduction, $pointsUtilises);
         $this->antidater($reservation, $demandeeAt);
+        $reservation->changerStatut(StatutReservation::EN_ATTENTE, $demandeeAt);
+        $reservation->accepterConditions($demandeeAt);
         $this->entityManager->persist($reservation);
 
         if ($pointsUtilises > 0) {
@@ -456,7 +458,8 @@ final class ChargerDonneesDemoCommand extends Command
         $valideeAt = min($demandeeAt->modify('+'.mt_rand(1, 20).' hours'), $maintenant);
 
         match ($statut) {
-            StatutReservation::EN_ATTENTE => null,
+            // tirerStatut() ne renvoie jamais « paiement en cours » : la démo ne montre que des demandes abouties.
+            StatutReservation::PAIEMENT_EN_COURS, StatutReservation::EN_ATTENTE => null,
             StatutReservation::CONFIRMEE => $reservation->changerStatut(StatutReservation::CONFIRMEE, $valideeAt),
             StatutReservation::REFUSEE, StatutReservation::EXPIREE => $reservation->changerStatut($statut, $valideeAt),
             StatutReservation::ANNULEE => $reservation->changerStatut(StatutReservation::ANNULEE, $valideeAt),

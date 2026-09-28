@@ -1,0 +1,8 @@
+{% extends 'emails/_base.html.twig' %}
+{% block contenu %}
+    <p>Bonjour {{ reservation.client.prenom }},</p>
+    <p>Votre demande n'a pas pu être traitée à temps et a expiré. <strong>Aucun montant n'a été débité</strong> :
+        l'empreinte sur votre carte est libérée.</p>
+    {{ include('emails/reservation/_recap.html.twig') }}
+    <p style="margin:20px 0;"><a href="{{ url('app_reservation') }}" style="color:#7a4747;">Faire une nouvelle demande</a></p>
+{% endblock %}

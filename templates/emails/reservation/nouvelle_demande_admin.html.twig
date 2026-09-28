@@ -1,0 +1,11 @@
+{% extends 'emails/_base.html.twig' %}
+{% block contenu %}
+    <p>Nouvelle demande de rendez-vous, empreinte bancaire autorisée.</p>
+    {{ include('emails/reservation/_recap.html.twig') }}
+    <p>Cliente : <strong>{{ reservation.client.nomComplet }}</strong></p>
+    <p style="margin:20px 0;">
+        <a href="{{ url('admin_reservation_detail', {entityId: reservation.id}) }}"
+           style="display:inline-block;padding:12px 22px;border-radius:999px;background:#7a4747;color:#ffffff;text-decoration:none;font-weight:bold;">Valider ou refuser</a>
+    </p>
+    <p style="font-size:13px;color:#6f625e;">Sans réponse sous 7 jours, la demande est annulée automatiquement.</p>
+{% endblock %}

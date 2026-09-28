@@ -9,6 +9,15 @@ use PHPUnit\Framework\TestCase;
 
 final class StatutReservationTest extends TestCase
 {
+    public function testUnPaiementEnCoursDevientUneDemandeOuExpire(): void
+    {
+        $statut = StatutReservation::PAIEMENT_EN_COURS;
+
+        self::assertTrue($statut->peutPasserA(StatutReservation::EN_ATTENTE));
+        self::assertTrue($statut->peutPasserA(StatutReservation::EXPIREE));
+        self::assertFalse($statut->peutPasserA(StatutReservation::CONFIRMEE), 'Pas de validation sans empreinte.');
+    }
+
     public function testUneDemandeEnAttentePeutEtreValideeRefuseeExpireeOuAnnulee(): void
     {
         $statut = StatutReservation::EN_ATTENTE;
@@ -40,7 +49,7 @@ final class StatutReservationTest extends TestCase
     public function testSeulesLesDemandesEnCoursBloquentLeCreneau(): void
     {
         self::assertSame(
-            [StatutReservation::EN_ATTENTE, StatutReservation::CONFIRMEE],
+            [StatutReservation::PAIEMENT_EN_COURS, StatutReservation::EN_ATTENTE, StatutReservation::CONFIRMEE],
             StatutReservation::bloquantLeCreneau(),
         );
     }

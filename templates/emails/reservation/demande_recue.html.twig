@@ -1,0 +1,9 @@
+{% extends 'emails/_base.html.twig' %}
+{% block contenu %}
+    <p>Bonjour {{ reservation.client.prenom }},</p>
+    <p>J'ai bien reçu votre demande de rendez-vous. Un acompte de <strong>{{ reservation.acompteCentimes|euros }}</strong>
+        est bloqué sur votre carte, mais <strong>rien n'est débité</strong> tant que je n'ai pas validé.</p>
+    {{ include('emails/reservation/_recap.html.twig') }}
+    <p>Je vous réponds au plus vite, en général sous 24 heures.</p>
+    {{ include('emails/reservation/_lien_suivi.html.twig') }}
+{% endblock %}

@@ -1,6 +1,6 @@
 {% extends 'layout/public.html.twig' %}
 
-{% block title %}Récapitulatif · {{ salon.nom }}{% endblock %}
+{% block title %}Vos coordonnées · {{ salon.nom }}{% endblock %}
 
 {% block meta %}
     {{ parent() }}
@@ -12,22 +12,41 @@
         {{ include('reservation/_etapes.html.twig', {etape: 3}) }}
         <h1>Votre rendez-vous</h1>
 
-        <dl class="recap">
-            <div><dt>Prestation</dt><dd>{{ prestation.nom }}</dd></div>
-            <div><dt>Date</dt><dd>{{ debut|date_fr('EEEE d MMMM yyyy')|capitalize }}</dd></div>
-            <div><dt>Horaire</dt><dd>{{ debut|heure }} – {{ fin|heure }}</dd></div>
-            <div><dt>Prix</dt><dd>{{ prestation.prixCentimes|euros }}</dd></div>
-            <div><dt>Acompte</dt><dd>{{ acompte|euros }}, déduit du prix</dd></div>
-            <div><dt>Reste à régler au salon</dt><dd>{{ (prestation.prixCentimes - acompte)|euros }}</dd></div>
-        </dl>
+        <div class="tunnel-colonnes">
+            <div>
+                {{ include('reservation/_recap.html.twig', {prix: prestation.prixCentimes}) }}
+                <p><a href="{{ path('app_reservation_creneau', {id: prestation.id, jour: debut|date('Y-m-d')}) }}">Changer de créneau</a></p>
+            </div>
 
-        <div class="alerte alerte--info" role="note">
-            La demande en ligne avec acompte sera bientôt disponible.
-            En attendant, <a href="{{ path('app_infos') }}#contact">appelez-moi ou écrivez-moi</a> pour bloquer ce créneau.
+            {{ form_start(formulaire, {attr: {class: 'formulaire', novalidate: 'novalidate'}}) }}
+                <h2 class="formulaire__titre">Vos coordonnées</h2>
+                {% if not formulaire.vars.valid %}
+                    <div class="alerte alerte--erreur" role="alert">Vérifiez les champs signalés ci-dessous.</div>
+                {% endif %}
+
+                {% for champ in [formulaire.prenom, formulaire.nom, formulaire.telephone, formulaire.email] %}
+                    <div class="champ{{ champ.vars.valid ? '' : ' champ--erreur' }}">
+                        {{ form_label(champ) }}
+                        {{ form_widget(champ) }}
+                        {{ form_help(champ) }}
+                        {{ form_errors(champ) }}
+                    </div>
+                {% endfor %}
+
+                <div class="champ champ--case{{ formulaire.accepteConditions.vars.valid ? '' : ' champ--erreur' }}">
+                    {{ form_widget(formulaire.accepteConditions) }}
+                    {{ form_label(formulaire.accepteConditions) }}
+                    {{ form_errors(formulaire.accepteConditions) }}
+                    <p class="champ__aide"><a href="{{ path('app_conditions') }}" target="_blank" rel="noopener">Lire les conditions de réservation</a> (nouvel onglet)</p>
+                </div>
+
+                <p class="formulaire__note">
+                    Vos coordonnées servent uniquement à gérer votre rendez-vous.
+                    <a href="{{ path('app_confidentialite') }}">Politique de confidentialité</a>.
+                </p>
+
+                <button type="submit" class="bouton">Continuer vers l'acompte</button>
+            {{ form_end(formulaire) }}
         </div>
-
-        <p class="page__actions">
-            <a class="bouton bouton--secondaire" href="{{ path('app_reservation_creneau', {id: prestation.id, jour: debut|date('Y-m-d')}) }}">Changer de créneau</a>
-        </p>
     </div>
 {% endblock %}

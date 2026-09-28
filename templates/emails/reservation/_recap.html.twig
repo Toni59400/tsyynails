@@ -1,0 +1,7 @@
+<table role="presentation" cellspacing="0" cellpadding="0" style="width:100%;margin:16px 0;border-collapse:collapse;font-size:15px;">
+    <tr><td style="padding:6px 0;color:#6f625e;">Prestation</td><td style="padding:6px 0;text-align:right;"><strong>{{ reservation.prestation.nom }}</strong></td></tr>
+    <tr><td style="padding:6px 0;color:#6f625e;">Date</td><td style="padding:6px 0;text-align:right;">{{ reservation.debut|date_fr('EEEE d MMMM yyyy')|capitalize }}</td></tr>
+    <tr><td style="padding:6px 0;color:#6f625e;">Horaire</td><td style="padding:6px 0;text-align:right;">{{ reservation.debut|heure }} – {{ reservation.fin|heure }}</td></tr>
+    <tr><td style="padding:6px 0;color:#6f625e;">Prix</td><td style="padding:6px 0;text-align:right;">{{ reservation.prixCentimes|euros }}</td></tr>
+    <tr><td style="padding:6px 0;color:#6f625e;">Acompte</td><td style="padding:6px 0;text-align:right;">{{ reservation.acompteCentimes|euros }}</td></tr>
+</table>

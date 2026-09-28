@@ -39,6 +39,11 @@ services:
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
 
+    # Stripe, ou simulation en développement sans clés (voir FabriquePaiementGateway)
+    App\Service\Paiement\PaiementGateway:
+        factory: ['@App\Service\Paiement\FabriquePaiementGateway', 'creer']
+        lazy: true
+
 when@test:
     parameters:
         app.dossier_galerie: '%kernel.project_dir%/var/test/galerie'

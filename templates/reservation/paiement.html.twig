@@ -1,0 +1,55 @@
+{% extends 'layout/public.html.twig' %}
+
+{% block title %}Acompte · {{ salon.nom }}{% endblock %}
+
+{% block meta %}
+    {{ parent() }}
+    <meta name="robots" content="noindex">
+{% endblock %}
+
+{% block contenu %}
+    <div class="conteneur page">
+        {{ include('reservation/_etapes.html.twig', {etape: 4}) }}
+        <h1>Acompte de {{ reservation.acompteCentimes|euros }}</h1>
+
+        <div class="tunnel-colonnes">
+            {{ include('reservation/_recap.html.twig', {
+                prestation: reservation.prestation, debut: reservation.debut, fin: reservation.fin,
+                prix: reservation.prixCentimes, acompte: reservation.acompteCentimes,
+            }) }}
+
+            <div class="formulaire">
+                <p class="alerte alerte--info">
+                    Le montant est <strong>bloqué</strong> sur votre carte, pas débité.
+                    Il n'est prélevé que si je valide votre rendez-vous ; sinon il est libéré.
+                    Le créneau vous est réservé pendant 30 minutes.
+                </p>
+
+                {% if simulation %}
+                    <div class="alerte alerte--erreur" role="note">
+                        <strong>Mode simulation</strong> (développement, aucune clé Stripe) : aucune carte n'est demandée.
+                    </div>
+                    <form method="post" action="{{ path('app_reservation_simuler', {jeton: reservation.jetonSuivi}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('simuler_' ~ reservation.jetonSuivi) }}">
+                        <button type="submit" class="bouton">Simuler l'empreinte bancaire</button>
+                    </form>
+                {% else %}
+                    <form data-controller="stripe-payment"
+                          data-stripe-payment-cle-publique-value="{{ cle_publique }}"
+                          data-stripe-payment-secret-client-value="{{ secret_client }}"
+                          data-stripe-payment-url-retour-value="{{ url('app_reservation_suivi', {jeton: reservation.jetonSuivi}) }}"
+                          data-action="stripe-payment#payer">
+                        <div data-stripe-payment-target="element" class="paiement__element">
+                            <p class="champ__aide">Chargement du formulaire de paiement sécurisé…</p>
+                        </div>
+                        <div data-stripe-payment-target="erreur" class="alerte alerte--erreur" role="alert" hidden></div>
+                        <button type="submit" class="bouton" data-stripe-payment-target="bouton" disabled>
+                            Bloquer {{ reservation.acompteCentimes|euros }}
+                        </button>
+                        <p class="formulaire__note">Paiement sécurisé par Stripe : vos données de carte ne transitent jamais par ce site.</p>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

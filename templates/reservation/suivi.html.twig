@@ -1,0 +1,48 @@
+{% extends 'layout/public.html.twig' %}
+
+{% block title %}Votre réservation · {{ salon.nom }}{% endblock %}
+
+{% block meta %}
+    {{ parent() }}
+    <meta name="robots" content="noindex">
+{% endblock %}
+
+{% block contenu %}
+    {% set statut = reservation.statut.value %}
+    <div class="conteneur page">
+        <h1>
+            {%- if statut == 'paiement_en_cours' -%}Paiement non finalisé
+            {%- elseif statut == 'en_attente' -%}Demande envoyée
+            {%- elseif statut == 'confirmee' -%}Rendez-vous confirmé
+            {%- elseif statut == 'honoree' -%}Merci de votre visite
+            {%- else -%}Réservation {{ reservation.statut.libelle|lower }}{%- endif -%}
+        </h1>
+
+        <div class="tunnel-colonnes">
+            <div>
+                {% if statut == 'paiement_en_cours' %}
+                    <p>L'empreinte bancaire n'a pas encore été confirmée.</p>
+                    <p><a class="bouton" href="{{ path('app_reservation_paiement', {jeton: reservation.jetonSuivi}) }}">Reprendre le paiement</a></p>
+                {% elseif statut == 'en_attente' %}
+                    <p class="alerte alerte--succes" role="status">
+                        Merci {{ reservation.client.prenom }} ! Votre demande est bien reçue et l'acompte est bloqué sur votre carte, sans être débité.
+                    </p>
+                    <p>Je vous réponds par email au plus vite, en général sous 24 heures.</p>
+                {% elseif statut == 'confirmee' %}
+                    <p class="alerte alerte--succes" role="status">À très vite, {{ reservation.client.prenom }} !</p>
+                    <p>Reste à régler au salon : <strong>{{ reservation.resteAPayerCentimes|euros }}</strong>.</p>
+                {% elseif statut in ['refusee', 'expiree'] %}
+                    <p>Aucun montant n'a été débité : l'empreinte sur votre carte est libérée.</p>
+                    <p><a class="bouton" href="{{ path('app_reservation') }}">Choisir un autre créneau</a></p>
+                {% elseif statut == 'annulee' %}
+                    <p>Pour toute question, <a href="{{ path('app_infos') }}#contact">contactez-moi</a>.</p>
+                {% endif %}
+            </div>
+
+            {{ include('reservation/_recap.html.twig', {
+                prestation: reservation.prestation, debut: reservation.debut, fin: reservation.fin,
+                prix: reservation.prixCentimes, acompte: reservation.acompteCentimes,
+            }) }}
+        </div>
+    </div>
+{% endblock %}

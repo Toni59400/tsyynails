@@ -190,17 +190,17 @@ class ReservationRepository extends ServiceEntityRepository
     }
 
     /**
-     * Demandes toujours en attente créées avant la date donnée (empreinte Stripe bientôt expirée).
+     * Réservations d'un statut créées avant la date donnée (paiements abandonnés, demandes sans réponse).
      *
      * @return list<Reservation>
      */
-    public function findEnAttenteCreeesAvant(\DateTimeImmutable $limite): array
+    public function findParStatutCreeesAvant(StatutReservation $statut, \DateTimeImmutable $limite): array
     {
         /** @var list<Reservation> */
         return $this->createQueryBuilder('r')
             ->andWhere('r.statut = :statut')
             ->andWhere('r.createdAt < :limite')
-            ->setParameter('statut', StatutReservation::EN_ATTENTE)
+            ->setParameter('statut', $statut)
             ->setParameter('limite', $limite)
             ->getQuery()
             ->getResult();

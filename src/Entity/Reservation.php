@@ -15,6 +15,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: ReservationRepository::class)]
 #[ORM\Index(name: 'idx_reservation_debut', fields: ['debut'])]
 #[ORM\Index(name: 'idx_reservation_statut', fields: ['statut'])]
+#[ORM\Index(name: 'idx_reservation_created', fields: ['createdAt'])]
 class Reservation
 {
     #[ORM\Id]
@@ -37,7 +38,7 @@ class Reservation
     private \DateTimeImmutable $fin;
 
     #[ORM\Column(length: 20, enumType: StatutReservation::class)]
-    private StatutReservation $statut = StatutReservation::EN_ATTENTE;
+    private StatutReservation $statut = StatutReservation::PAIEMENT_EN_COURS;
 
     #[ORM\Column]
     private int $prixCentimes;
@@ -62,6 +63,17 @@ class Reservation
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $decisionAt = null;
 
+    /**
+     * Jeton aléatoire (128 bits) de la page de suivi envoyée à la cliente, qui n'a pas forcément de compte.
+     * Ne contient aucune donnée personnelle.
+     */
+    #[ORM\Column(length: 32, unique: true)]
+    private string $jetonSuivi;
+
+    /** Acceptation des conditions de réservation (acompte, annulation) au moment de la demande. */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $conditionsAccepteesAt = null;
+
     public function __construct(
         Client $client,
         Prestation $prestation,
@@ -83,6 +95,7 @@ class Reservation
         $this->reductionCentimes = $reductionCentimes;
         $this->pointsUtilises = $pointsUtilises;
         $this->createdAt = new \DateTimeImmutable();
+        $this->jetonSuivi = rtrim(strtr(base64_encode(random_bytes(16)), '+/', '-_'), '=');
     }
 
     public function getId(): ?int
@@ -126,7 +139,10 @@ class Reservation
         }
 
         $this->statut = $nouveau;
-        $this->decisionAt = $at;
+        // L'autorisation de l'empreinte n'est pas une décision de la prothésiste.
+        if (StatutReservation::EN_ATTENTE !== $nouveau) {
+            $this->decisionAt = $at;
+        }
     }
 
     public function getPrixCentimes(): int
@@ -174,5 +190,22 @@ class Reservation
     public function getDecisionAt(): ?\DateTimeImmutable
     {
         return $this->decisionAt;
+    }
+
+    public function getJetonSuivi(): string
+    {
+        return $this->jetonSuivi;
+    }
+
+    public function getConditionsAccepteesAt(): ?\DateTimeImmutable
+    {
+        return $this->conditionsAccepteesAt;
+    }
+
+    public function accepterConditions(\DateTimeImmutable $at): static
+    {
+        $this->conditionsAccepteesAt = $at;
+
+        return $this;
     }
 }

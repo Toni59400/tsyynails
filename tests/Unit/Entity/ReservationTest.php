@@ -21,7 +21,16 @@ final class ReservationTest extends TestCase
 
         self::assertEquals(new \DateTimeImmutable('2026-10-05 11:30'), $reservation->getFin());
         self::assertSame(4500, $reservation->getPrixCentimes());
-        self::assertSame(StatutReservation::EN_ATTENTE, $reservation->getStatut());
+        self::assertSame(StatutReservation::PAIEMENT_EN_COURS, $reservation->getStatut());
+    }
+
+    public function testChaqueReservationAUnJetonDeSuiviAleatoire(): void
+    {
+        $a = $this->reservation(new Prestation('Pose gel', 4500, 90));
+        $b = $this->reservation(new Prestation('Pose gel', 4500, 90));
+
+        self::assertMatchesRegularExpression('/^[A-Za-z0-9_-]{22}$/', $a->getJetonSuivi());
+        self::assertNotSame($a->getJetonSuivi(), $b->getJetonSuivi());
     }
 
     public function testLeResteAPayerDeduitReductionEtAcompte(): void
@@ -51,6 +60,9 @@ final class ReservationTest extends TestCase
     {
         $reservation = $this->reservation(new Prestation('Pose gel', 4500, 90));
         $maintenant = new \DateTimeImmutable('2026-10-01 09:00');
+
+        $reservation->changerStatut(StatutReservation::EN_ATTENTE, new \DateTimeImmutable('2026-09-30 18:00'));
+        self::assertNull($reservation->getDecisionAt(), 'L\'empreinte autorisée n\'est pas une décision.');
 
         $reservation->changerStatut(StatutReservation::CONFIRMEE, $maintenant);
 

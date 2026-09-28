@@ -1,0 +1,8 @@
+<dl class="recap">
+    <div><dt>Prestation</dt><dd>{{ prestation.nom }}</dd></div>
+    <div><dt>Date</dt><dd>{{ debut|date_fr('EEEE d MMMM yyyy')|capitalize }}</dd></div>
+    <div><dt>Horaire</dt><dd>{{ debut|heure }} – {{ fin|heure }}</dd></div>
+    <div><dt>Prix</dt><dd>{{ prix|euros }}</dd></div>
+    <div><dt>Acompte</dt><dd>{{ acompte|euros }}, déduit du prix</dd></div>
+    <div><dt>Reste à régler au salon</dt><dd>{{ (prix - acompte)|euros }}</dd></div>
+</dl>

@@ -1,0 +1,22 @@
+framework:
+    rate_limiter:
+        # Une demande bloque un créneau : on limite les demandes par adresse IP
+        # pour qu'un robot ne puisse pas remplir l'agenda.
+        demande_reservation:
+            policy: sliding_window
+            limit: 5
+            interval: '1 hour'
+
+when@test:
+    framework:
+        rate_limiter:
+            demande_reservation:
+                policy: sliding_window
+                limit: 5
+                interval: '1 hour'
+                # Compteur en mémoire : chaque test repart de zéro.
+                cache_pool: cache.limiteur_test
+        cache:
+            pools:
+                cache.limiteur_test:
+                    adapter: cache.adapter.array

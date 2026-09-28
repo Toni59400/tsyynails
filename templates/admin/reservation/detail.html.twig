@@ -1,0 +1,46 @@
+{% extends '@EasyAdmin/crud/detail.html.twig' %}
+
+{% set reservation = entity.instance %}
+
+{# Libellé, style du bouton, confirmation demandée avant l'envoi. #}
+{% set boutons = {
+    'valider': ['Valider et débiter l\'acompte', 'btn-success', 'Confirmer ce rendez-vous ? L\'acompte sera débité.'],
+    'refuser': ['Refuser', 'btn-danger', 'Refuser cette demande ? L\'empreinte sera libérée.'],
+    'annuler': ['Annuler la réservation', 'btn-outline-danger', 'Annuler cette réservation ? La cliente sera prévenue par email.'],
+    'honorer': ['Cliente venue', 'btn-success', ''],
+    'non-honorer': ['Cliente absente', 'btn-outline-danger', 'Enregistrer une absence ?'],
+} %}
+
+{% block main %}
+    <div class="fiche-cliente">
+        {% if actions_workflow is not empty %}
+            <section class="tdb-carte actions-reservation" aria-labelledby="titre-actions">
+                <h2 id="titre-actions" class="tdb-carte__titre">
+                    {{ reservation.statut.libelle }}
+                    {% if reservation.statut.value == 'en_attente' %}
+                        <span class="tdb-aide">· demandée le {{ reservation.createdAt|date('d/m/Y à H:i') }}, sans réponse elle expire 7 jours après.</span>
+                    {% endif %}
+                </h2>
+                <div class="actions-reservation__boutons">
+                    {% for action in actions_workflow %}
+                        {% set bouton = boutons[action] %}
+                        <form method="post" action="{{ path('admin_reservation_workflow', {entityId: reservation.id, action: action}) }}"
+                              {% if bouton[2] %}data-confirmation="{{ bouton[2] }}"{% endif %}>
+                            <input type="hidden" name="_token" value="{{ csrf_token('reservation_' ~ action ~ '_' ~ reservation.id) }}">
+                            <button type="submit" class="btn {{ bouton[1] }} btn-lg">{{ bouton[0] }}</button>
+                        </form>
+                    {% endfor %}
+                </div>
+                {% if 'annuler' in actions_workflow and reservation.statut.value == 'confirmee' %}
+                    <p class="tdb-aide">L'acompte déjà débité n'est pas remboursé automatiquement : si besoin, remboursez-le depuis le tableau de bord Stripe.</p>
+                {% endif %}
+            </section>
+        {% endif %}
+
+        <section class="tdb-carte">
+            {{ parent() }}
+        </section>
+
+        <p><a href="{{ path('admin_client_detail', {entityId: reservation.client.id}) }}">Voir la fiche de {{ reservation.client.nomComplet }}</a></p>
+    </div>
+{% endblock %}
