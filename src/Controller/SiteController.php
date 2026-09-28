@@ -10,6 +10,7 @@ use App\Repository\InspirationRepository;
 use App\Repository\ParametreRepository;
 use App\Repository\PhotoRepository;
 use App\Repository\PrestationRepository;
+use App\Repository\QuestionFrequenteRepository;
 use App\Repository\RecompenseFideliteRepository;
 use App\Service\Reservation\Tarification;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -29,6 +30,7 @@ final class SiteController extends AbstractController
         private readonly Tarification $tarification,
         private readonly RecompenseFideliteRepository $recompenses,
         private readonly ParametreRepository $parametres,
+        private readonly QuestionFrequenteRepository $questions,
     ) {
     }
 
@@ -52,30 +54,61 @@ final class SiteController extends AbstractController
         ]);
     }
 
+    /** Page d'une prestation : texte détaillé, prix, durée, réalisations, réservation. */
+    #[Route('/prestations/{slug<[a-z0-9-]+>}', name: 'app_prestation', methods: ['GET'])]
+    public function prestation(string $slug): Response
+    {
+        $prestation = $this->prestations->findActiveParSlug($slug) ?? throw $this->createNotFoundException();
+
+        return $this->render('site/prestation.html.twig', [
+            'prestation' => $prestation,
+            'photos' => $this->photos->findPubliees(12, null, $prestation),
+            'autres' => array_values(array_filter($this->prestations->findActives(), static fn (Prestation $p): bool => $p !== $prestation)),
+            'acompte_pourcentage' => $this->tarification->acomptePourcentage(),
+        ]);
+    }
+
     /**
-     * Filtres facultatifs : ?theme=<slug d'un thème d'inspiration> ou ?prestation=<id>.
-     * Un filtre inconnu est ignoré (toutes les photos s'affichent).
+     * Galerie complète. Les anciens filtres (?theme=, ?prestation=) redirigent définitivement
+     * vers les pages dédiées, qui seules sont indexées.
      */
     #[Route('/galerie', name: 'app_galerie', methods: ['GET'])]
     public function galerie(Request $request): Response
     {
         $theme = $this->inspirations->findPublieeParSlug($request->query->getString('theme'));
+        if (null !== $theme) {
+            return $this->redirectToRoute('app_galerie_theme', ['slug' => $theme->getSlug()], Response::HTTP_MOVED_PERMANENTLY);
+        }
 
-        $prestation = null;
         $idPrestation = (int) filter_var($request->query->getString('prestation'), \FILTER_VALIDATE_INT, ['options' => ['default' => 0]]);
-        if (null === $theme && $idPrestation > 0) {
-            $prestation = $this->prestations->find($idPrestation);
-            if (!$prestation instanceof Prestation || !$prestation->isActive()) {
-                $prestation = null;
-            }
+        $prestation = $idPrestation > 0 ? $this->prestations->find($idPrestation) : null;
+        if ($prestation instanceof Prestation && $prestation->isActive()) {
+            return $this->redirect($this->generateUrl('app_prestation', ['slug' => $prestation->getSlug()]).'#realisations', Response::HTTP_MOVED_PERMANENTLY);
         }
 
         return $this->render('site/galerie.html.twig', [
-            'photos' => $this->photos->findPubliees(null, $theme, $prestation),
+            'photos' => $this->photos->findPubliees(),
+            'inspirations' => $this->inspirations->findPublieesAvecPhotos(),
+            'theme' => null,
+        ]);
+    }
+
+    #[Route('/galerie/{slug<[a-z0-9-]+>}', name: 'app_galerie_theme', methods: ['GET'])]
+    public function galerieTheme(string $slug): Response
+    {
+        $theme = $this->inspirations->findPublieeParSlug($slug) ?? throw $this->createNotFoundException();
+
+        return $this->render('site/galerie.html.twig', [
+            'photos' => $this->photos->findPubliees(null, $theme),
             'inspirations' => $this->inspirations->findPublieesAvecPhotos(),
             'theme' => $theme,
-            'prestation' => $prestation,
         ]);
+    }
+
+    #[Route('/questions-frequentes', name: 'app_faq', methods: ['GET'])]
+    public function faq(): Response
+    {
+        return $this->render('site/faq.html.twig', ['questions' => $this->questions->findPubliees()]);
     }
 
     #[Route('/infos-pratiques', name: 'app_infos', methods: ['GET'])]

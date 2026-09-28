@@ -40,7 +40,11 @@ final class PrestationCrudController extends AbstractCrudController
     public function configureFields(string $pageName): iterable
     {
         yield TextField::new('nom');
-        yield TextareaField::new('description')->hideOnIndex();
+        yield TextareaField::new('description', 'Résumé')->hideOnIndex()
+            ->setHelp('Une ou deux phrases, affichées sur les cartes et reprises par Google.');
+        yield TextareaField::new('contenu', 'Texte détaillé')->hideOnIndex()->setNumOfRows(10)
+            ->setHelp('Page de la prestation : déroulé, tenue, entretien, pour qui, conseils (300 à 500 mots idéalement, avec les mots que vos clientes cherchent : « pose gel Arras »…).');
+        yield TextField::new('slug', 'Adresse de la page')->onlyOnDetail();
         yield MoneyField::new('prixCentimes', 'Prix')->setCurrency('EUR')->setStoredAsCents();
         yield IntegerField::new('dureeMinutes', 'Durée (min)')->setHelp('Multiple de 15 minutes.');
         yield IntegerField::new('ordre', 'Ordre d\'affichage')->hideOnIndex();

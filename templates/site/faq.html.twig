@@ -1,0 +1,35 @@
+{% extends 'layout/public.html.twig' %}
+
+{% block title %}Questions fréquentes · {{ salon.activite }} à {{ salon.ville }} · {{ salon.nom }}{% endblock %}
+{% block description %}Réservation, acompte, tenue du gel, semi-permanent, allergies, fidélité : les réponses aux questions fréquentes sur {{ salon.nom }} à {{ salon.ville }}.{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {% if questions is not empty %}
+        <script type="application/ld+json" nonce="{{ csp_nonce('script') }}">{{ donnees_structurees_faq(questions) }}</script>
+    {% endif %}
+{% endblock %}
+
+{% block contenu %}
+    <div class="conteneur page page--texte">
+        <h1>Questions fréquentes</h1>
+
+        {% if questions is empty %}
+            <p>Une question ? <a href="{{ path('app_infos') }}#contact">Contactez-moi</a>.</p>
+        {% else %}
+            <div class="faq">
+                {% for q in questions %}
+                    <details class="faq__question"{% if loop.first %} open{% endif %}>
+                        <summary><h2>{{ q.question }}</h2></summary>
+                        <p>{{ q.reponse|nl2br }}</p>
+                    </details>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <p class="page__actions">
+            <a class="bouton" href="{{ path('app_reservation') }}">Réserver un rendez-vous</a>
+            <a class="bouton bouton--secondaire" href="{{ path('app_infos') }}#contact">Poser une autre question</a>
+        </p>
+    </div>
+{% endblock %}

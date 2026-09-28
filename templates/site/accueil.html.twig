@@ -61,7 +61,7 @@
                     {% for inspiration in inspirations %}
                         {% set couverture = inspiration.photos|filter(p => p.publiee)|first %}
                         <li>
-                            <a class="inspiration" href="{{ path('app_galerie', {theme: inspiration.slug}) }}">
+                            <a class="inspiration" href="{{ path('app_galerie_theme', {slug: inspiration.slug}) }}">
                                 {% if couverture %}
                                     <img src="{{ asset('uploads/galerie/' ~ couverture.fichier) }}" alt=""
                                          width="400" height="400" loading="lazy" decoding="async">

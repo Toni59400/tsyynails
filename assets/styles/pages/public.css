@@ -1096,3 +1096,112 @@ a.jour:hover {
     margin-top: calc(var(--space) * 3);
     text-align: center;
 }
+/* Fil d'Ariane */
+.fil-ariane ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(var(--space) / 2);
+    margin: 0 0 calc(var(--space) * 2);
+    padding: 0;
+    list-style: none;
+    color: var(--color-muted);
+    font-size: 0.9rem;
+}
+
+.fil-ariane li + li::before {
+    content: "›";
+    margin-right: calc(var(--space) / 2);
+}
+
+/* Page d'une prestation */
+.prestation-entete {
+    display: grid;
+    gap: calc(var(--space) * 4);
+    align-items: start;
+    margin-bottom: calc(var(--space) * 4);
+}
+
+@media (min-width: 56rem) {
+    .prestation-entete {
+        grid-template-columns: 1.2fr 1fr;
+    }
+}
+
+.prestation-entete__photo {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: calc(var(--radius) * 2);
+}
+
+.prestation-infos {
+    display: grid;
+    gap: var(--space);
+    margin: 0 0 calc(var(--space) * 2);
+    padding: 0;
+    list-style: none;
+}
+
+.prestation-infos li {
+    display: flex;
+    gap: calc(var(--space) * 2);
+    padding-bottom: var(--space);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.prestation-infos__libelle {
+    min-width: 6rem;
+    color: var(--color-muted);
+}
+
+.prestation-contenu {
+    margin-bottom: calc(var(--space) * 4);
+}
+
+.carte-prestation__nom a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.carte-prestation__nom a:hover {
+    color: var(--color-primary-ink);
+    text-decoration: underline;
+}
+
+.liste-liens {
+    padding-left: calc(var(--space) * 2.5);
+    line-height: 2;
+}
+
+/* FAQ */
+.faq {
+    display: grid;
+    gap: var(--space);
+}
+
+.faq__question {
+    padding: calc(var(--space) * 1.5) calc(var(--space) * 2);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+}
+
+.faq__question summary {
+    cursor: pointer;
+    list-style-position: outside;
+}
+
+.faq__question summary h2 {
+    display: inline;
+    margin: 0;
+    font-size: 1.15rem;
+}
+
+.faq__question[open] summary {
+    margin-bottom: var(--space);
+}
+
+.faq__question p {
+    margin: 0;
+}

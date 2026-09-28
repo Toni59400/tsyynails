@@ -1,6 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 {% for page in pages %}
-    <url><loc>{{ url(page) }}</loc></url>
+    <url>
+        <loc>{{ url(page) }}</loc>
+{% if page == 'app_galerie' %}
+{% for photo in photos|slice(0, 1000) %}
+        <image:image><image:loc>{{ absolute_url(asset('uploads/galerie/' ~ photo.fichier)) }}</image:loc></image:image>
+{% endfor %}
+{% endif %}
+    </url>
+{% endfor %}
+{% for prestation in prestations %}
+    <url>
+        <loc>{{ url('app_prestation', {slug: prestation.slug}) }}</loc>
+{% for photo in (photos_par_prestation[prestation.id] ?? [])|slice(0, 20) %}
+        <image:image><image:loc>{{ absolute_url(asset('uploads/galerie/' ~ photo.fichier)) }}</image:loc></image:image>
+{% endfor %}
+    </url>
+{% endfor %}
+{% for inspiration in inspirations %}
+    <url><loc>{{ url('app_galerie_theme', {slug: inspiration.slug}) }}</loc></url>
 {% endfor %}
 </urlset>

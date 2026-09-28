@@ -6,7 +6,19 @@ Google AI Overviews, Gemini, Copilot).
 
 Légende : **[toi]** action dans un service en ligne, **[code]** développement sur le site.
 
-## Déjà en place (28/09/2026)
+## Fait le 28/09/2026 (deuxième lot)
+
+- Page par prestation `/prestations/<nom>` : résumé, texte détaillé modifiable dans l'admin, prix, durée,
+  points, réalisations, données `Service` + `Offer` + fil d'Ariane ; anciennes URL redirigées (301)
+- Pages de thèmes `/galerie/<thème>` ; FAQ `/questions-frequentes` (admin, balisage `FAQPage`)
+- JSON-LD `NailSalon` : photo, logo, gamme de prix, coordonnées GPS (Base Adresse Nationale),
+  zone desservie, Instagram, catalogue des prestations avec prix
+- Open Graph / Twitter, image de partage 1200×630, favicon SVG, icône 576 px, manifeste
+- Sitemap avec prestations, thèmes et images ; `robots.txt` excluant les pages privées ; `llms.txt`
+- Balises de validation Search Console / Bing via `GOOGLE_SITE_VERIFICATION` et `BING_SITE_VERIFICATION`
+- Page 404 utile, page d'erreur autonome, cache long et compression (`.htaccess`)
+
+## Déjà en place (premier lot)
 
 - `<title>` et meta description propres à chaque page, URL canonique
 - `sitemap.xml` (pages publiques) et `robots.txt` (admin exclue)
@@ -32,30 +44,30 @@ Légende : **[toi]** action dans un service en ligne, **[code]** développement 
 
 ## Priorité 2 — Technique
 
-- [ ] **[code] Aperçus de partage** Open Graph / Twitter : titre, description, image par page
+- [x] **[code] Aperçus de partage** Open Graph / Twitter : titre, description, image par page
   (liens partagés sur Instagram, WhatsApp, Facebook).
-- [ ] **[code] Favicon**, `apple-touch-icon`, manifeste web.
-- [ ] **[code] JSON-LD enrichi** : `image`, `priceRange`, `geo` (latitude/longitude), `sameAs` (Instagram),
+- [x] **[code] Favicon**, `apple-touch-icon`, manifeste web.
+- [x] **[code] JSON-LD enrichi** : `image`, `priceRange`, `geo` (latitude/longitude), `sameAs` (Instagram),
   `areaServed` (Arras et communes voisines), `hasOfferCatalog` avec chaque prestation (`Service` + `Offer` :
   prix, durée) ; `BreadcrumbList` sur les pages internes.
-- [ ] **[code] Une page par prestation** (`/prestations/pose-complete-gel`) : description détaillée
+- [x] **[code] Une page par prestation** (`/prestations/pose-complete-gel`) : description détaillée
   (300 à 500 mots), prix, durée, déroulé, entretien, photos liées, bouton Réserver, questions fréquentes.
   Cible les recherches précises (« remplissage gel Arras »). Nécessite un slug sur `Prestation`.
-- [ ] **[code] Pages de thèmes indexables** : `/galerie/inspiration-ete` au lieu de `?theme=`, avec texte
+- [x] **[code] Pages de thèmes indexables** : `/galerie/inspiration-ete` au lieu de `?theme=`, avec texte
   d'introduction ; canonical sur la galerie filtrée.
-- [ ] **[code] Sitemap complet** : `lastmod`, pages prestations et thèmes, sitemap d'images.
+- [x] **[code] Sitemap complet** : `lastmod`, pages prestations et thèmes, sitemap d'images.
 - [ ] **[code] Images** : conversion WebP, tailles adaptées (`srcset`), vraies dimensions `width`/`height`.
   Vérifier que l'extension GD ou Imagick est disponible sur l'hébergement Pro.
-- [ ] **[code] Performance** : cache long des fichiers versionnés (actuellement 15 min, passer à 1 an
-  `immutable` via `.htaccess`), polices auto-hébergées, objectif Lighthouse mobile ≥ 90 partout.
-- [ ] **[code] Page 404** aux couleurs du site avec liens utiles.
+- [x] **[code] Cache long** des fichiers versionnés (1 an `immutable`), photos 30 jours, compression.
+- [ ] **[code] Performance** : polices auto-hébergées (après la charte), objectif Lighthouse mobile ≥ 90 partout.
+- [x] **[code] Page 404** aux couleurs du site avec liens utiles.
 
 ## Priorité 3 — Contenu (la matière que Google et les IA citent)
 
 - [ ] **[toi + code] Page « À propos »** : parcours, formations et certifications, engagement hygiène,
   produits utilisés, photo du salon. Renforce la confiance (critères E-E-A-T de Google) et donne aux IA
   une entité claire à citer.
-- [ ] **[toi + code] FAQ** avec données structurées `FAQPage` : tenue d'une pose gel, gel ou semi-permanent,
+- [x] **[toi + code] FAQ** avec données structurées `FAQPage` : tenue d'une pose gel, gel ou semi-permanent,
   fréquence du remplissage, allergies et contre-indications, dépose, prix, acompte et annulation, parking.
   Réponses courtes et factuelles en tête, détail ensuite.
 - [ ] **[toi] Photos régulières** dans la galerie et sur la fiche Google (au moins 2 par mois).
@@ -69,9 +81,9 @@ Légende : **[toi]** action dans un service en ligne, **[code]** développement 
 Les IA citent des sources **cohérentes, factuelles et faciles à extraire**, et s'appuient sur des index
 existants (Google, Bing) et sur les avis.
 
-- [ ] **[code] Décider de l'accès des robots d'IA** dans `robots.txt` (GPTBot, OAI-SearchBot, PerplexityBot,
+- [x] **[code] Décider de l'accès des robots d'IA** dans `robots.txt` (GPTBot, OAI-SearchBot, PerplexityBot,
   ClaudeBot, Google-Extended…). Recommandation : les autoriser, le site n'a rien à protéger et y gagne en visibilité.
-- [ ] **[code] `llms.txt`** à la racine : présentation courte du salon, prestations et prix, zone, liens vers
+- [x] **[code] `llms.txt`** à la racine : présentation courte du salon, prestations et prix, zone, liens vers
   les pages clés (format émergent, coût quasi nul).
 - [ ] **[code] Informations clés en texte** et non seulement en image : prix, durées, adresse, horaires,
   modalités d'acompte, déjà en grande partie le cas.

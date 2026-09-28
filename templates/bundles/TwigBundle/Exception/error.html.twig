@@ -1,0 +1,23 @@
+{# Page d'erreur autonome : aucun accès à la base (elle peut être la cause de l'erreur). #}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <title>Un souci technique · {{ salon.nom }}</title>
+    <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+    {{ importmap('app', {nonce: csp_nonce('script')}) }}
+</head>
+<body>
+    <main class="auth">
+        <div class="auth__carte">
+            <p class="auth__marque">{{ salon.nom }}</p>
+            <h1>Oups, un souci technique</h1>
+            <p>La page n'a pas pu s'afficher. Réessayez dans quelques minutes.</p>
+            <p>Pour un rendez-vous urgent : <a href="tel:{{ salon.telephone }}">{{ salon.telephone|telephone }}</a>.</p>
+            <p class="lien-secondaire"><a href="/">Retour à l'accueil</a></p>
+        </div>
+    </main>
+</body>
+</html>

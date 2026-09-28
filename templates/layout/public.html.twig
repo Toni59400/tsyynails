@@ -1,8 +1,18 @@
 {% extends 'base.html.twig' %}
 
 {% block meta %}
+    {% set url_canonique = url(app.current_route ?? 'app_accueil', app.current_route_parameters) %}
     <meta name="description" content="{% block description %}{{ salon.nom }}, {{ salon.activite|lower }} à {{ salon.ville }} : pose gel, semi-permanent, nail art. Réservez votre rendez-vous en ligne.{% endblock %}">
-    <link rel="canonical" href="{{ url(app.current_route ?? 'app_accueil', app.current_route_parameters) }}">
+    <link rel="canonical" href="{{ url_canonique }}">
+    {# Aperçu lors d'un partage (Instagram, WhatsApp, Facebook, messageries) #}
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="fr_FR">
+    <meta property="og:site_name" content="{{ salon.nom }}">
+    <meta property="og:title" content="{{ block('title')|striptags|trim }}">
+    <meta property="og:description" content="{{ block('description')|striptags|trim }}">
+    <meta property="og:url" content="{{ url_canonique }}">
+    <meta property="og:image" content="{% block image_partage %}{{ image_partage() }}{% endblock %}">
+    <meta name="twitter:card" content="summary_large_image">
 {% endblock %}
 
 {% block body %}
@@ -64,6 +74,8 @@
             <section aria-labelledby="pied-liens">
                 <h2 id="pied-liens" class="pied__titre">Informations</h2>
                 <ul class="pied__liens">
+                    <li><a href="{{ path('app_faq') }}">Questions fréquentes</a></li>
+                    <li><a href="{{ path('app_inscription') }}">Programme de fidélité</a></li>
                     <li><a href="{{ path('app_conditions') }}">Conditions de réservation</a></li>
                     <li><a href="{{ path('app_confidentialite') }}">Confidentialité</a></li>
                     <li><a href="{{ path('app_mentions_legales') }}">Mentions légales</a></li>

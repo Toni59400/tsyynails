@@ -5,7 +5,7 @@
         <img class="carte-prestation__photo" src="{{ asset('uploads/galerie/' ~ (photos|first).fichier) }}"
              alt="{{ (photos|first).legende }}" width="600" height="400" loading="lazy" decoding="async">
     {% endif %}
-    <{{ titre }} class="carte-prestation__nom">{{ prestation.nom }}</{{ titre }}>
+    <{{ titre }} class="carte-prestation__nom"><a href="{{ path('app_prestation', {slug: prestation.slug}) }}">{{ prestation.nom }}</a></{{ titre }}>
     {% if prestation.description %}
         <p class="carte-prestation__description">{{ prestation.description }}</p>
     {% endif %}
@@ -23,7 +23,7 @@
             </a>
         {% endif %}
         {% if photos|length > 1 %}
-            <a class="carte-prestation__lien" href="{{ path('app_galerie', {prestation: prestation.id}) }}">
+            <a class="carte-prestation__lien" href="{{ path('app_prestation', {slug: prestation.slug}) }}#realisations">
                 {{ photos|length }} réalisations<span class="visuellement-cache"> : {{ prestation.nom }}</span>
             </a>
         {% endif %}

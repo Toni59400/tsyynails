@@ -18,6 +18,11 @@ class PrestationRepository extends ServiceEntityRepository
         parent::__construct($registry, Prestation::class);
     }
 
+    public function findActiveParSlug(string $slug): ?Prestation
+    {
+        return $this->findOneBy(['slug' => $slug, 'active' => true]);
+    }
+
     /**
      * @return list<Prestation>
      */

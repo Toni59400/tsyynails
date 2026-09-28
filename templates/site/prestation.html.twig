@@ -1,0 +1,71 @@
+{% extends 'layout/public.html.twig' %}
+
+{% block title %}{{ prestation.nom }} à {{ salon.ville }} · {{ prestation.prixCentimes|euros }} · {{ salon.nom }}{% endblock %}
+{% block description %}{{ prestation.nom }} chez {{ salon.nom }}, {{ salon.activite|lower }} à {{ salon.ville }} : {{ prestation.prixCentimes|euros }}, {{ prestation.dureeMinutes|duree }}. {{ (prestation.description ?: 'Réservation en ligne.')|slice(0, 110) }}{% endblock %}
+{% block image_partage %}{{ image_partage(photos|first ?: null) }}{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script type="application/ld+json" nonce="{{ csp_nonce('script') }}">{{ donnees_structurees_prestation(prestation) }}</script>
+{% endblock %}
+
+{% block contenu %}
+    <div class="conteneur page">
+        {{ include('site/_fil_ariane.html.twig', {etapes: {
+            'Accueil': path('app_accueil'),
+            'Prestations': path('app_prestations'),
+            (prestation.nom): path('app_prestation', {slug: prestation.slug}),
+        }}) }}
+
+        <div class="prestation-entete">
+            <div>
+                <h1>{{ prestation.nom }}</h1>
+                {% if prestation.description %}
+                    <p class="page__intro">{{ prestation.description }}</p>
+                {% endif %}
+                <ul class="prestation-infos">
+                    <li><span class="prestation-infos__libelle">Prix</span> <strong>{{ prestation.prixCentimes|euros }}</strong></li>
+                    <li><span class="prestation-infos__libelle">Durée</span> {{ prestation.dureeMinutes|duree }}</li>
+                    {% if points_pour(prestation.prixCentimes) > 0 %}
+                        <li><span class="prestation-infos__libelle">Fidélité</span> {{ points_pour(prestation.prixCentimes) }} points</li>
+                    {% endif %}
+                    <li><span class="prestation-infos__libelle">Lieu</span> {{ salon.nom }}, {{ salon.ville }}</li>
+                </ul>
+                <p class="page__actions">
+                    <a class="bouton" href="{{ path('app_reservation_creneau', {id: prestation.id}) }}">Réserver : {{ prestation.nom }}</a>
+                </p>
+                <p class="page__note">Acompte de {{ acompte_pourcentage }} % bloqué à la réservation, débité seulement si je valide votre rendez-vous.</p>
+            </div>
+            {% if photos is not empty %}
+                <img class="prestation-entete__photo" src="{{ asset('uploads/galerie/' ~ (photos|first).fichier) }}"
+                     alt="{{ (photos|first).legende }}" width="600" height="600" fetchpriority="high">
+            {% endif %}
+        </div>
+
+        {% if prestation.contenu %}
+            <section class="page--texte prestation-contenu" aria-labelledby="titre-detail">
+                <h2 id="titre-detail">En détail</h2>
+                <p>{{ prestation.contenu|nl2br }}</p>
+            </section>
+        {% endif %}
+
+        {% if photos|length > 1 %}
+            <section id="realisations" aria-labelledby="titre-realisations">
+                <h2 id="titre-realisations" class="section__titre">Réalisations</h2>
+                {{ include('site/_galerie.html.twig', {photos: photos}) }}
+            </section>
+        {% endif %}
+
+        {% if autres is not empty %}
+            <section class="section" aria-labelledby="titre-autres">
+                <h2 id="titre-autres" class="section__titre">Les autres prestations</h2>
+                <ul class="liste-liens">
+                    {% for autre in autres %}
+                        <li><a href="{{ path('app_prestation', {slug: autre.slug}) }}">{{ autre.nom }}</a> · {{ autre.prixCentimes|euros }}</li>
+                    {% endfor %}
+                </ul>
+                <p><a href="{{ path('app_faq') }}">Questions fréquentes</a></p>
+            </section>
+        {% endif %}
+    </div>
+{% endblock %}

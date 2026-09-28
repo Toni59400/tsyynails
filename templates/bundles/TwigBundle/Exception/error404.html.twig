@@ -1,0 +1,21 @@
+{% extends 'layout/public.html.twig' %}
+
+{% block title %}Page introuvable · {{ salon.nom }}{% endblock %}
+
+{% block meta %}
+    <meta name="robots" content="noindex">
+{% endblock %}
+
+{% block contenu %}
+    <div class="conteneur page page--texte">
+        <h1>Cette page n'existe pas (ou plus)</h1>
+        <p>Le lien est peut-être ancien, ou la prestation a changé de nom. Voici où aller :</p>
+        <ul class="liste-liens">
+            <li><a href="{{ path('app_prestations') }}">Prestations et tarifs</a></li>
+            <li><a href="{{ path('app_galerie') }}">Galerie des réalisations</a></li>
+            <li><a href="{{ path('app_faq') }}">Questions fréquentes</a></li>
+            <li><a href="{{ path('app_infos') }}">Infos pratiques et contact</a></li>
+        </ul>
+        <p class="page__actions"><a class="bouton" href="{{ path('app_reservation') }}">Réserver un rendez-vous</a></p>
+    </div>
+{% endblock %}

@@ -67,6 +67,7 @@ final class DashboardController extends AbstractDashboardController
         yield MenuItem::linkTo(PrestationCrudController::class, 'Prestations', 'fa fa-hand-sparkles');
         yield MenuItem::linkTo(PhotoCrudController::class, 'Photos', 'fa fa-images');
         yield MenuItem::linkTo(InspirationCrudController::class, 'Thèmes d\'inspiration', 'fa fa-wand-magic-sparkles');
+        yield MenuItem::linkTo(QuestionFrequenteCrudController::class, 'Questions fréquentes', 'fa fa-circle-question');
 
         yield MenuItem::section('Fidélité');
         yield MenuItem::linkTo(RecompenseFideliteCrudController::class, 'Paliers de récompenses', 'fa fa-gift');

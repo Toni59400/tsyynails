@@ -1,0 +1,14 @@
+{# Fil d'Ariane visible ; etapes = libellé => URL (la dernière est la page courante). #}
+<nav class="fil-ariane" aria-label="Fil d'Ariane">
+    <ol>
+        {% for libelle, lien in etapes %}
+            <li>
+                {% if loop.last %}
+                    <span aria-current="page">{{ libelle }}</span>
+                {% else %}
+                    <a href="{{ lien }}">{{ libelle }}</a>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ol>
+</nav>

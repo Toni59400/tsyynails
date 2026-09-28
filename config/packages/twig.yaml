@@ -2,6 +2,9 @@ twig:
     file_name_pattern: '*.twig'
     globals:
         salon: '%app.salon%'
+        # Balises de validation de propriété (Search Console, Bing Webmaster Tools), vides = absentes.
+        verification_google: '%env(GOOGLE_SITE_VERIFICATION)%'
+        verification_bing: '%env(BING_SITE_VERIFICATION)%'
 
 when@test:
     twig:

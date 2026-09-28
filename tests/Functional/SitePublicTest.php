@@ -134,7 +134,7 @@ final class SitePublicTest extends WebTestCase
 
         $this->client->click($crawler->filter('.carte-prestation__lien')->first()->link());
         self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('h1', 'Réalisations');
+        self::assertSelectorExists('#realisations .galerie__item');
     }
 
     public function testLeSitemapListeLesPagesPubliques(): void

@@ -1,0 +1,45 @@
+{% autoescape false %}
+# {{ salon.nom }}
+
+> {{ salon.nom }} est un salon de prothésie ongulaire à {{ salon.ville }} ({{ salon.code_postal }}), tenu par une seule prothésiste. Pose gel, remplissage, semi-permanent, nail art, soins des mains et des pieds. Réservation en ligne avec acompte, programme de fidélité à points.
+
+- Adresse : {{ salon.adresse }}, {{ salon.code_postal }} {{ salon.ville }}, France
+- Téléphone : {{ salon.telephone|telephone }}
+- Email : {{ salon.email }}
+{% if salon.instagram %}- Instagram : {{ salon.instagram }}
+{% endif %}- Zone desservie : {{ salon.zone }}
+- Réservation en ligne : {{ url('app_reservation') }} (acompte de {{ acompte_pourcentage }} % bloqué sur la carte, débité seulement à la validation)
+
+## Horaires
+
+{% for jour in horaires_semaine() %}- {{ jour.jour }} : {% for plage in jour.plages %}{{ plage.heureDebut|date('H\\hi') }}–{{ plage.heureFin|date('H\\hi') }}{% if not loop.last %}, {% endif %}{% else %}fermé{% endfor %}
+
+{% endfor %}
+
+## Prestations et tarifs
+
+{% for prestation in prestations %}- [{{ prestation.nom }}]({{ url('app_prestation', {slug: prestation.slug}) }}) : {{ (prestation.prixCentimes / 100)|number_format(prestation.prixCentimes % 100 ? 2 : 0, ',', ' ') }} €, {{ prestation.dureeMinutes }} minutes.{% if prestation.description %} {{ prestation.description }}{% endif %}
+
+{% endfor %}
+
+## Programme de fidélité
+
+- 1 point par euro payé (avec un compte client), crédité après chaque rendez-vous.
+{% for palier in paliers %}- {{ palier.seuilPoints }} points : {{ palier.nom }}
+{% endfor %}- Détail : {{ url('app_conditions') }}#fidelite
+
+## Questions fréquentes
+
+{% for q in questions %}### {{ q.question }}
+
+{{ q.reponse }}
+
+{% endfor %}
+## Pages utiles
+
+- [Prestations et tarifs]({{ url('app_prestations') }})
+- [Galerie des réalisations]({{ url('app_galerie') }})
+- [Infos pratiques et contact]({{ url('app_infos') }})
+- [Questions fréquentes]({{ url('app_faq') }})
+- [Conditions de réservation]({{ url('app_conditions') }})
+{% endautoescape %}

@@ -5,6 +5,13 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{% block title %}Tsyynails{% endblock %}</title>
         {% block meta %}{% endblock %}
+        <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+        <link rel="icon" href="{{ asset('images/icone-576.png') }}" type="image/png" sizes="576x576">
+        <link rel="apple-touch-icon" href="{{ asset('images/icone-576.png') }}">
+        <link rel="manifest" href="{{ asset('site.webmanifest') }}">
+        <meta name="theme-color" content="#fbf7f4">
+        {% if verification_google %}<meta name="google-site-verification" content="{{ verification_google }}">{% endif %}
+        {% if verification_bing %}<meta name="msvalidate.01" content="{{ verification_bing }}">{% endif %}
         {% block stylesheets %}
         {% endblock %}
 

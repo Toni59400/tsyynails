@@ -1,27 +1,45 @@
 {% extends 'layout/public.html.twig' %}
 
 {% block title %}
-    {%- if theme -%}{{ theme.nom }}
-    {%- elseif prestation -%}Réalisations {{ prestation.nom }}
-    {%- else -%}Galerie des réalisations{%- endif %} · {{ salon.nom }}
+    {%- if theme -%}{{ theme.nom }} · ongles à {{ salon.ville }}
+    {%- else -%}Galerie des réalisations · {{ salon.activite }} à {{ salon.ville }}{%- endif %} · {{ salon.nom }}
 {%- endblock %}
-{% block description %}Les réalisations et inspirations {{ salon.nom }} : french, baby boomer, nail art, couleurs de saison.{% endblock %}
+{% block description %}
+    {%- if theme -%}{{ theme.nom }} : {{ theme.description ?: 'idées et réalisations' }} — {{ salon.nom }}, {{ salon.activite|lower }} à {{ salon.ville }}.
+    {%- else -%}Les réalisations et inspirations {{ salon.nom }} à {{ salon.ville }} : french, baby boomer, nail art, couleurs de saison.{%- endif -%}
+{% endblock %}
+{% block image_partage %}{{ image_partage(photos|first ?: null) }}{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {% if theme %}
+        <script type="application/ld+json" nonce="{{ csp_nonce('script') }}">{{ donnees_structurees_fil_ariane({
+            'Accueil': url('app_accueil'),
+            'Galerie': url('app_galerie'),
+            (theme.nom): url('app_galerie_theme', {slug: theme.slug}),
+        }) }}</script>
+    {% endif %}
+{% endblock %}
 
 {% block contenu %}
     <div class="conteneur page">
-        <h1>
-            {%- if theme -%}{{ theme.nom }}
-            {%- elseif prestation -%}Réalisations : {{ prestation.nom }}
-            {%- else -%}Galerie{%- endif -%}
-        </h1>
+        {% if theme %}
+            {{ include('site/_fil_ariane.html.twig', {etapes: {
+                'Accueil': path('app_accueil'),
+                'Galerie': path('app_galerie'),
+                (theme.nom): path('app_galerie_theme', {slug: theme.slug}),
+            }}) }}
+        {% endif %}
+
+        <h1>{{ theme ? theme.nom : 'Galerie' }}</h1>
 
         {% if inspirations is not empty %}
             <nav class="filtres" aria-label="Thèmes d'inspiration">
                 <ul class="filtres__liste">
-                    <li><a class="filtre" href="{{ path('app_galerie') }}" {% if not theme and not prestation %}aria-current="page"{% endif %}>Toutes</a></li>
+                    <li><a class="filtre" href="{{ path('app_galerie') }}" {% if not theme %}aria-current="page"{% endif %}>Toutes</a></li>
                     {% for inspiration in inspirations %}
                         <li>
-                            <a class="filtre" href="{{ path('app_galerie', {theme: inspiration.slug}) }}"
+                            <a class="filtre" href="{{ path('app_galerie_theme', {slug: inspiration.slug}) }}"
                                {% if theme and theme.id == inspiration.id %}aria-current="page"{% endif %}>{{ inspiration.nom }}</a>
                         </li>
                     {% endfor %}
@@ -39,12 +57,6 @@
             {{ include('site/_galerie.html.twig') }}
         {% endif %}
 
-        <p class="page__actions">
-            {% if prestation %}
-                <a class="bouton" href="{{ path('app_reservation_creneau', {id: prestation.id}) }}">Réserver : {{ prestation.nom }}</a>
-            {% else %}
-                <a class="bouton" href="{{ path('app_reservation') }}">Réserver un rendez-vous</a>
-            {% endif %}
-        </p>
+        <p class="page__actions"><a class="bouton" href="{{ path('app_reservation') }}">Réserver un rendez-vous</a></p>
     </div>
 {% endblock %}

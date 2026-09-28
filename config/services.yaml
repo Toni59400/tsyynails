@@ -21,6 +21,11 @@ parameters:
         acces: 'Stationnement gratuit dans la rue. Salon au rez-de-chaussée, accessible en fauteuil roulant.'
         responsable_publication: 'Gipsy Pira'
         siret: 'À compléter'
+        # Référencement local. Coordonnées : Base Adresse Nationale (api-adresse.data.gouv.fr).
+        latitude: '50.269614'
+        longitude: '2.788523'
+        # Communes citées comme zone desservie (données structurées, textes), séparées par des virgules.
+        zone: 'Arras, Saint-Laurent-Blangy, Achicourt, Dainville, Beaurains, Sainte-Catherine, Saint-Nicolas'
 
     # Photos de la galerie, hors du dépôt Git
     app.dossier_galerie: '%kernel.project_dir%/public/uploads/galerie'
