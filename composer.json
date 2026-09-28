@@ -85,6 +85,7 @@
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.95",
         "phpstan/phpstan": "^2.2",
+        "phpstan/phpstan-doctrine": "^2.0",
         "phpstan/phpstan-symfony": "^2.0",
         "symfony/debug-pack": "^1.1",
         "symfony/maker-bundle": "^1.68",

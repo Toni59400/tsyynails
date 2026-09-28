@@ -12,6 +12,8 @@ $finder = (new PhpCsFixer\Finder())
 return (new PhpCsFixer\Config())
     ->setRules([
         '@Symfony' => true,
+        // Garde les /** @var */ utilisés par PHPStan pour typer les résultats Doctrine
+        'phpdoc_to_comment' => ['ignored_tags' => ['var']],
     ])
     ->setFinder($finder)
 ;
