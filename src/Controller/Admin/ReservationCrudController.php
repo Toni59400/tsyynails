@@ -40,6 +40,7 @@ final class ReservationCrudController extends AbstractCrudController
         'valider' => ['valider', 'Rendez-vous confirmé : l\'acompte est débité et la cliente prévenue par email.'],
         'refuser' => ['refuser', 'Demande refusée : l\'empreinte est libérée et la cliente prévenue par email.'],
         'annuler' => ['annuler', 'Réservation annulée, la cliente est prévenue par email.'],
+        'annuler-salon' => ['annulerParLeSalon', 'Réservation annulée à votre initiative : acompte remboursé, la cliente est prévenue par email.'],
         'honorer' => ['honorer', 'Rendez-vous honoré : les points de fidélité sont crédités.'],
         'non-honorer' => ['nonHonorer', 'Absence enregistrée.'],
     ];
@@ -97,6 +98,8 @@ final class ReservationCrudController extends AbstractCrudController
         yield IntegerField::new('pointsUtilises', 'Points utilisés')->onlyOnDetail();
         yield DateTimeField::new('createdAt', 'Demandée le')->onlyOnDetail()->setFormat('dd/MM/yyyy HH:mm');
         yield DateTimeField::new('decisionAt', 'Décision le')->onlyOnDetail()->setFormat('dd/MM/yyyy HH:mm');
+        yield DateTimeField::new('acompteRembourseAt', 'Acompte remboursé le')->onlyOnDetail()->setFormat('dd/MM/yyyy HH:mm');
+        yield DateTimeField::new('rappelEnvoyeAt', 'Rappel envoyé le')->onlyOnDetail()->setFormat('dd/MM/yyyy HH:mm');
     }
 
     /**
@@ -104,7 +107,7 @@ final class ReservationCrudController extends AbstractCrudController
      *
      * @param AdminContext<Reservation> $context
      */
-    #[AdminRoute('/{entityId}/{action}', name: 'workflow', options: ['methods' => ['POST'], 'requirements' => ['action' => 'valider|refuser|annuler|honorer|non-honorer']])]
+    #[AdminRoute('/{entityId}/{action}', name: 'workflow', options: ['methods' => ['POST'], 'requirements' => ['action' => 'valider|refuser|annuler|annuler-salon|honorer|non-honorer']])]
     public function executerAction(AdminContext $context, Request $request, string $action): RedirectResponse
     {
         $reservation = $context->getEntity()->getInstance();
@@ -136,6 +139,8 @@ final class ReservationCrudController extends AbstractCrudController
         $reservation = Crud::PAGE_DETAIL === $responseParameters->get('pageName') ? $responseParameters->get('entity')->getInstance() : null;
         if ($reservation instanceof Reservation) {
             $responseParameters->set('actions_workflow', $this->actionsPossibles($reservation));
+            $responseParameters->set('annulation_gratuite', $this->workflow->annulationGratuite($reservation));
+            $responseParameters->set('limite_annulation', $this->workflow->limiteAnnulationGratuite($reservation));
         }
 
         return $responseParameters;
@@ -152,7 +157,7 @@ final class ReservationCrudController extends AbstractCrudController
 
         return match ($reservation->getStatut()) {
             StatutReservation::EN_ATTENTE => ['valider', 'refuser'],
-            StatutReservation::CONFIRMEE => $passe ? ['honorer', 'non-honorer'] : ['annuler'],
+            StatutReservation::CONFIRMEE => $passe ? ['honorer', 'non-honorer'] : ['annuler', 'annuler-salon'],
             StatutReservation::PAIEMENT_EN_COURS => ['annuler'],
             default => [],
         };

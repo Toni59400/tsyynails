@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Service\Reservation;
 
+use App\Entity\Parametre;
 use App\Entity\Reservation;
+use App\Repository\ParametreRepository;
 use Psr\Log\LoggerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -25,6 +27,7 @@ final class NotificationsReservation
     public function __construct(
         private readonly MailerInterface $mailer,
         private readonly LoggerInterface $logger,
+        private readonly ParametreRepository $parametres,
         #[Autowire('%app.salon%')] private readonly array $salon,
         /** Adresse du domaine du site : un envoi « de la part » d'une adresse Gmail finirait en spam. */
         #[Autowire(env: 'MAILER_EXPEDITEUR')] private readonly string $expediteur,
@@ -61,12 +64,24 @@ final class NotificationsReservation
         $this->envoyerALaCliente($reservation, 'Votre demande de rendez-vous a expiré', 'emails/reservation/expiree.html.twig');
     }
 
-    public function annulee(Reservation $reservation): void
+    /** La veille du rendez-vous confirmé. */
+    public function rappel(Reservation $reservation): void
     {
-        $this->envoyerALaCliente($reservation, 'Votre rendez-vous est annulé', 'emails/reservation/annulee.html.twig');
+        $this->envoyerALaCliente($reservation, 'Rappel : votre rendez-vous de demain', 'emails/reservation/rappel.html.twig');
     }
 
-    private function envoyerALaCliente(Reservation $reservation, string $sujet, string $gabarit): void
+    /**
+     * @param bool $acompteConserve acompte débité et non remboursé (annulation à moins de 48 h)
+     */
+    public function annulee(Reservation $reservation, bool $acompteConserve = false): void
+    {
+        $this->envoyerALaCliente($reservation, 'Votre rendez-vous est annulé', 'emails/reservation/annulee.html.twig', ['acompte_conserve' => $acompteConserve]);
+    }
+
+    /**
+     * @param array<string, mixed> $contexte
+     */
+    private function envoyerALaCliente(Reservation $reservation, string $sujet, string $gabarit, array $contexte = []): void
     {
         $email = $reservation->getEmailNotification();
         if (null === $email) {
@@ -78,7 +93,11 @@ final class NotificationsReservation
                 ->to(new Address($email, $reservation->getClient()->getNomComplet()))
                 ->subject($sujet.' · '.$this->salon['nom'])
                 ->htmlTemplate($gabarit)
-                ->context(['reservation' => $reservation]),
+                ->context($contexte + [
+                    'reservation' => $reservation,
+                    // Date limite d'annulation gratuite (acompte remboursé), rappelée dans les emails.
+                    'limite_annulation' => $reservation->getDebut()->modify(\sprintf('-%d hours', $this->parametres->valeur(Parametre::ANNULATION_GRATUITE_HEURES))),
+                ]),
             $reservation,
             basename($gabarit, '.html.twig'),
         );

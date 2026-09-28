@@ -37,6 +37,11 @@
                 {% elseif statut == 'confirmee' %}
                     <p class="alerte alerte--succes" role="status">À très vite, {{ reservation.client.prenom }} !</p>
                     <p>Reste à régler au salon : <strong>{{ reservation.resteAPayerCentimes|euros }}</strong>.</p>
+                    <p class="page__note">
+                        Annulation gratuite jusqu'au {{ limite_annulation|date_fr("EEEE d MMMM 'à' H'h'mm") }} (acompte remboursé) ;
+                        ensuite, ou en cas d'absence, l'acompte est conservé. Pour annuler : <a href="tel:{{ salon.telephone }}">{{ salon.telephone|telephone }}</a>.
+                        <a href="{{ path('app_conditions') }}#annulation">Conditions</a>
+                    </p>
                 {% elseif statut in ['refusee', 'expiree'] %}
                     <p>Aucun montant n'a été débité : l'empreinte sur votre carte est libérée.</p>
                     <p><a class="bouton" href="{{ path('app_reservation') }}">Choisir un autre créneau</a></p>

@@ -6,12 +6,14 @@ namespace App\Service\Reservation;
 
 use App\Entity\Client;
 use App\Entity\MouvementPoints;
+use App\Entity\Parametre;
 use App\Entity\Prestation;
 use App\Entity\RecompenseFidelite;
 use App\Entity\Reservation;
 use App\Enum\MotifMouvementPoints;
 use App\Enum\StatutReservation;
 use App\Repository\ClientRepository;
+use App\Repository\ParametreRepository;
 use App\Service\Fidelite\Parrainage;
 use App\Service\Fidelite\ProgrammeFidelite;
 use App\Service\Paiement\PaiementGateway;
@@ -38,6 +40,7 @@ final class ReservationWorkflow
         private readonly PaiementGateway $paiement,
         private readonly NotificationsReservation $notifications,
         private readonly ProgrammeFidelite $fidelite,
+        private readonly ParametreRepository $parametres,
         private readonly Parrainage $parrainage,
         private readonly ClockInterface $clock,
         private readonly LoggerInterface $logger,
@@ -170,19 +173,49 @@ final class ReservationWorkflow
     }
 
     /**
-     * Annulation par la prothésiste. Une demande en attente libère l'empreinte ;
-     * un rendez-vous confirmé garde l'acompte déjà débité (remboursement éventuel depuis Stripe).
+     * Annulation (la cliente prévient le salon, ou empêchement du salon).
+     * - Demande pas encore validée : l'empreinte est libérée, rien n'est débité.
+     * - Rendez-vous confirmé (acompte débité) : remboursé si l'annulation a lieu au moins
+     *   48 h avant (réglable), ou toujours si c'est le salon qui annule ; sinon l'acompte est conservé.
      */
-    public function annuler(Reservation $reservation, string $auteur): void
+    public function annuler(Reservation $reservation, string $auteur, bool $initiativeSalon = false): void
     {
         $etaitConfirmee = StatutReservation::CONFIRMEE === $reservation->getStatut();
+        $rembourser = $etaitConfirmee && ($initiativeSalon || $this->annulationGratuite($reservation));
+
         if (!$etaitConfirmee) {
             $this->libererEmpreinte($reservation);
+        } elseif ($rembourser && null !== $reservation->getStripePaymentIntentId() && $reservation->getAcompteCentimes() > 0) {
+            // Remboursement d'abord : si Stripe refuse, la réservation reste confirmée.
+            $this->paiement->rembourser($reservation->getStripePaymentIntentId());
+            $reservation->marquerAcompteRembourse($this->clock->now());
         }
         $this->changer($reservation, StatutReservation::ANNULEE, $auteur);
         $this->restituerPoints($reservation, $auteur);
+        $this->logger->notice('Réservation annulée.', [
+            'reservation' => $reservation->getId(),
+            'initiative' => $initiativeSalon ? 'salon' : 'cliente',
+            'acompte_rembourse' => null !== $reservation->getAcompteRembourseAt(),
+        ]);
 
-        $this->notifications->annulee($reservation);
+        $this->notifications->annulee($reservation, $etaitConfirmee && !$rembourser);
+    }
+
+    /** Vrai tant que l'annulation est gratuite (acompte remboursé) : au moins N heures avant le rendez-vous. */
+    public function annulationGratuite(Reservation $reservation): bool
+    {
+        return $this->clock->now() <= $this->limiteAnnulationGratuite($reservation);
+    }
+
+    public function limiteAnnulationGratuite(Reservation $reservation): \DateTimeImmutable
+    {
+        return $reservation->getDebut()->modify(\sprintf('-%d hours', $this->parametres->valeur(Parametre::ANNULATION_GRATUITE_HEURES)));
+    }
+
+    /** Empêchement du salon : l'acompte est toujours remboursé. */
+    public function annulerParLeSalon(Reservation $reservation, string $auteur): void
+    {
+        $this->annuler($reservation, $auteur, initiativeSalon: true);
     }
 
     /** La cliente est venue : ses points de fidélité sont crédités (une seule fois par réservation). */

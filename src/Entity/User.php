@@ -51,6 +51,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TwoFact
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $totpActiveAt = null;
 
+    /** Sert au calcul de l'inactivité (suppression des comptes inactifs depuis 3 ans). */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $derniereConnexionAt = null;
+
+    /** Email « votre compte va être supprimé » envoyé (une fois par période d'inactivité). */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $avertissementSuppressionAt = null;
+
     /** Adresse email confirmée par le lien envoyé à l'inscription. */
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $emailVerifieAt = null;
@@ -201,5 +209,25 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TwoFact
     public function __toString(): string
     {
         return $this->email;
+    }
+
+    public function getDerniereConnexionAt(): ?\DateTimeImmutable
+    {
+        return $this->derniereConnexionAt;
+    }
+
+    public function enregistrerConnexion(\DateTimeImmutable $at): void
+    {
+        $this->derniereConnexionAt = $at;
+    }
+
+    public function getAvertissementSuppressionAt(): ?\DateTimeImmutable
+    {
+        return $this->avertissementSuppressionAt;
+    }
+
+    public function marquerAvertissementSuppression(\DateTimeImmutable $at): void
+    {
+        $this->avertissementSuppressionAt = $at;
     }
 }

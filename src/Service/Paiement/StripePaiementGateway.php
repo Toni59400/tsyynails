@@ -44,6 +44,12 @@ final class StripePaiementGateway implements PaiementGateway
         $this->stripe->paymentIntents->capture($identifiant);
     }
 
+    public function rembourser(string $identifiant): void
+    {
+        // Clé d'idempotence : un double clic ou une relance ne rembourse jamais deux fois.
+        $this->stripe->refunds->create(['payment_intent' => $identifiant], ['idempotency_key' => 'remboursement-'.$identifiant]);
+    }
+
     public function annuler(string $identifiant): void
     {
         $intention = $this->stripe->paymentIntents->retrieve($identifiant);

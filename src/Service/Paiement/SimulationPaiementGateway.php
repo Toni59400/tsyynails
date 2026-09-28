@@ -38,6 +38,11 @@ final class SimulationPaiementGateway implements PaiementGateway
         $this->journal[] = 'capturer:'.$identifiant;
     }
 
+    public function rembourser(string $identifiant): void
+    {
+        $this->journal[] = 'rembourser:'.$identifiant;
+    }
+
     public function annuler(string $identifiant): void
     {
         $this->journal[] = 'annuler:'.$identifiant;

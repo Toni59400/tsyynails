@@ -134,6 +134,7 @@ final class SiteController extends AbstractController
     {
         return $this->render('site/legal/conditions.html.twig', [
             'acompte_pourcentage' => $this->tarification->acomptePourcentage(),
+            'annulation_heures' => $this->parametres->valeur(Parametre::ANNULATION_GRATUITE_HEURES),
             'paliers' => $this->recompenses->findActives(),
             'points_par_euro' => $this->parametres->valeur(Parametre::POINTS_PAR_EURO),
             'expiration_mois' => $this->parametres->valeur(Parametre::EXPIRATION_POINTS_MOIS),

@@ -207,7 +207,10 @@ final class ReservationController extends AbstractController
             $this->workflow->empreinteAutorisee($reservation);
         }
 
-        return $this->render('reservation/suivi.html.twig', ['reservation' => $reservation]);
+        return $this->render('reservation/suivi.html.twig', [
+            'reservation' => $reservation,
+            'limite_annulation' => $this->workflow->limiteAnnulationGratuite($reservation),
+        ]);
     }
 
     /** Développement sans clés Stripe uniquement : simule la saisie d'une carte valide. */

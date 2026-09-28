@@ -1,0 +1,10 @@
+{% extends 'emails/_base.html.twig' %}
+{% block contenu %}
+    <p>Bonjour,</p>
+    <p>Votre compte n'a pas été utilisé depuis près de 3 ans. Pour protéger vos données, il sera
+        <strong>supprimé le {{ date|date_fr('d MMMM yyyy') }}</strong>, et votre fiche anonymisée.</p>
+    <p>Vous souhaitez le garder ? Il suffit de vous connecter avant cette date.</p>
+    <p style="margin:20px 0;">
+        <a href="{{ url('app_login') }}" style="display:inline-block;padding:12px 22px;border-radius:999px;background:#7a4747;color:#ffffff;text-decoration:none;font-weight:bold;">Me connecter</a>
+    </p>
+{% endblock %}

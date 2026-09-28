@@ -2,11 +2,19 @@
 
 {% set reservation = entity.instance %}
 
+{% set confirmee = reservation.statut.value == 'confirmee' %}
+{% set effet_annulation = not confirmee
+    ? 'L\'empreinte sera libérée, rien n\'est débité.'
+    : (annulation_gratuite
+        ? 'Annulation au moins 48 h avant : l\'acompte de ' ~ reservation.acompteCentimes|euros ~ ' sera remboursé.'
+        : 'Annulation à moins de 48 h : l\'acompte de ' ~ reservation.acompteCentimes|euros ~ ' est conservé.') %}
+
 {# Libellé, style du bouton, confirmation demandée avant l'envoi. #}
 {% set boutons = {
     'valider': ['Valider et débiter l\'acompte', 'btn-success', 'Confirmer ce rendez-vous ? L\'acompte sera débité.'],
     'refuser': ['Refuser', 'btn-danger', 'Refuser cette demande ? L\'empreinte sera libérée.'],
-    'annuler': ['Annuler la réservation', 'btn-outline-danger', 'Annuler cette réservation ? La cliente sera prévenue par email.'],
+    'annuler': [confirmee ? 'Annuler (demande de la cliente)' : 'Annuler la réservation', 'btn-outline-danger', 'Annuler cette réservation ? ' ~ effet_annulation ~ ' La cliente sera prévenue par email.'],
+    'annuler-salon': ['Annuler (empêchement du salon)', 'btn-outline-secondary', 'Annuler à votre initiative ? L\'acompte sera remboursé à la cliente, prévenue par email.'],
     'honorer': ['Cliente venue', 'btn-success', ''],
     'non-honorer': ['Cliente absente', 'btn-outline-danger', 'Enregistrer une absence ?'],
 } %}
@@ -31,8 +39,18 @@
                         </form>
                     {% endfor %}
                 </div>
-                {% if 'annuler' in actions_workflow and reservation.statut.value == 'confirmee' %}
-                    <p class="tdb-aide">L'acompte déjà débité n'est pas remboursé automatiquement : si besoin, remboursez-le depuis le tableau de bord Stripe.</p>
+                {% if 'annuler' in actions_workflow and confirmee %}
+                    <p class="tdb-aide">
+                        {% if annulation_gratuite %}
+                            Annulation gratuite jusqu'au {{ limite_annulation|date_fr("EEEE d MMMM 'à' H'h'mm") }} : l'acompte serait remboursé.
+                        {% else %}
+                            Délai d'annulation gratuite dépassé (48 h) : si la cliente annule, l'acompte est conservé.
+                        {% endif %}
+                        Si c'est vous qui annulez, choisissez « empêchement du salon » : l'acompte est toujours remboursé.
+                    </p>
+                {% endif %}
+                {% if reservation.acompteRembourseAt %}
+                    <p class="tdb-aide">Acompte remboursé le {{ reservation.acompteRembourseAt|date('d/m/Y à H:i') }}.</p>
                 {% endif %}
             </section>
         {% endif %}

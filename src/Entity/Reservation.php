@@ -77,6 +77,14 @@ class Reservation
     #[ORM\Column(length: 180, nullable: true)]
     private ?string $emailContact = null;
 
+    /** Email de rappel envoyé la veille (une seule fois). */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $rappelEnvoyeAt = null;
+
+    /** Acompte déjà débité puis remboursé (annulation dans les délais ou à l'initiative du salon). */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $acompteRembourseAt = null;
+
     /** Acceptation des conditions de réservation (acompte, annulation) au moment de la demande. */
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $conditionsAccepteesAt = null;
@@ -232,5 +240,25 @@ class Reservation
     public function getEmailNotification(): ?string
     {
         return $this->emailContact ?? $this->client->getEmail();
+    }
+
+    public function getRappelEnvoyeAt(): ?\DateTimeImmutable
+    {
+        return $this->rappelEnvoyeAt;
+    }
+
+    public function marquerRappelEnvoye(\DateTimeImmutable $at): void
+    {
+        $this->rappelEnvoyeAt = $at;
+    }
+
+    public function getAcompteRembourseAt(): ?\DateTimeImmutable
+    {
+        return $this->acompteRembourseAt;
+    }
+
+    public function marquerAcompteRembourse(\DateTimeImmutable $at): void
+    {
+        $this->acompteRembourseAt = $at;
     }
 }

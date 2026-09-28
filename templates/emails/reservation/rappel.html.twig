@@ -1,0 +1,15 @@
+{% extends 'emails/_base.html.twig' %}
+{% block contenu %}
+    <p>Bonjour {{ reservation.client.prenom }},</p>
+    <p>Petit rappel : je vous attends <strong>{{ reservation.debut|date_fr('EEEE d MMMM') }} à {{ reservation.debut|heure }}</strong>
+        pour votre {{ reservation.prestation.nom|lower }}.</p>
+    {{ include('emails/reservation/_recap.html.twig') }}
+    <p>Reste à régler au salon : <strong>{{ reservation.resteAPayerCentimes|euros }}</strong>.</p>
+    <p>Adresse : {{ salon.adresse }}, {{ salon.code_postal }} {{ salon.ville }}.</p>
+    <p style="font-size:14px;color:#6f625e;">
+        Un empêchement ? Prévenez-moi au plus vite au {{ salon.telephone|telephone }}.
+        À moins de 48 h du rendez-vous, ou en cas d'absence, l'acompte est conservé.
+    </p>
+    {{ include('emails/reservation/_lien_suivi.html.twig') }}
+    <p>À demain !</p>
+{% endblock %}

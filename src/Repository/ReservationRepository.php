@@ -219,4 +219,49 @@ class ReservationRepository extends ServiceEntityRepository
             ->getQuery()
             ->getSingleScalarResult();
     }
+
+    /**
+     * Rendez-vous confirmés commençant dans la fenêtre donnée, dont le rappel n'est pas encore parti.
+     *
+     * @return list<Reservation>
+     */
+    public function findRappelsAEnvoyer(\DateTimeImmutable $apres, \DateTimeImmutable $avant): array
+    {
+        /** @var list<Reservation> */
+        return $this->createQueryBuilder('r')
+            ->addSelect('c', 'p')
+            ->innerJoin('r.client', 'c')
+            ->innerJoin('r.prestation', 'p')
+            ->andWhere('r.statut = :confirmee')
+            ->andWhere('r.rappelEnvoyeAt IS NULL')
+            ->andWhere('r.debut > :apres')
+            ->andWhere('r.debut <= :avant')
+            ->setParameter('confirmee', StatutReservation::CONFIRMEE)
+            ->setParameter('apres', $apres)
+            ->setParameter('avant', $avant)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Date de la dernière demande de réservation par cliente (activité pour la durée de conservation).
+     *
+     * @return array<int, \DateTimeImmutable>
+     */
+    public function dernieresDemandesParClient(): array
+    {
+        /** @var list<array{client: int|string, derniere: string}> $lignes */
+        $lignes = $this->createQueryBuilder('r')
+            ->select('IDENTITY(r.client) AS client', 'MAX(r.createdAt) AS derniere')
+            ->groupBy('r.client')
+            ->getQuery()
+            ->getArrayResult();
+
+        $dates = [];
+        foreach ($lignes as $ligne) {
+            $dates[(int) $ligne['client']] = new \DateTimeImmutable($ligne['derniere']);
+        }
+
+        return $dates;
+    }
 }

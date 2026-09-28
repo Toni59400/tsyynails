@@ -24,6 +24,10 @@
                     Il n'est prélevé que si je valide votre rendez-vous ; sinon il est libéré.
                     Le créneau vous est réservé pendant 30 minutes.
                 </p>
+                <p class="formulaire__note">
+                    Annulation gratuite jusqu'à 48 h avant le rendez-vous ; ensuite, ou en cas d'absence, l'acompte est conservé.
+                    <a href="{{ path('app_conditions') }}#annulation" target="_blank" rel="noopener">Conditions</a>
+                </p>
 
                 {% if simulation %}
                     <div class="alerte alerte--erreur" role="note">

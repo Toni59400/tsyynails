@@ -27,6 +27,9 @@ interface PaiementGateway
     /** Débite l'acompte bloqué (validation de la demande). */
     public function capturer(string $identifiant): void;
 
+    /** Rembourse un acompte déjà débité (annulation dans les délais). */
+    public function rembourser(string $identifiant): void;
+
     /** Libère l'empreinte sans rien débiter (refus, expiration, annulation). */
     public function annuler(string $identifiant): void;
 

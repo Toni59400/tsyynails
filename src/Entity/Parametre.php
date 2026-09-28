@@ -18,6 +18,8 @@ class Parametre
     public const ACOMPTE_POURCENTAGE = 'reservation.acompte_pourcentage';
     /** Délai minimum avant un rendez-vous pour réserver, en heures. */
     public const DELAI_MIN_RESERVATION_HEURES = 'reservation.delai_min_heures';
+    /** Annulation au moins ce nombre d'heures avant le rendez-vous : acompte remboursé. */
+    public const ANNULATION_GRATUITE_HEURES = 'reservation.annulation_gratuite_heures';
 
     /** Points gagnés par euro réellement payé (rendez-vous honoré). */
     public const POINTS_PAR_EURO = 'fidelite.points_par_euro';
@@ -46,6 +48,7 @@ class Parametre
     public const DEFINITIONS = [
         self::ACOMPTE_POURCENTAGE => ['Acompte (% du prix)', 'Bloqué à la demande, débité à la validation.', 30, 0, 100],
         self::DELAI_MIN_RESERVATION_HEURES => ['Délai minimum de réservation (heures)', 'Aucun créneau proposé avant ce délai.', 24, 0, 168],
+        self::ANNULATION_GRATUITE_HEURES => ['Annulation gratuite jusqu\'à (heures avant)', 'Plus tard, l\'acompte est conservé. En cas d\'absence, il est toujours conservé.', 48, 0, 336],
         self::POINTS_PAR_EURO => ['Points par euro payé', 'Crédités quand le rendez-vous est honoré, sur le prix payé après réduction.', 1, 0, 10],
         self::EXPIRATION_POINTS_MOIS => ['Expiration des points (mois sans visite)', 'Un email prévient la cliente 30 jours avant.', 12, 1, 60],
         self::BONUS_INSCRIPTION_POINTS => ['Bonus à la création du compte (points)', 'Offert une seule fois, après vérification de l\'email.', 20, 0, 500],

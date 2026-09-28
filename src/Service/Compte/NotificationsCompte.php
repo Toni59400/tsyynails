@@ -45,6 +45,12 @@ final class NotificationsCompte
         $this->envoyer($user->getEmail(), 'Choisir un nouveau mot de passe', 'emails/compte/reinitialisation.html.twig', ['lien' => $lien]);
     }
 
+    /** Compte inactif : il sera supprimé à cette date sans nouvelle connexion ni rendez-vous. */
+    public function suppressionProchaine(User $user, \DateTimeImmutable $date): void
+    {
+        $this->envoyer($user->getEmail(), 'Votre compte va être supprimé', 'emails/compte/suppression_prochaine.html.twig', ['date' => $date]);
+    }
+
     public function expirationPoints(Client $client, int $points, \DateTimeImmutable $expiration): void
     {
         if (null === $client->getEmail()) {

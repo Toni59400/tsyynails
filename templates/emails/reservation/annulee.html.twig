@@ -1,7 +1,17 @@
 {% extends 'emails/_base.html.twig' %}
 {% block contenu %}
     <p>Bonjour {{ reservation.client.prenom }},</p>
-    <p>Votre rendez-vous ci-dessous est annulé. Pour toute question sur l'acompte, répondez simplement à cet email
-        ou appelez-moi au {{ salon.telephone|telephone }}.</p>
+    <p>Votre rendez-vous ci-dessous est annulé.</p>
     {{ include('emails/reservation/_recap.html.twig') }}
+    {% if reservation.acompteRembourseAt %}
+        <p>L'acompte de <strong>{{ reservation.acompteCentimes|euros }}</strong> vous est <strong>remboursé</strong>
+            (le délai d'affichage sur votre compte dépend de votre banque, en général 5 à 10 jours).</p>
+    {% elseif acompte_conserve %}
+        <p>L'annulation intervenant moins de 48 h avant le rendez-vous, l'acompte de {{ reservation.acompteCentimes|euros }}
+            est conservé, conformément aux conditions de réservation.</p>
+    {% else %}
+        <p>Aucun montant n'a été débité : l'empreinte sur votre carte est libérée.</p>
+    {% endif %}
+    <p>Pour toute question, répondez simplement à cet email ou appelez-moi au {{ salon.telephone|telephone }}.</p>
+    <p style="margin:20px 0;"><a href="{{ url('app_reservation') }}" style="color:#7a4747;">Reprendre un rendez-vous</a></p>
 {% endblock %}

@@ -5,6 +5,11 @@
         a été débité et sera déduit du prix le jour J.</p>
     {{ include('emails/reservation/_recap.html.twig') }}
     <p>Reste à régler au salon : <strong>{{ reservation.resteAPayerCentimes|euros }}</strong>.</p>
+    <p style="font-size:14px;color:#6f625e;">
+        Annulation gratuite jusqu'au <strong>{{ limite_annulation|date_fr("EEEE d MMMM 'à' H'h'mm") }}</strong> (48 h avant) :
+        l'acompte vous est alors remboursé. Après ce délai, ou en cas d'absence, l'acompte est conservé.
+        Pour annuler ou déplacer, répondez à cet email ou appelez-moi au {{ salon.telephone|telephone }}.
+    </p>
     {{ include('emails/reservation/_lien_suivi.html.twig') }}
     <p>À très vite !</p>
 {% endblock %}

@@ -24,11 +24,21 @@
             <li>Sans réponse de ma part sous 7 jours, la demande est annulée et l'empreinte libérée.</li>
         </ul>
 
-        <h2>Annulation et retard</h2>
-        <p>
-            Les conditions d'annulation gratuite et le sort de l'acompte en cas d'absence
-            seront précisés ici avant l'ouverture de la réservation en ligne.
-        </p>
+        <h2 id="annulation">Annulation et absence</h2>
+        <ul>
+            <li>
+                <strong>Annulation au moins {{ annulation_heures }} heures avant le rendez-vous</strong> :
+                l'acompte vous est remboursé (délai d'affichage selon votre banque, en général 5 à 10 jours).
+            </li>
+            <li><strong>Annulation moins de {{ annulation_heures }} heures avant</strong> : l'acompte est conservé.</li>
+            <li><strong>Absence sans prévenir</strong> : l'acompte est conservé.</li>
+            <li>
+                Pour annuler ou déplacer un rendez-vous, répondez à l'email de confirmation ou appelez le
+                <a href="tel:{{ salon.telephone }}">{{ salon.telephone|telephone }}</a>. L'heure de votre message fait foi.
+            </li>
+            <li>Si le salon doit annuler votre rendez-vous, l'acompte vous est toujours remboursé.</li>
+            <li>Une demande pas encore validée peut être annulée à tout moment : rien n'a été débité.</li>
+        </ul>
 
         <h2 id="fidelite">Programme de fidélité</h2>
         <ul>
