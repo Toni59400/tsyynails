@@ -1,0 +1,32 @@
+{% extends 'layout/public.html.twig' %}
+
+{% block title %}Mentions légales · {{ salon.nom }}{% endblock %}
+
+{% block contenu %}
+    <div class="conteneur page page--texte">
+        <h1>Mentions légales</h1>
+        {{ include('site/legal/_provisoire.html.twig') }}
+
+        <h2>Éditrice du site</h2>
+        <p>
+            {{ salon.nom }}, {{ salon.activite|lower }}<br>
+            {{ salon.adresse }}, {{ salon.code_postal }} {{ salon.ville }}<br>
+            SIRET : {{ salon.siret }}<br>
+            Téléphone : <a href="tel:{{ salon.telephone }}">{{ salon.telephone|telephone }}</a><br>
+            Email : <a href="mailto:{{ salon.email }}">{{ salon.email }}</a>
+        </p>
+        <p>Responsable de la publication : {{ salon.responsable_publication }}.</p>
+
+        <h2>Hébergement</h2>
+        <p>OVH SAS, 2 rue Kellermann, 59100 Roubaix, France.</p>
+
+        <h2>Propriété intellectuelle</h2>
+        <p>
+            Les photos des réalisations et les textes de ce site appartiennent à {{ salon.nom }}.
+            Toute reproduction sans autorisation est interdite.
+        </p>
+
+        <h2>Données personnelles</h2>
+        <p>Voir la <a href="{{ path('app_confidentialite') }}">politique de confidentialité</a>.</p>
+    </div>
+{% endblock %}

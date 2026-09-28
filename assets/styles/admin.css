@@ -1,0 +1,985 @@
+/*
+ * Administration : complète le thème EasyAdmin pour les écrans sur mesure.
+ * Pensé pour le téléphone de la prothésiste : grosses cibles, listes lisibles d'une main.
+ */
+/*
+ * Les fonds et le texte suivent le thème EasyAdmin (clair ou sombre) ;
+ * les couleurs de statut sont mélangées au fond pour rester lisibles dans les deux.
+ */
+body {
+    --adm-bordure: var(--border-color, #e3e6ea);
+    --adm-fond: var(--bs-body-bg, #ffffff);
+    --adm-texte: var(--text-color, #1f2328);
+    --adm-texte-doux: var(--text-muted, #5f6b7a);
+    --adm-accent: #7a4747;
+    --adm-sur-accent: #ffffff;
+    --adm-fond-doux: color-mix(in srgb, var(--adm-accent) 8%, var(--adm-fond));
+
+    --adm-attente: #a35f00;
+    --adm-confirmee: #2f6b46;
+    --adm-honoree: #3d5a99;
+    --adm-non-honoree: #a33a3a;
+
+    --agenda-ligne: 18px;
+}
+
+body.ea-dark-scheme {
+    --adm-accent: #c98f8f;
+    --adm-sur-accent: #1f1a19;
+    --adm-attente: #f0b35a;
+    --adm-confirmee: #6fcf97;
+    --adm-honoree: #8fb0f0;
+    --adm-non-honoree: #f08a8a;
+}
+
+body {
+    --adm-attente-fond: color-mix(in srgb, var(--adm-attente) 16%, var(--adm-fond));
+    --adm-confirmee-fond: color-mix(in srgb, var(--adm-confirmee) 16%, var(--adm-fond));
+    --adm-honoree-fond: color-mix(in srgb, var(--adm-honoree) 16%, var(--adm-fond));
+    --adm-non-honoree-fond: color-mix(in srgb, var(--adm-non-honoree) 16%, var(--adm-fond));
+    --adm-fermeture-fond: color-mix(in srgb, var(--adm-texte-doux) 14%, var(--adm-fond));
+}
+
+/* ---------- Tuiles et cartes (tableau de bord, fiche cliente) ---------- */
+.tdb,
+.fiche-cliente {
+    display: grid;
+    gap: 1.25rem;
+}
+
+.tdb-tuiles {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+}
+
+.tdb-tuile {
+    color: var(--adm-texte);
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 1rem 1.25rem;
+    background: var(--adm-fond);
+    border: 1px solid var(--adm-bordure);
+    border-radius: 10px;
+    color: var(--adm-texte);
+    text-decoration: none;
+}
+
+a.tdb-tuile:hover {
+    border-color: var(--adm-accent);
+}
+
+.tdb-tuile--principale {
+    background: var(--adm-fond-doux);
+}
+
+.tdb-tuile--alerte {
+    background: var(--adm-attente-fond);
+    border-color: var(--adm-attente);
+}
+
+.tdb-tuile__libelle {
+    color: var(--adm-texte-doux);
+    font-size: 0.85rem;
+}
+
+.tdb-tuile__valeur {
+    font-size: 1.9rem;
+    font-weight: 600;
+    line-height: 1.1;
+}
+
+.tdb-tuile__valeur--texte {
+    font-size: 1.3rem;
+}
+
+.tdb-tuile__detail {
+    color: var(--adm-texte-doux);
+    font-size: 0.85rem;
+}
+
+.tdb-evolution {
+    font-weight: 600;
+}
+
+.tdb-evolution--hausse {
+    color: var(--adm-confirmee);
+}
+
+.tdb-evolution--baisse {
+    color: var(--adm-non-honoree);
+}
+
+.tdb-colonnes {
+    display: grid;
+    gap: 1.25rem;
+}
+
+@media (min-width: 992px) {
+    .tdb-colonnes {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.tdb-carte {
+    color: var(--adm-texte);
+    padding: 1.25rem;
+    background: var(--adm-fond);
+    border: 1px solid var(--adm-bordure);
+    border-radius: 10px;
+    min-width: 0;
+}
+
+.tdb-carte__titre {
+    margin: 0 0 0.75rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.tdb-carte__lien {
+    display: inline-block;
+    margin-top: 0.75rem;
+}
+
+.tdb-sous-titre {
+    margin: 1.25rem 0 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.tdb-vide,
+.tdb-aide {
+    color: var(--adm-texte-doux);
+    font-size: 0.9rem;
+}
+
+.tdb-periode {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1rem;
+    margin-bottom: 1rem;
+}
+
+.tdb-periode .tdb-carte__titre {
+    flex: 1 1 100%;
+    margin: 0;
+}
+
+.tdb-periode__choix {
+    display: inline-flex;
+    border: 1px solid var(--adm-bordure);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.tdb-periode__choix a,
+.agenda__vue {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 0 1rem;
+    color: inherit;
+    text-decoration: none;
+}
+
+.tdb-periode__choix a[aria-current="page"],
+.agenda__vue[aria-current="page"] {
+    background: var(--adm-accent);
+    color: var(--adm-sur-accent);
+}
+
+.tdb-periode__navigation,
+.agenda__navigation {
+    display: inline-flex;
+    gap: 0.5rem;
+}
+
+/* ---------- Liste compacte de rendez-vous ---------- */
+.liste-rdv {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.liste-rdv__item {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 48px;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--adm-bordure);
+    color: inherit;
+    text-decoration: none;
+}
+
+.liste-rdv li:last-child .liste-rdv__item {
+    border-bottom: 0;
+}
+
+.liste-rdv__item:hover .liste-rdv__quoi strong {
+    text-decoration: underline;
+}
+
+.liste-rdv__quand {
+    min-width: 5.5rem;
+    color: var(--adm-texte-doux);
+    font-size: 0.9rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.liste-rdv__demande {
+    display: block;
+    color: var(--adm-texte-doux);
+    font-size: 0.8rem;
+}
+
+.liste-rdv__statut--en_attente,
+.agenda-rdv--en_attente,
+.pastille--en_attente,
+.agenda-mois__rdv--en_attente {
+    --statut: var(--adm-attente);
+    --statut-fond: var(--adm-attente-fond);
+}
+
+.liste-rdv__statut--confirmee,
+.agenda-rdv--confirmee,
+.pastille--confirmee,
+.agenda-mois__rdv--confirmee {
+    --statut: var(--adm-confirmee);
+    --statut-fond: var(--adm-confirmee-fond);
+}
+
+.liste-rdv__statut--honoree,
+.agenda-rdv--honoree,
+.pastille--honoree,
+.agenda-mois__rdv--honoree {
+    --statut: var(--adm-honoree);
+    --statut-fond: var(--adm-honoree-fond);
+}
+
+.liste-rdv__statut--non_honoree,
+.agenda-rdv--non_honoree,
+.pastille--non_honoree,
+.agenda-mois__rdv--non_honoree {
+    --statut: var(--adm-non-honoree);
+    --statut-fond: var(--adm-non-honoree-fond);
+}
+
+.liste-rdv__statut--refusee,
+.liste-rdv__statut--expiree,
+.liste-rdv__statut--annulee,
+.pastille--fermeture {
+    --statut: var(--adm-texte-doux);
+    --statut-fond: var(--adm-fermeture-fond);
+}
+
+.liste-rdv__statut {
+    background: var(--statut-fond);
+    color: var(--statut);
+    font-weight: 600;
+}
+
+/* ---------- Fiche cliente ---------- */
+.points-delta {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.points-delta--gain {
+    color: var(--adm-confirmee);
+}
+
+.points-delta--perte {
+    color: var(--adm-non-honoree);
+}
+
+.fiche-cliente .tdb-carte .field-group,
+.fiche-cliente .tdb-carte .form-panel {
+    margin: 0;
+    border: 0;
+    box-shadow: none;
+}
+
+/* ---------- Agenda ---------- */
+.agenda__barre {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.agenda__vues {
+    display: inline-flex;
+    border: 1px solid var(--adm-bordure);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.agenda__alerte {
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    background: var(--adm-attente-fond);
+    color: var(--adm-attente);
+    font-weight: 600;
+}
+
+.agenda__legende {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    margin: 0 0 1rem;
+    padding: 0;
+    list-style: none;
+    color: var(--adm-texte-doux);
+    font-size: 0.85rem;
+}
+
+.pastille {
+    display: inline-block;
+    width: 0.8rem;
+    height: 0.8rem;
+    margin-right: 0.25rem;
+    border-left: 4px solid var(--statut);
+    border-radius: 3px;
+    background: var(--statut-fond);
+    vertical-align: -1px;
+}
+
+/* Grille horaire (jour, semaine) */
+.agenda-grille {
+    display: grid;
+    grid-template-columns: 3rem repeat(7, minmax(0, 1fr));
+    border: 1px solid var(--adm-bordure);
+    border-radius: 10px;
+    background: var(--adm-fond);
+    overflow: hidden;
+}
+
+.agenda-grille__entete {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.25rem;
+    height: 3.25rem;
+    margin: 0;
+    padding: 0 0.5rem;
+    border-bottom: 1px solid var(--adm-bordure);
+    font-size: 0.9rem;
+    font-weight: 400;
+}
+
+.agenda-grille__entete a {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    color: inherit;
+    text-decoration: none;
+}
+
+.agenda-jour__nom {
+    color: var(--adm-texte-doux);
+    text-transform: capitalize;
+}
+
+.agenda-jour__numero {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.agenda-jour__total {
+    color: var(--adm-texte-doux);
+    font-size: 0.75rem;
+}
+
+.agenda-jour--aujourdhui .agenda-jour__numero {
+    display: inline-grid;
+    place-items: center;
+    min-width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: var(--adm-accent);
+    color: var(--adm-sur-accent);
+}
+
+.agenda-grille__corps {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-rows: var(--agenda-ligne);
+    padding: 0 2px;
+}
+
+.agenda-jour {
+    min-width: 0;
+    border-left: 1px solid var(--adm-bordure);
+}
+
+.agenda-jour--ferme .agenda-grille__corps {
+    background: repeating-linear-gradient(-45deg, transparent 0 6px, var(--adm-fermeture-fond) 6px 12px);
+}
+
+.agenda-heure {
+    grid-column: 1;
+    padding-right: 0.35rem;
+    color: var(--adm-texte-doux);
+    font-size: 0.7rem;
+    line-height: 1;
+    text-align: right;
+    transform: translateY(-0.35rem);
+}
+
+.agenda-trait {
+    grid-column: 1;
+    border-top: 1px solid var(--adm-bordure);
+    pointer-events: none;
+}
+
+.agenda-rdv,
+.agenda-fermeture {
+    grid-column: 1;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    margin: 1px 0;
+    padding: 2px 6px;
+    overflow: hidden;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    line-height: 1.2;
+}
+
+.agenda-rdv {
+    border-left: 4px solid var(--statut);
+    background: var(--statut-fond);
+    color: var(--adm-texte);
+    text-decoration: none;
+}
+
+.agenda-rdv:hover,
+.agenda-rdv:focus-visible {
+    z-index: 2;
+    outline: 2px solid var(--statut);
+}
+
+.agenda-rdv__heure,
+.agenda-rdv__statut {
+    color: var(--statut);
+    font-weight: 600;
+}
+
+.agenda-rdv__statut {
+    display: none;
+}
+
+.agenda-rdv__cliente,
+.agenda-rdv__prestation {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.agenda-fermeture {
+    justify-content: center;
+    background: var(--adm-fermeture-fond);
+    color: var(--adm-texte-doux);
+    font-style: italic;
+    text-align: center;
+}
+
+.agenda-jour__vide {
+    display: none;
+}
+
+.agenda--jour .agenda-grille {
+    grid-template-columns: 3rem minmax(0, 1fr);
+}
+
+.agenda--jour .agenda-rdv {
+    flex-direction: row;
+    flex-wrap: wrap;
+    column-gap: 0.75rem;
+    font-size: 0.9rem;
+}
+
+.agenda--jour .agenda-rdv__statut {
+    display: inline;
+    margin-left: auto;
+}
+
+/*
+ * Téléphone, vue semaine : les jours s'empilent et chaque rendez-vous devient une ligne de liste.
+ */
+@media (max-width: 767.98px) {
+    .agenda--semaine .agenda-grille {
+        display: block;
+    }
+
+    .agenda--semaine .agenda-grille__heures,
+    .agenda--semaine .agenda-trait {
+        display: none;
+    }
+
+    .agenda--semaine .agenda-jour {
+        border-left: 0;
+        border-bottom: 1px solid var(--adm-bordure);
+    }
+
+    .agenda--semaine .agenda-grille__corps {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        padding: 0.5rem;
+        background: none;
+    }
+
+    .agenda--semaine .agenda-rdv,
+    .agenda--semaine .agenda-fermeture {
+        min-height: 48px;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+    }
+
+    .agenda--semaine .agenda-rdv__statut {
+        display: block;
+    }
+
+    .agenda--semaine .agenda-jour__vide {
+        display: block;
+        margin: 0;
+        color: var(--adm-texte-doux);
+        font-size: 0.85rem;
+    }
+}
+
+/* Vue mois */
+.agenda-mois {
+    border: 1px solid var(--adm-bordure);
+    border-radius: 10px;
+    background: var(--adm-fond);
+    overflow: hidden;
+}
+
+.agenda-mois__semaine {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.agenda-mois__semaine--entete span {
+    padding: 0.4rem;
+    color: var(--adm-texte-doux);
+    font-size: 0.8rem;
+    text-align: center;
+}
+
+.agenda-mois__jour {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-height: 5.5rem;
+    padding: 0.35rem;
+    border-top: 1px solid var(--adm-bordure);
+    border-left: 1px solid var(--adm-bordure);
+    color: inherit;
+    text-decoration: none;
+}
+
+.agenda-mois__jour:nth-child(7n + 1) {
+    border-left: 0;
+}
+
+.agenda-mois__jour:hover {
+    background: var(--adm-fond-doux);
+}
+
+.agenda-mois__jour--hors-mois {
+    opacity: 0.45;
+}
+
+.agenda-mois__jour--ferme,
+.agenda-mois__jour--fermeture {
+    background: repeating-linear-gradient(-45deg, transparent 0 6px, var(--adm-fermeture-fond) 6px 12px);
+}
+
+.agenda-mois__numero {
+    font-weight: 600;
+}
+
+.agenda-mois__jour--aujourdhui .agenda-mois__numero {
+    display: inline-grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    background: var(--adm-accent);
+    color: var(--adm-sur-accent);
+}
+
+.agenda-mois__total {
+    color: var(--adm-texte-doux);
+    font-size: 0.75rem;
+}
+
+.agenda-mois__liste {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.75rem;
+}
+
+.agenda-mois__rdv {
+    overflow: hidden;
+    padding-left: 4px;
+    border-left: 3px solid var(--statut);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.agenda-mois__plus,
+.agenda-mois__fermeture {
+    color: var(--adm-texte-doux);
+    font-size: 0.75rem;
+    font-style: italic;
+}
+
+/* Sur téléphone, le mois ne montre que le nombre de rendez-vous par jour. */
+@media (max-width: 767.98px) {
+    .agenda-mois__jour {
+        min-height: 3.5rem;
+    }
+
+    .agenda-mois__liste,
+    .agenda-mois__fermeture {
+        display: none;
+    }
+}
+
+/*
+ * Position des blocs dans la grille horaire : une ligne par quart d'heure.
+ * agenda-lN = ligne de départ, agenda-hN = nombre de lignes occupées.
+ * Classes générées (24 h = 96 lignes) pour éviter tout style en ligne, interdit par la CSP.
+ */
+.agenda-l1 { grid-row-start: 1; }
+.agenda-l2 { grid-row-start: 2; }
+.agenda-l3 { grid-row-start: 3; }
+.agenda-l4 { grid-row-start: 4; }
+.agenda-l5 { grid-row-start: 5; }
+.agenda-l6 { grid-row-start: 6; }
+.agenda-l7 { grid-row-start: 7; }
+.agenda-l8 { grid-row-start: 8; }
+.agenda-l9 { grid-row-start: 9; }
+.agenda-l10 { grid-row-start: 10; }
+.agenda-l11 { grid-row-start: 11; }
+.agenda-l12 { grid-row-start: 12; }
+.agenda-l13 { grid-row-start: 13; }
+.agenda-l14 { grid-row-start: 14; }
+.agenda-l15 { grid-row-start: 15; }
+.agenda-l16 { grid-row-start: 16; }
+.agenda-l17 { grid-row-start: 17; }
+.agenda-l18 { grid-row-start: 18; }
+.agenda-l19 { grid-row-start: 19; }
+.agenda-l20 { grid-row-start: 20; }
+.agenda-l21 { grid-row-start: 21; }
+.agenda-l22 { grid-row-start: 22; }
+.agenda-l23 { grid-row-start: 23; }
+.agenda-l24 { grid-row-start: 24; }
+.agenda-l25 { grid-row-start: 25; }
+.agenda-l26 { grid-row-start: 26; }
+.agenda-l27 { grid-row-start: 27; }
+.agenda-l28 { grid-row-start: 28; }
+.agenda-l29 { grid-row-start: 29; }
+.agenda-l30 { grid-row-start: 30; }
+.agenda-l31 { grid-row-start: 31; }
+.agenda-l32 { grid-row-start: 32; }
+.agenda-l33 { grid-row-start: 33; }
+.agenda-l34 { grid-row-start: 34; }
+.agenda-l35 { grid-row-start: 35; }
+.agenda-l36 { grid-row-start: 36; }
+.agenda-l37 { grid-row-start: 37; }
+.agenda-l38 { grid-row-start: 38; }
+.agenda-l39 { grid-row-start: 39; }
+.agenda-l40 { grid-row-start: 40; }
+.agenda-l41 { grid-row-start: 41; }
+.agenda-l42 { grid-row-start: 42; }
+.agenda-l43 { grid-row-start: 43; }
+.agenda-l44 { grid-row-start: 44; }
+.agenda-l45 { grid-row-start: 45; }
+.agenda-l46 { grid-row-start: 46; }
+.agenda-l47 { grid-row-start: 47; }
+.agenda-l48 { grid-row-start: 48; }
+.agenda-l49 { grid-row-start: 49; }
+.agenda-l50 { grid-row-start: 50; }
+.agenda-l51 { grid-row-start: 51; }
+.agenda-l52 { grid-row-start: 52; }
+.agenda-l53 { grid-row-start: 53; }
+.agenda-l54 { grid-row-start: 54; }
+.agenda-l55 { grid-row-start: 55; }
+.agenda-l56 { grid-row-start: 56; }
+.agenda-l57 { grid-row-start: 57; }
+.agenda-l58 { grid-row-start: 58; }
+.agenda-l59 { grid-row-start: 59; }
+.agenda-l60 { grid-row-start: 60; }
+.agenda-l61 { grid-row-start: 61; }
+.agenda-l62 { grid-row-start: 62; }
+.agenda-l63 { grid-row-start: 63; }
+.agenda-l64 { grid-row-start: 64; }
+.agenda-l65 { grid-row-start: 65; }
+.agenda-l66 { grid-row-start: 66; }
+.agenda-l67 { grid-row-start: 67; }
+.agenda-l68 { grid-row-start: 68; }
+.agenda-l69 { grid-row-start: 69; }
+.agenda-l70 { grid-row-start: 70; }
+.agenda-l71 { grid-row-start: 71; }
+.agenda-l72 { grid-row-start: 72; }
+.agenda-l73 { grid-row-start: 73; }
+.agenda-l74 { grid-row-start: 74; }
+.agenda-l75 { grid-row-start: 75; }
+.agenda-l76 { grid-row-start: 76; }
+.agenda-l77 { grid-row-start: 77; }
+.agenda-l78 { grid-row-start: 78; }
+.agenda-l79 { grid-row-start: 79; }
+.agenda-l80 { grid-row-start: 80; }
+.agenda-l81 { grid-row-start: 81; }
+.agenda-l82 { grid-row-start: 82; }
+.agenda-l83 { grid-row-start: 83; }
+.agenda-l84 { grid-row-start: 84; }
+.agenda-l85 { grid-row-start: 85; }
+.agenda-l86 { grid-row-start: 86; }
+.agenda-l87 { grid-row-start: 87; }
+.agenda-l88 { grid-row-start: 88; }
+.agenda-l89 { grid-row-start: 89; }
+.agenda-l90 { grid-row-start: 90; }
+.agenda-l91 { grid-row-start: 91; }
+.agenda-l92 { grid-row-start: 92; }
+.agenda-l93 { grid-row-start: 93; }
+.agenda-l94 { grid-row-start: 94; }
+.agenda-l95 { grid-row-start: 95; }
+.agenda-l96 { grid-row-start: 96; }
+.agenda-h1 { grid-row-end: span 1; }
+.agenda-h2 { grid-row-end: span 2; }
+.agenda-h3 { grid-row-end: span 3; }
+.agenda-h4 { grid-row-end: span 4; }
+.agenda-h5 { grid-row-end: span 5; }
+.agenda-h6 { grid-row-end: span 6; }
+.agenda-h7 { grid-row-end: span 7; }
+.agenda-h8 { grid-row-end: span 8; }
+.agenda-h9 { grid-row-end: span 9; }
+.agenda-h10 { grid-row-end: span 10; }
+.agenda-h11 { grid-row-end: span 11; }
+.agenda-h12 { grid-row-end: span 12; }
+.agenda-h13 { grid-row-end: span 13; }
+.agenda-h14 { grid-row-end: span 14; }
+.agenda-h15 { grid-row-end: span 15; }
+.agenda-h16 { grid-row-end: span 16; }
+.agenda-h17 { grid-row-end: span 17; }
+.agenda-h18 { grid-row-end: span 18; }
+.agenda-h19 { grid-row-end: span 19; }
+.agenda-h20 { grid-row-end: span 20; }
+.agenda-h21 { grid-row-end: span 21; }
+.agenda-h22 { grid-row-end: span 22; }
+.agenda-h23 { grid-row-end: span 23; }
+.agenda-h24 { grid-row-end: span 24; }
+.agenda-h25 { grid-row-end: span 25; }
+.agenda-h26 { grid-row-end: span 26; }
+.agenda-h27 { grid-row-end: span 27; }
+.agenda-h28 { grid-row-end: span 28; }
+.agenda-h29 { grid-row-end: span 29; }
+.agenda-h30 { grid-row-end: span 30; }
+.agenda-h31 { grid-row-end: span 31; }
+.agenda-h32 { grid-row-end: span 32; }
+.agenda-h33 { grid-row-end: span 33; }
+.agenda-h34 { grid-row-end: span 34; }
+.agenda-h35 { grid-row-end: span 35; }
+.agenda-h36 { grid-row-end: span 36; }
+.agenda-h37 { grid-row-end: span 37; }
+.agenda-h38 { grid-row-end: span 38; }
+.agenda-h39 { grid-row-end: span 39; }
+.agenda-h40 { grid-row-end: span 40; }
+.agenda-h41 { grid-row-end: span 41; }
+.agenda-h42 { grid-row-end: span 42; }
+.agenda-h43 { grid-row-end: span 43; }
+.agenda-h44 { grid-row-end: span 44; }
+.agenda-h45 { grid-row-end: span 45; }
+.agenda-h46 { grid-row-end: span 46; }
+.agenda-h47 { grid-row-end: span 47; }
+.agenda-h48 { grid-row-end: span 48; }
+.agenda-h49 { grid-row-end: span 49; }
+.agenda-h50 { grid-row-end: span 50; }
+.agenda-h51 { grid-row-end: span 51; }
+.agenda-h52 { grid-row-end: span 52; }
+.agenda-h53 { grid-row-end: span 53; }
+.agenda-h54 { grid-row-end: span 54; }
+.agenda-h55 { grid-row-end: span 55; }
+.agenda-h56 { grid-row-end: span 56; }
+.agenda-h57 { grid-row-end: span 57; }
+.agenda-h58 { grid-row-end: span 58; }
+.agenda-h59 { grid-row-end: span 59; }
+.agenda-h60 { grid-row-end: span 60; }
+.agenda-h61 { grid-row-end: span 61; }
+.agenda-h62 { grid-row-end: span 62; }
+.agenda-h63 { grid-row-end: span 63; }
+.agenda-h64 { grid-row-end: span 64; }
+.agenda-h65 { grid-row-end: span 65; }
+.agenda-h66 { grid-row-end: span 66; }
+.agenda-h67 { grid-row-end: span 67; }
+.agenda-h68 { grid-row-end: span 68; }
+.agenda-h69 { grid-row-end: span 69; }
+.agenda-h70 { grid-row-end: span 70; }
+.agenda-h71 { grid-row-end: span 71; }
+.agenda-h72 { grid-row-end: span 72; }
+.agenda-h73 { grid-row-end: span 73; }
+.agenda-h74 { grid-row-end: span 74; }
+.agenda-h75 { grid-row-end: span 75; }
+.agenda-h76 { grid-row-end: span 76; }
+.agenda-h77 { grid-row-end: span 77; }
+.agenda-h78 { grid-row-end: span 78; }
+.agenda-h79 { grid-row-end: span 79; }
+.agenda-h80 { grid-row-end: span 80; }
+.agenda-h81 { grid-row-end: span 81; }
+.agenda-h82 { grid-row-end: span 82; }
+.agenda-h83 { grid-row-end: span 83; }
+.agenda-h84 { grid-row-end: span 84; }
+.agenda-h85 { grid-row-end: span 85; }
+.agenda-h86 { grid-row-end: span 86; }
+.agenda-h87 { grid-row-end: span 87; }
+.agenda-h88 { grid-row-end: span 88; }
+.agenda-h89 { grid-row-end: span 89; }
+.agenda-h90 { grid-row-end: span 90; }
+.agenda-h91 { grid-row-end: span 91; }
+.agenda-h92 { grid-row-end: span 92; }
+.agenda-h93 { grid-row-end: span 93; }
+.agenda-h94 { grid-row-end: span 94; }
+.agenda-h95 { grid-row-end: span 95; }
+.agenda-h96 { grid-row-end: span 96; }
+.agenda-grille--l1 .agenda-grille__corps { grid-template-rows: repeat(1, var(--agenda-ligne)); }
+.agenda-grille--l2 .agenda-grille__corps { grid-template-rows: repeat(2, var(--agenda-ligne)); }
+.agenda-grille--l3 .agenda-grille__corps { grid-template-rows: repeat(3, var(--agenda-ligne)); }
+.agenda-grille--l4 .agenda-grille__corps { grid-template-rows: repeat(4, var(--agenda-ligne)); }
+.agenda-grille--l5 .agenda-grille__corps { grid-template-rows: repeat(5, var(--agenda-ligne)); }
+.agenda-grille--l6 .agenda-grille__corps { grid-template-rows: repeat(6, var(--agenda-ligne)); }
+.agenda-grille--l7 .agenda-grille__corps { grid-template-rows: repeat(7, var(--agenda-ligne)); }
+.agenda-grille--l8 .agenda-grille__corps { grid-template-rows: repeat(8, var(--agenda-ligne)); }
+.agenda-grille--l9 .agenda-grille__corps { grid-template-rows: repeat(9, var(--agenda-ligne)); }
+.agenda-grille--l10 .agenda-grille__corps { grid-template-rows: repeat(10, var(--agenda-ligne)); }
+.agenda-grille--l11 .agenda-grille__corps { grid-template-rows: repeat(11, var(--agenda-ligne)); }
+.agenda-grille--l12 .agenda-grille__corps { grid-template-rows: repeat(12, var(--agenda-ligne)); }
+.agenda-grille--l13 .agenda-grille__corps { grid-template-rows: repeat(13, var(--agenda-ligne)); }
+.agenda-grille--l14 .agenda-grille__corps { grid-template-rows: repeat(14, var(--agenda-ligne)); }
+.agenda-grille--l15 .agenda-grille__corps { grid-template-rows: repeat(15, var(--agenda-ligne)); }
+.agenda-grille--l16 .agenda-grille__corps { grid-template-rows: repeat(16, var(--agenda-ligne)); }
+.agenda-grille--l17 .agenda-grille__corps { grid-template-rows: repeat(17, var(--agenda-ligne)); }
+.agenda-grille--l18 .agenda-grille__corps { grid-template-rows: repeat(18, var(--agenda-ligne)); }
+.agenda-grille--l19 .agenda-grille__corps { grid-template-rows: repeat(19, var(--agenda-ligne)); }
+.agenda-grille--l20 .agenda-grille__corps { grid-template-rows: repeat(20, var(--agenda-ligne)); }
+.agenda-grille--l21 .agenda-grille__corps { grid-template-rows: repeat(21, var(--agenda-ligne)); }
+.agenda-grille--l22 .agenda-grille__corps { grid-template-rows: repeat(22, var(--agenda-ligne)); }
+.agenda-grille--l23 .agenda-grille__corps { grid-template-rows: repeat(23, var(--agenda-ligne)); }
+.agenda-grille--l24 .agenda-grille__corps { grid-template-rows: repeat(24, var(--agenda-ligne)); }
+.agenda-grille--l25 .agenda-grille__corps { grid-template-rows: repeat(25, var(--agenda-ligne)); }
+.agenda-grille--l26 .agenda-grille__corps { grid-template-rows: repeat(26, var(--agenda-ligne)); }
+.agenda-grille--l27 .agenda-grille__corps { grid-template-rows: repeat(27, var(--agenda-ligne)); }
+.agenda-grille--l28 .agenda-grille__corps { grid-template-rows: repeat(28, var(--agenda-ligne)); }
+.agenda-grille--l29 .agenda-grille__corps { grid-template-rows: repeat(29, var(--agenda-ligne)); }
+.agenda-grille--l30 .agenda-grille__corps { grid-template-rows: repeat(30, var(--agenda-ligne)); }
+.agenda-grille--l31 .agenda-grille__corps { grid-template-rows: repeat(31, var(--agenda-ligne)); }
+.agenda-grille--l32 .agenda-grille__corps { grid-template-rows: repeat(32, var(--agenda-ligne)); }
+.agenda-grille--l33 .agenda-grille__corps { grid-template-rows: repeat(33, var(--agenda-ligne)); }
+.agenda-grille--l34 .agenda-grille__corps { grid-template-rows: repeat(34, var(--agenda-ligne)); }
+.agenda-grille--l35 .agenda-grille__corps { grid-template-rows: repeat(35, var(--agenda-ligne)); }
+.agenda-grille--l36 .agenda-grille__corps { grid-template-rows: repeat(36, var(--agenda-ligne)); }
+.agenda-grille--l37 .agenda-grille__corps { grid-template-rows: repeat(37, var(--agenda-ligne)); }
+.agenda-grille--l38 .agenda-grille__corps { grid-template-rows: repeat(38, var(--agenda-ligne)); }
+.agenda-grille--l39 .agenda-grille__corps { grid-template-rows: repeat(39, var(--agenda-ligne)); }
+.agenda-grille--l40 .agenda-grille__corps { grid-template-rows: repeat(40, var(--agenda-ligne)); }
+.agenda-grille--l41 .agenda-grille__corps { grid-template-rows: repeat(41, var(--agenda-ligne)); }
+.agenda-grille--l42 .agenda-grille__corps { grid-template-rows: repeat(42, var(--agenda-ligne)); }
+.agenda-grille--l43 .agenda-grille__corps { grid-template-rows: repeat(43, var(--agenda-ligne)); }
+.agenda-grille--l44 .agenda-grille__corps { grid-template-rows: repeat(44, var(--agenda-ligne)); }
+.agenda-grille--l45 .agenda-grille__corps { grid-template-rows: repeat(45, var(--agenda-ligne)); }
+.agenda-grille--l46 .agenda-grille__corps { grid-template-rows: repeat(46, var(--agenda-ligne)); }
+.agenda-grille--l47 .agenda-grille__corps { grid-template-rows: repeat(47, var(--agenda-ligne)); }
+.agenda-grille--l48 .agenda-grille__corps { grid-template-rows: repeat(48, var(--agenda-ligne)); }
+.agenda-grille--l49 .agenda-grille__corps { grid-template-rows: repeat(49, var(--agenda-ligne)); }
+.agenda-grille--l50 .agenda-grille__corps { grid-template-rows: repeat(50, var(--agenda-ligne)); }
+.agenda-grille--l51 .agenda-grille__corps { grid-template-rows: repeat(51, var(--agenda-ligne)); }
+.agenda-grille--l52 .agenda-grille__corps { grid-template-rows: repeat(52, var(--agenda-ligne)); }
+.agenda-grille--l53 .agenda-grille__corps { grid-template-rows: repeat(53, var(--agenda-ligne)); }
+.agenda-grille--l54 .agenda-grille__corps { grid-template-rows: repeat(54, var(--agenda-ligne)); }
+.agenda-grille--l55 .agenda-grille__corps { grid-template-rows: repeat(55, var(--agenda-ligne)); }
+.agenda-grille--l56 .agenda-grille__corps { grid-template-rows: repeat(56, var(--agenda-ligne)); }
+.agenda-grille--l57 .agenda-grille__corps { grid-template-rows: repeat(57, var(--agenda-ligne)); }
+.agenda-grille--l58 .agenda-grille__corps { grid-template-rows: repeat(58, var(--agenda-ligne)); }
+.agenda-grille--l59 .agenda-grille__corps { grid-template-rows: repeat(59, var(--agenda-ligne)); }
+.agenda-grille--l60 .agenda-grille__corps { grid-template-rows: repeat(60, var(--agenda-ligne)); }
+.agenda-grille--l61 .agenda-grille__corps { grid-template-rows: repeat(61, var(--agenda-ligne)); }
+.agenda-grille--l62 .agenda-grille__corps { grid-template-rows: repeat(62, var(--agenda-ligne)); }
+.agenda-grille--l63 .agenda-grille__corps { grid-template-rows: repeat(63, var(--agenda-ligne)); }
+.agenda-grille--l64 .agenda-grille__corps { grid-template-rows: repeat(64, var(--agenda-ligne)); }
+.agenda-grille--l65 .agenda-grille__corps { grid-template-rows: repeat(65, var(--agenda-ligne)); }
+.agenda-grille--l66 .agenda-grille__corps { grid-template-rows: repeat(66, var(--agenda-ligne)); }
+.agenda-grille--l67 .agenda-grille__corps { grid-template-rows: repeat(67, var(--agenda-ligne)); }
+.agenda-grille--l68 .agenda-grille__corps { grid-template-rows: repeat(68, var(--agenda-ligne)); }
+.agenda-grille--l69 .agenda-grille__corps { grid-template-rows: repeat(69, var(--agenda-ligne)); }
+.agenda-grille--l70 .agenda-grille__corps { grid-template-rows: repeat(70, var(--agenda-ligne)); }
+.agenda-grille--l71 .agenda-grille__corps { grid-template-rows: repeat(71, var(--agenda-ligne)); }
+.agenda-grille--l72 .agenda-grille__corps { grid-template-rows: repeat(72, var(--agenda-ligne)); }
+.agenda-grille--l73 .agenda-grille__corps { grid-template-rows: repeat(73, var(--agenda-ligne)); }
+.agenda-grille--l74 .agenda-grille__corps { grid-template-rows: repeat(74, var(--agenda-ligne)); }
+.agenda-grille--l75 .agenda-grille__corps { grid-template-rows: repeat(75, var(--agenda-ligne)); }
+.agenda-grille--l76 .agenda-grille__corps { grid-template-rows: repeat(76, var(--agenda-ligne)); }
+.agenda-grille--l77 .agenda-grille__corps { grid-template-rows: repeat(77, var(--agenda-ligne)); }
+.agenda-grille--l78 .agenda-grille__corps { grid-template-rows: repeat(78, var(--agenda-ligne)); }
+.agenda-grille--l79 .agenda-grille__corps { grid-template-rows: repeat(79, var(--agenda-ligne)); }
+.agenda-grille--l80 .agenda-grille__corps { grid-template-rows: repeat(80, var(--agenda-ligne)); }
+.agenda-grille--l81 .agenda-grille__corps { grid-template-rows: repeat(81, var(--agenda-ligne)); }
+.agenda-grille--l82 .agenda-grille__corps { grid-template-rows: repeat(82, var(--agenda-ligne)); }
+.agenda-grille--l83 .agenda-grille__corps { grid-template-rows: repeat(83, var(--agenda-ligne)); }
+.agenda-grille--l84 .agenda-grille__corps { grid-template-rows: repeat(84, var(--agenda-ligne)); }
+.agenda-grille--l85 .agenda-grille__corps { grid-template-rows: repeat(85, var(--agenda-ligne)); }
+.agenda-grille--l86 .agenda-grille__corps { grid-template-rows: repeat(86, var(--agenda-ligne)); }
+.agenda-grille--l87 .agenda-grille__corps { grid-template-rows: repeat(87, var(--agenda-ligne)); }
+.agenda-grille--l88 .agenda-grille__corps { grid-template-rows: repeat(88, var(--agenda-ligne)); }
+.agenda-grille--l89 .agenda-grille__corps { grid-template-rows: repeat(89, var(--agenda-ligne)); }
+.agenda-grille--l90 .agenda-grille__corps { grid-template-rows: repeat(90, var(--agenda-ligne)); }
+.agenda-grille--l91 .agenda-grille__corps { grid-template-rows: repeat(91, var(--agenda-ligne)); }
+.agenda-grille--l92 .agenda-grille__corps { grid-template-rows: repeat(92, var(--agenda-ligne)); }
+.agenda-grille--l93 .agenda-grille__corps { grid-template-rows: repeat(93, var(--agenda-ligne)); }
+.agenda-grille--l94 .agenda-grille__corps { grid-template-rows: repeat(94, var(--agenda-ligne)); }
+.agenda-grille--l95 .agenda-grille__corps { grid-template-rows: repeat(95, var(--agenda-ligne)); }
+.agenda-grille--l96 .agenda-grille__corps { grid-template-rows: repeat(96, var(--agenda-ligne)); }
+
+@media (max-width: 767.98px) {
+    .agenda--semaine [class*="agenda-l"],
+    .agenda--semaine [class*="agenda-h"] {
+        grid-row: auto;
+    }
+}
+
+/* Rendez-vous courts (15 ou 30 min) : heure et cliente seulement, sur une ligne si besoin. */
+.agenda-rdv.agenda-h1,
+.agenda-rdv.agenda-h2 {
+    flex-direction: row;
+    flex-wrap: wrap;
+    column-gap: 0.4rem;
+}
+
+.agenda-rdv.agenda-h1 .agenda-rdv__prestation,
+.agenda-rdv.agenda-h2 .agenda-rdv__prestation,
+.agenda-rdv.agenda-h1 .agenda-rdv__statut {
+    display: none;
+}
+
+@media (max-width: 767.98px) {
+    .agenda--semaine .agenda-rdv.agenda-h1,
+    .agenda--semaine .agenda-rdv.agenda-h2 {
+        flex-direction: column;
+    }
+
+    .agenda--semaine .agenda-rdv .agenda-rdv__prestation {
+        display: block;
+    }
+}

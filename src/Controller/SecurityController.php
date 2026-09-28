@@ -40,6 +40,6 @@ final class SecurityController extends AbstractController
         }
 
         // Espace cliente à venir : retour à l'accueil en attendant.
-        return $this->redirect('/');
+        return $this->redirectToRoute('app_accueil');
     }
 }

@@ -1,0 +1,121 @@
+{% extends 'layout/public.html.twig' %}
+
+{% block title %}{{ salon.nom }} · {{ salon.activite }} à {{ salon.ville }}{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script type="application/ld+json" nonce="{{ csp_nonce('script') }}">{{ donnees_structurees_salon() }}</script>
+{% endblock %}
+
+{% block contenu %}
+    <section class="accroche">
+        <div class="conteneur accroche__grille">
+            <div class="accroche__texte">
+                <p class="surtitre">{{ salon.activite }} · {{ salon.ville }}</p>
+                <h1 class="accroche__titre">Des ongles soignés, dans un cocon tout doux</h1>
+                <p class="accroche__intro">
+                    Pose gel, semi-permanent, nail art : je prends le temps de chaque cliente,
+                    dans mon salon, avec des produits de qualité et une hygiène irréprochable.
+                </p>
+                <div class="accroche__actions">
+                    <a class="bouton" href="{{ path('app_reservation') }}">Réserver un rendez-vous</a>
+                    <a class="bouton bouton--secondaire" href="{{ path('app_prestations') }}">Voir les prestations</a>
+                </div>
+            </div>
+            {% if photos is not empty %}
+                <img class="accroche__photo" src="{{ asset('uploads/galerie/' ~ photos|first.fichier) }}"
+                     alt="{{ photos|first.legende }}" width="600" height="750" fetchpriority="high">
+            {% endif %}
+        </div>
+    </section>
+
+    {% if prestations is not empty %}
+        <section class="section" aria-labelledby="titre-prestations">
+            <div class="conteneur">
+                <h2 id="titre-prestations" class="section__titre">Prestations phares</h2>
+                <div class="grille-cartes">
+                    {% for prestation in prestations %}
+                        <twig:PrestationCard :prestation="prestation" />
+                    {% endfor %}
+                </div>
+                <p class="section__suite"><a href="{{ path('app_prestations') }}">Toutes les prestations et tarifs</a></p>
+            </div>
+        </section>
+    {% endif %}
+
+    {% if photos is not empty %}
+        <section class="section section--douce" aria-labelledby="titre-galerie">
+            <div class="conteneur">
+                <h2 id="titre-galerie" class="section__titre">Dernières réalisations</h2>
+                {{ include('site/_galerie.html.twig', {photos: photos}) }}
+                <p class="section__suite"><a href="{{ path('app_galerie') }}">Voir toute la galerie</a></p>
+            </div>
+        </section>
+    {% endif %}
+
+    {% if inspirations is not empty %}
+        <section class="section" aria-labelledby="titre-inspirations">
+            <div class="conteneur">
+                <h2 id="titre-inspirations" class="section__titre">Envie d'inspiration ?</h2>
+                <ul class="inspirations">
+                    {% for inspiration in inspirations %}
+                        {% set couverture = inspiration.photos|filter(p => p.publiee)|first %}
+                        <li>
+                            <a class="inspiration" href="{{ path('app_galerie', {theme: inspiration.slug}) }}">
+                                {% if couverture %}
+                                    <img src="{{ asset('uploads/galerie/' ~ couverture.fichier) }}" alt=""
+                                         width="400" height="400" loading="lazy" decoding="async">
+                                {% endif %}
+                                <span class="inspiration__nom">{{ inspiration.nom }}</span>
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </section>
+    {% endif %}
+
+    <section class="section" aria-labelledby="titre-fonctionnement">
+        <div class="conteneur">
+            <h2 id="titre-fonctionnement" class="section__titre">Comment réserver ?</h2>
+            <ol class="etapes">
+                <li class="etapes__item">
+                    <h3>Choisissez votre prestation</h3>
+                    <p>Et le créneau qui vous convient parmi les disponibilités en temps réel.</p>
+                </li>
+                <li class="etapes__item">
+                    <h3>Laissez un acompte</h3>
+                    <p>Votre carte est simplement bloquée : rien n'est débité tant que je n'ai pas validé.</p>
+                </li>
+                <li class="etapes__item">
+                    <h3>Recevez la confirmation</h3>
+                    <p>Par email, avec un rappel la veille de votre rendez-vous.</p>
+                </li>
+            </ol>
+        </div>
+    </section>
+
+    <section class="section section--douce" aria-labelledby="titre-fidelite">
+        <div class="conteneur texte-centre">
+            <h2 id="titre-fidelite" class="section__titre">Votre fidélité récompensée</h2>
+            <p class="section__intro">
+                Chaque rendez-vous vous rapporte des points sur votre carte de fidélité.
+                Vos points se transforment en réduction sur vos prochaines prestations.
+            </p>
+        </div>
+    </section>
+
+    <section class="section" aria-labelledby="titre-venir">
+        <div class="conteneur infos-grille">
+            <div>
+                <h2 id="titre-venir" class="section__titre">Venir au salon</h2>
+                {{ include('site/_adresse.html.twig') }}
+                <p><a href="{{ path('app_infos') }}">Accès et informations pratiques</a></p>
+            </div>
+            <div>
+                <h2 class="section__titre">Horaires</h2>
+                {{ include('site/_horaires.html.twig') }}
+            </div>
+        </div>
+    </section>
+{% endblock %}

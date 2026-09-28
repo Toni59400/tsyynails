@@ -14,12 +14,17 @@
     --color-danger-bg: #fbeaea;
     --color-success: #2f6b46;
     --color-success-bg: #e7f3ec;
+    --color-info: #5b4a3f;
+    --color-info-bg: #f3ebe4;
+    --color-surface-douce: #f5ece6;
+    --color-on-primary: #ffffff;
 
     --font-heading: Georgia, "Times New Roman", serif;
     --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
     --radius: 12px;
     --space: 8px;
+    --largeur-max: 72rem;
     --focus-ring: 0 0 0 3px rgb(201 143 143 / 45%);
 }
 
@@ -92,6 +97,10 @@ a {
     font-size: 1.4rem;
 }
 
+.auth .bouton {
+    width: 100%;
+}
+
 .auth__aide {
     color: var(--color-muted);
     font-size: 0.95rem;
@@ -139,13 +148,13 @@ a {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 100%;
     min-height: 44px;
-    padding: var(--space) calc(var(--space) * 2);
+    padding: var(--space) calc(var(--space) * 3);
     border: 0;
     border-radius: 999px;
     background: var(--color-primary-ink);
-    color: #fff;
+    color: var(--color-on-primary);
+    text-decoration: none;
     font: inherit;
     font-weight: 600;
     cursor: pointer;
@@ -175,4 +184,28 @@ a {
 .alerte--succes {
     background: var(--color-success-bg);
     color: var(--color-success);
+}
+
+.alerte--info {
+    background: var(--color-info-bg);
+    color: var(--color-info);
+}
+
+.alerte__titre {
+    margin: 0 0 var(--space);
+    font-size: 1.1rem;
+}
+
+.alerte ul {
+    margin: 0;
+    padding-left: calc(var(--space) * 2.5);
+}
+
+.visuellement-cache {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
 }

@@ -46,10 +46,6 @@ class Prestation
     #[ORM\Column]
     private int $ordre = 0;
 
-    /** Nom du fichier image stocké (jamais le nom d'origine envoyé). */
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $photo = null;
-
     public function __construct(string $nom, int $prixCentimes, int $dureeMinutes)
     {
         $this->nom = $nom;
@@ -142,18 +138,6 @@ class Prestation
     public function setOrdre(int $ordre): static
     {
         $this->ordre = $ordre;
-
-        return $this;
-    }
-
-    public function getPhoto(): ?string
-    {
-        return $this->photo;
-    }
-
-    public function setPhoto(?string $photo): static
-    {
-        $this->photo = $photo;
 
         return $this;
     }

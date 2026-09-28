@@ -1,0 +1,50 @@
+{% extends 'layout/public.html.twig' %}
+
+{% block title %}
+    {%- if theme -%}{{ theme.nom }}
+    {%- elseif prestation -%}Réalisations {{ prestation.nom }}
+    {%- else -%}Galerie des réalisations{%- endif %} · {{ salon.nom }}
+{%- endblock %}
+{% block description %}Les réalisations et inspirations {{ salon.nom }} : french, baby boomer, nail art, couleurs de saison.{% endblock %}
+
+{% block contenu %}
+    <div class="conteneur page">
+        <h1>
+            {%- if theme -%}{{ theme.nom }}
+            {%- elseif prestation -%}Réalisations : {{ prestation.nom }}
+            {%- else -%}Galerie{%- endif -%}
+        </h1>
+
+        {% if inspirations is not empty %}
+            <nav class="filtres" aria-label="Thèmes d'inspiration">
+                <ul class="filtres__liste">
+                    <li><a class="filtre" href="{{ path('app_galerie') }}" {% if not theme and not prestation %}aria-current="page"{% endif %}>Toutes</a></li>
+                    {% for inspiration in inspirations %}
+                        <li>
+                            <a class="filtre" href="{{ path('app_galerie', {theme: inspiration.slug}) }}"
+                               {% if theme and theme.id == inspiration.id %}aria-current="page"{% endif %}>{{ inspiration.nom }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </nav>
+        {% endif %}
+
+        {% if theme and theme.description %}
+            <p class="page__intro">{{ theme.description }}</p>
+        {% endif %}
+
+        {% if photos is empty %}
+            <p>Les photos arrivent bientôt.</p>
+        {% else %}
+            {{ include('site/_galerie.html.twig') }}
+        {% endif %}
+
+        <p class="page__actions">
+            {% if prestation %}
+                <a class="bouton" href="{{ path('app_reservation_creneau', {id: prestation.id}) }}">Réserver : {{ prestation.nom }}</a>
+            {% else %}
+                <a class="bouton" href="{{ path('app_reservation') }}">Réserver un rendez-vous</a>
+            {% endif %}
+        </p>
+    </div>
+{% endblock %}

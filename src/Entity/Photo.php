@@ -5,13 +5,16 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Repository\PhotoRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
- * Réalisation affichée dans la galerie du site vitrine.
+ * Photo de la galerie : réalisation liée à une prestation, photo d'inspiration classée par thèmes, ou les deux.
  */
 #[ORM\Entity(repositoryClass: PhotoRepository::class)]
+#[ORM\Index(name: 'idx_photo_publiee_ordre', fields: ['publiee', 'ordre'])]
 class Photo
 {
     #[ORM\Id]
@@ -38,11 +41,22 @@ class Photo
     #[ORM\Column]
     private \DateTimeImmutable $createdAt;
 
+    /** Prestation illustrée par cette photo (réalisation). */
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?Prestation $prestation = null;
+
+    /** @var Collection<int, Inspiration> */
+    #[ORM\ManyToMany(targetEntity: Inspiration::class, inversedBy: 'photos')]
+    #[ORM\JoinTable(name: 'photo_inspiration')]
+    private Collection $inspirations;
+
     public function __construct(string $fichier, string $legende)
     {
         $this->fichier = $fichier;
         $this->legende = $legende;
         $this->createdAt = new \DateTimeImmutable();
+        $this->inspirations = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -101,5 +115,46 @@ class Photo
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    public function getPrestation(): ?Prestation
+    {
+        return $this->prestation;
+    }
+
+    public function setPrestation(?Prestation $prestation): static
+    {
+        $this->prestation = $prestation;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Inspiration>
+     */
+    public function getInspirations(): Collection
+    {
+        return $this->inspirations;
+    }
+
+    public function addInspiration(Inspiration $inspiration): static
+    {
+        if (!$this->inspirations->contains($inspiration)) {
+            $this->inspirations->add($inspiration);
+        }
+
+        return $this;
+    }
+
+    public function removeInspiration(Inspiration $inspiration): static
+    {
+        $this->inspirations->removeElement($inspiration);
+
+        return $this;
+    }
+
+    public function __toString(): string
+    {
+        return $this->legende;
     }
 }

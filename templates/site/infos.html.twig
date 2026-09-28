@@ -1,0 +1,57 @@
+{% extends 'layout/public.html.twig' %}
+
+{% block title %}Infos pratiques et contact · {{ salon.nom }}{% endblock %}
+{% block description %}Adresse, accès, horaires et contact du salon {{ salon.nom }} à {{ salon.ville }}.{% endblock %}
+
+{% block contenu %}
+    <div class="conteneur page">
+        <h1>Infos pratiques</h1>
+
+        {% set fermetures = fermetures_a_venir() %}
+        {% if fermetures is not empty %}
+            <div class="alerte alerte--info" role="note">
+                <h2 class="alerte__titre">Fermetures à venir</h2>
+                <ul>
+                    {% for fermeture in fermetures %}
+                        {# Une fin à minuit est exclue : fermé jusqu'à la veille au soir. #}
+                        {% set dernier_jour = fermeture.fin|date('H:i') == '00:00' ? fermeture.fin.modify('-1 day') : fermeture.fin %}
+                        <li>
+                            {% if fermeture.debut|date('Y-m-d') == dernier_jour|date('Y-m-d') %}
+                                Le {{ fermeture.debut|date_fr('EEEE d MMMM') }}
+                            {% else %}
+                                Du {{ fermeture.debut|date_fr('EEEE d MMMM') }} au {{ dernier_jour|date_fr('EEEE d MMMM') }}
+                            {% endif %}
+                            {%- if fermeture.motif %} ({{ fermeture.motif }}){% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <div class="infos-grille">
+            <section aria-labelledby="titre-adresse">
+                <h2 id="titre-adresse">Adresse et accès</h2>
+                {{ include('site/_adresse.html.twig') }}
+                <p>{{ salon.acces }}</p>
+            </section>
+
+            <section aria-labelledby="titre-horaires">
+                <h2 id="titre-horaires">Horaires</h2>
+                {{ include('site/_horaires.html.twig') }}
+                <p class="page__note">Sur rendez-vous uniquement.</p>
+            </section>
+        </div>
+
+        <section id="contact" aria-labelledby="titre-contact">
+            <h2 id="titre-contact">Contact</h2>
+            <p>
+                Pour une question, un conseil ou un rendez-vous hors créneaux en ligne,
+                appelez-moi ou écrivez-moi. Je réponds dès que possible, entre deux clientes.
+            </p>
+            <div class="contact-actions">
+                <a class="bouton" href="tel:{{ salon.telephone }}">Appeler le {{ salon.telephone|telephone }}</a>
+                <a class="bouton bouton--secondaire" href="mailto:{{ salon.email }}">Écrire un email</a>
+            </div>
+        </section>
+    </div>
+{% endblock %}

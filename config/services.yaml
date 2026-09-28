@@ -7,6 +7,23 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    # Coordonnées affichées sur le site (pied de page, infos pratiques, données structurées, mentions légales).
+    # VALEURS PROVISOIRES : à remplacer par les vraies informations avant la mise en ligne.
+    app.salon:
+        nom: 'Tsyynails'
+        activite: 'Prothésiste ongulaire'
+        adresse: "16 rue du Roussillon"
+        code_postal: '62000'
+        ville: 'Arras'
+        telephone: '+33622176077'
+        email: 'tsyyart@gmail.com'
+        instagram: 'https://www.instagram.com/tsyynails'
+        acces: 'Stationnement gratuit dans la rue. Salon au rez-de-chaussée, accessible en fauteuil roulant.'
+        responsable_publication: 'Gipsy Pira'
+        siret: 'À compléter'
+
+    # Photos de la galerie, hors du dépôt Git
+    app.dossier_galerie: '%kernel.project_dir%/public/uploads/galerie'
 
 services:
     # default configuration for services in *this* file
@@ -21,3 +38,7 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+when@test:
+    parameters:
+        app.dossier_galerie: '%kernel.project_dir%/var/test/galerie'

@@ -1,0 +1,72 @@
+{% extends 'layout/public.html.twig' %}
+
+{% block title %}Choisir un créneau · {{ prestation.nom }} · {{ salon.nom }}{% endblock %}
+
+{% block meta %}
+    {{ parent() }}
+    <meta name="robots" content="noindex">
+{% endblock %}
+
+{% block contenu %}
+    <div class="conteneur page">
+        {{ include('reservation/_etapes.html.twig', {etape: 2}) }}
+        <h1>Choisissez votre créneau</h1>
+        <p class="recap-court">
+            <strong>{{ prestation.nom }}</strong> · {{ prestation.dureeMinutes|duree }} · {{ prestation.prixCentimes|euros }}
+            · <a href="{{ path('app_reservation') }}">changer</a>
+        </p>
+
+        {# Le changement de jour ne recharge que ce cadre (Turbo Frame). #}
+        <turbo-frame id="creneaux" data-turbo-action="advance">
+            <h2 class="visuellement-cache">Jour</h2>
+            <ul class="jours" aria-label="Jours disponibles">
+                {% for date, creneaux in creneaux_par_jour %}
+                    {% set jour_date = date(date) %}
+                    <li>
+                        {% if creneaux is empty %}
+                            <span class="jour jour--complet" aria-disabled="true">
+                                <span class="jour__nom">{{ jour_date|date_fr('EEE') }}</span>
+                                <span class="jour__numero">{{ jour_date|date_fr('d') }}</span>
+                                <span class="jour__mois">{{ jour_date|date_fr('MMM') }}</span>
+                                <span class="visuellement-cache">, aucun créneau</span>
+                            </span>
+                        {% else %}
+                            <a class="jour" href="{{ path('app_reservation_creneau', {id: prestation.id, jour: date}) }}"
+                               {% if date == jour %}aria-current="date"{% endif %}>
+                                <span class="jour__nom">{{ jour_date|date_fr('EEE') }}</span>
+                                <span class="jour__numero">{{ jour_date|date_fr('d') }}</span>
+                                <span class="jour__mois">{{ jour_date|date_fr('MMM') }}</span>
+                            </a>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+
+            {% set creneaux = creneaux_par_jour[jour] ?? [] %}
+            <h2 class="creneaux__titre">{{ date(jour)|date_fr('EEEE d MMMM')|capitalize }}</h2>
+            {% if creneaux_par_jour|filter(c => c is not empty) is empty %}
+                <p>Aucun créneau libre sur les {{ creneaux_par_jour|length }} prochains jours pour cette prestation.
+                    <a href="{{ path('app_infos') }}#contact" data-turbo-frame="_top">Contactez-moi</a> pour trouver une solution.</p>
+            {% elseif creneaux is empty %}
+                <p>Aucun créneau libre ce jour-là. Choisissez un autre jour.</p>
+            {% else %}
+                {% for moment, filtre in {'Matin': 'matin', 'Après-midi': 'apres-midi'} %}
+                    {% set liste = creneaux|filter(c => (c|date('G') < 12) == (filtre == 'matin')) %}
+                    {% if liste is not empty %}
+                        <h3 class="creneaux__moment">{{ moment }}</h3>
+                        <ul class="creneaux">
+                            {% for creneau in liste %}
+                                <li>
+                                    <a class="creneau" data-turbo-frame="_top"
+                                       href="{{ path('app_reservation_recapitulatif', {id: prestation.id, creneau: creneau|date(format_creneau)}) }}">
+                                        {{ creneau|heure }}
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        </turbo-frame>
+    </div>
+{% endblock %}

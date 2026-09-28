@@ -42,4 +42,26 @@ class MouvementPointsRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    /**
+     * Soldes de toutes les clientes en une requête (liste de l'admin).
+     *
+     * @return array<int, int> solde par identifiant de cliente
+     */
+    public function soldesParClient(): array
+    {
+        /** @var list<array{client: int|string, solde: int|string}> $lignes */
+        $lignes = $this->createQueryBuilder('m')
+            ->select('IDENTITY(m.client) AS client', 'SUM(m.delta) AS solde')
+            ->groupBy('m.client')
+            ->getQuery()
+            ->getArrayResult();
+
+        $soldes = [];
+        foreach ($lignes as $ligne) {
+            $soldes[(int) $ligne['client']] = (int) $ligne['solde'];
+        }
+
+        return $soldes;
+    }
 }

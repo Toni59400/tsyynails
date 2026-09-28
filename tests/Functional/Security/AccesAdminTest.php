@@ -58,6 +58,16 @@ final class AccesAdminTest extends WebTestCase
     public static function pagesAdmin(): iterable
     {
         yield 'tableau de bord' => ['/admin'];
+        yield 'tableau de bord, année précédente' => ['/admin?periode=annee&date=2025-06-01'];
+        yield 'tableau de bord, période inconnue' => ['/admin?periode=siecle&date=pas-une-date'];
+        yield 'agenda semaine' => ['/admin/agenda'];
+        yield 'agenda jour' => ['/admin/agenda?vue=jour&date=2026-10-06'];
+        yield 'agenda mois' => ['/admin/agenda?vue=mois&date=2026-02-01'];
+        yield 'agenda vue inconnue' => ['/admin/agenda?vue=annee&date=xx'];
+        yield 'photos' => ['/admin/photo'];
+        yield 'nouvelle photo' => ['/admin/photo/new'];
+        yield 'thèmes d\'inspiration' => ['/admin/inspiration'];
+        yield 'nouveau thème' => ['/admin/inspiration/new'];
         yield 'réservations' => ['/admin/reservation'];
         yield 'clientes' => ['/admin/client'];
         yield 'nouvelle cliente' => ['/admin/client/new'];

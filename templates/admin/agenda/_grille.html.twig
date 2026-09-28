@@ -1,0 +1,58 @@
+{#
+    Vues jour et semaine : une colonne par jour, une ligne de grille par quart d'heure.
+    Sur téléphone, les jours s'empilent et les rendez-vous forment une simple liste.
+    Positionnement par classes CSS (agenda-l / agenda-h) : aucun style en ligne, compatible CSP.
+#}
+<div class="agenda-grille agenda-grille--l{{ agenda.lignes }}">
+    <div class="agenda-grille__heures" aria-hidden="true">
+        <div class="agenda-grille__entete"></div>
+        <div class="agenda-grille__corps">
+            {% for h in agenda.heures %}
+                <span class="agenda-heure agenda-l{{ h.ligne }}">{{ h.heure }} h</span>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% for jour in agenda.jours %}
+        {% set est_aujourdhui = jour.date == aujourdhui %}
+        <section class="agenda-jour{{ jour.ouvert ? '' : ' agenda-jour--ferme' }}{{ est_aujourdhui ? ' agenda-jour--aujourdhui' }}"
+                 aria-label="{{ jour.date|date_fr('EEEE d MMMM') }}">
+            <h2 class="agenda-grille__entete">
+                <a href="{{ path('admin_agenda_index', {vue: 'jour', date: jour.date|date('Y-m-d')}) }}">
+                    <span class="agenda-jour__nom">{{ jour.date|date_fr('EEE') }}</span>
+                    <span class="agenda-jour__numero">{{ jour.date|date('j') }}</span>
+                </a>
+                {% if jour.reservations is not empty %}
+                    <span class="agenda-jour__total">{{ jour.reservations|length }} rdv</span>
+                {% endif %}
+            </h2>
+
+            <div class="agenda-grille__corps">
+                {% for heure in agenda.heures %}
+                    <span class="agenda-trait agenda-l{{ heure.ligne }}" aria-hidden="true"></span>
+                {% endfor %}
+
+                {% for item in jour.indisponibilites %}
+                    <div class="agenda-fermeture agenda-l{{ item.ligne }} agenda-h{{ item.lignes }}">
+                        {{ item.indisponibilite.motif ?: 'Fermé' }}
+                    </div>
+                {% endfor %}
+
+                {% for item in jour.reservations %}
+                    {% set r = item.reservation %}
+                    <a class="agenda-rdv agenda-rdv--{{ r.statut.value }} agenda-l{{ item.ligne }} agenda-h{{ item.lignes }}"
+                       href="{{ path('admin_reservation_detail', {entityId: r.id}) }}">
+                        <span class="agenda-rdv__heure">{{ r.debut|heure }} – {{ r.fin|heure }}</span>
+                        <strong class="agenda-rdv__cliente">{{ r.client.nomComplet }}</strong>
+                        <span class="agenda-rdv__prestation">{{ r.prestation.nom }}</span>
+                        <span class="agenda-rdv__statut">{{ r.statut.libelle }}</span>
+                    </a>
+                {% endfor %}
+
+                {% if jour.reservations is empty and jour.indisponibilites is empty %}
+                    <p class="agenda-jour__vide">{{ jour.ouvert ? 'Aucun rendez-vous' : 'Fermé' }}</p>
+                {% endif %}
+            </div>
+        </section>
+    {% endfor %}
+</div>

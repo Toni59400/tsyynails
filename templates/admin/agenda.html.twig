@@ -1,0 +1,63 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% set vue = agenda.vue %}
+{% set dernier_jour = agenda.fin.modify('-1 day') %}
+
+{% block content_title %}
+    {%- if vue == 'jour' -%}
+        {{ agenda.debut|date_fr('EEEE d MMMM yyyy')|capitalize }}
+    {%- elseif vue == 'semaine' -%}
+        Semaine du {{ agenda.debut|date_fr('d MMMM') }} au {{ dernier_jour|date_fr('d MMMM yyyy') }}
+    {%- else -%}
+        {{ date|date_fr('MMMM yyyy')|capitalize }}
+    {%- endif -%}
+{% endblock %}
+
+{% block page_actions %}
+    <a class="btn btn-secondary" href="{{ path('admin_reservation_index') }}">
+        <i class="fa fa-list" aria-hidden="true"></i> Liste
+    </a>
+{% endblock %}
+
+{% block main %}
+    <div class="agenda agenda--{{ vue }}">
+        <div class="agenda__barre">
+            <nav class="agenda__navigation" aria-label="Période">
+                <a class="btn btn-secondary" href="{{ path('admin_agenda_index', {vue: vue, date: agenda.precedente|date('Y-m-d')}) }}" aria-label="Période précédente">
+                    <i class="fa fa-chevron-left" aria-hidden="true"></i>
+                </a>
+                <a class="btn btn-secondary" href="{{ path('admin_agenda_index', {vue: vue, date: aujourdhui|date('Y-m-d')}) }}">Aujourd'hui</a>
+                <a class="btn btn-secondary" href="{{ path('admin_agenda_index', {vue: vue, date: agenda.suivante|date('Y-m-d')}) }}" aria-label="Période suivante">
+                    <i class="fa fa-chevron-right" aria-hidden="true"></i>
+                </a>
+            </nav>
+            <nav class="agenda__vues" aria-label="Affichage">
+                {% for v, libelle in {jour: 'Jour', semaine: 'Semaine', mois: 'Mois'} %}
+                    <a class="agenda__vue" href="{{ path('admin_agenda_index', {vue: v, date: date|date('Y-m-d')}) }}"
+                       {% if v == vue %}aria-current="page"{% endif %}>{{ libelle }}</a>
+                {% endfor %}
+            </nav>
+        </div>
+
+        {% if agenda.en_attente > 0 %}
+            <p class="agenda__alerte">
+                <i class="fa fa-hourglass-half" aria-hidden="true"></i>
+                {{ agenda.en_attente }} demande{{ agenda.en_attente > 1 ? 's' }} en attente de validation sur cette période.
+            </p>
+        {% endif %}
+
+        <ul class="agenda__legende" aria-label="Légende">
+            <li><span class="pastille pastille--en_attente"></span> En attente</li>
+            <li><span class="pastille pastille--confirmee"></span> Confirmée</li>
+            <li><span class="pastille pastille--honoree"></span> Honorée</li>
+            <li><span class="pastille pastille--non_honoree"></span> Non honorée</li>
+            <li><span class="pastille pastille--fermeture"></span> Fermeture</li>
+        </ul>
+
+        {% if vue == 'mois' %}
+            {{ include('admin/agenda/_mois.html.twig') }}
+        {% else %}
+            {{ include('admin/agenda/_grille.html.twig') }}
+        {% endif %}
+    </div>
+{% endblock %}

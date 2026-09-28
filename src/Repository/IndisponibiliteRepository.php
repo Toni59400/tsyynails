@@ -17,4 +17,22 @@ class IndisponibiliteRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Indisponibilite::class);
     }
+
+    /**
+     * Indisponibilités qui chevauchent la période [debut, fin[.
+     *
+     * @return list<Indisponibilite>
+     */
+    public function findChevauchant(\DateTimeImmutable $debut, \DateTimeImmutable $fin): array
+    {
+        /** @var list<Indisponibilite> */
+        return $this->createQueryBuilder('i')
+            ->andWhere('i.debut < :fin')
+            ->andWhere('i.fin > :debut')
+            ->setParameter('debut', $debut)
+            ->setParameter('fin', $fin)
+            ->orderBy('i.debut', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }

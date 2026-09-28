@@ -19,6 +19,15 @@ php bin/console doctrine:migrations:migrate
 symfony serve -d
 ```
 
+## Données de démonstration
+
+```bash
+php bin/console app:demo:charger            # base vide
+php bin/console app:demo:charger --purger   # remplace les données existantes
+```
+
+Prestations, horaires, congés, 40 clientes fictives, environ 400 réservations sur 10 semaines passées et 4 à venir, points de fidélité, cartes et photos de galerie illustrées. Les comptes utilisateurs ne sont jamais touchés. Commande refusée en production.
+
 ## Compte administrateur
 
 ```bash

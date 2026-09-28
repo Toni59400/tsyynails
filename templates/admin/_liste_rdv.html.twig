@@ -1,0 +1,19 @@
+{# Liste compacte de rendez-vous (tableau de bord, fiche cliente). #}
+<ul class="liste-rdv">
+    {% for r in reservations %}
+        <li>
+            <a class="liste-rdv__item" href="{{ path('admin_reservation_detail', {entityId: r.id}) }}">
+                <span class="liste-rdv__quand">
+                    {% if avec_date ?? true %}{{ r.debut|date_fr('EEE d MMM')|capitalize }}, {% endif %}{{ r.debut|heure }}
+                </span>
+                <span class="liste-rdv__quoi">
+                    {% if avec_cliente ?? true %}<strong>{{ r.client.nomComplet }}</strong> · {% endif %}{{ r.prestation.nom }}
+                    {% if avec_demande ?? false %}
+                        <span class="liste-rdv__demande">demandée {{ r.createdAt|date_fr("d MMM 'à' H'h'mm") }}</span>
+                    {% endif %}
+                </span>
+                <span class="badge liste-rdv__statut liste-rdv__statut--{{ r.statut.value }}">{{ r.statut.libelle }}</span>
+            </a>
+        </li>
+    {% endfor %}
+</ul>

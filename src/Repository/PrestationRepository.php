@@ -17,4 +17,19 @@ class PrestationRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Prestation::class);
     }
+
+    /**
+     * @return list<Prestation>
+     */
+    public function findActives(?int $limite = null): array
+    {
+        /** @var list<Prestation> */
+        return $this->createQueryBuilder('p')
+            ->andWhere('p.active = true')
+            ->orderBy('p.ordre', 'ASC')
+            ->addOrderBy('p.nom', 'ASC')
+            ->setMaxResults($limite)
+            ->getQuery()
+            ->getResult();
+    }
 }

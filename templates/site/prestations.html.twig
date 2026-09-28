@@ -1,0 +1,29 @@
+{% extends 'layout/public.html.twig' %}
+
+{% block title %}Prestations et tarifs · {{ salon.nom }}{% endblock %}
+{% block description %}Tarifs et durées des prestations {{ salon.nom }} : pose gel, remplissage, semi-permanent, nail art, soins des mains et des pieds.{% endblock %}
+
+{% block contenu %}
+    <div class="conteneur page">
+        <h1>Prestations et tarifs</h1>
+        <p class="page__intro">
+            Les durées sont indicatives et comprennent la préparation de l'ongle.
+            Un acompte de {{ acompte_pourcentage }} % est demandé à la réservation, déduit du prix le jour du rendez-vous.
+        </p>
+
+        {% if prestations is empty %}
+            <p>Les prestations seront bientôt présentées ici.</p>
+        {% else %}
+            <div class="grille-cartes">
+                {% for prestation in prestations %}
+                    <twig:PrestationCard :prestation="prestation" titre="h2" :photos="photos_par_prestation[prestation.id] ?? []" />
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <p class="page__note">
+            Une question sur une prestation, une allergie ou un design particulier ?
+            <a href="{{ path('app_infos') }}#contact">Contactez-moi</a> avant de réserver.
+        </p>
+    </div>
+{% endblock %}

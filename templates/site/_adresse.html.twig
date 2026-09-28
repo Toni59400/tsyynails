@@ -1,0 +1,9 @@
+<address class="adresse">
+    {{ salon.adresse }}<br>
+    {{ salon.code_postal }} {{ salon.ville }}<br>
+    <a href="tel:{{ salon.telephone }}">{{ salon.telephone|telephone }}</a><br>
+    <a href="mailto:{{ salon.email }}">{{ salon.email }}</a>
+    {% if salon.instagram %}
+        <br><a href="{{ salon.instagram }}" rel="noopener">Instagram</a>
+    {% endif %}
+</address>

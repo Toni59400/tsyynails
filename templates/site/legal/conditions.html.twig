@@ -1,0 +1,39 @@
+{% extends 'layout/public.html.twig' %}
+
+{% block title %}Conditions de réservation · {{ salon.nom }}{% endblock %}
+
+{% block contenu %}
+    <div class="conteneur page page--texte">
+        <h1>Conditions de réservation</h1>
+        {{ include('site/legal/_provisoire.html.twig') }}
+
+        <h2>Demande de rendez-vous</h2>
+        <p>
+            Vous choisissez une prestation et un créneau libre. Votre demande bloque le créneau
+            jusqu'à ma réponse, en général sous 24 heures.
+        </p>
+
+        <h2>Acompte</h2>
+        <p>
+            Un acompte de {{ acompte_pourcentage }} % du prix est demandé par empreinte bancaire :
+            le montant est bloqué sur votre carte, mais pas débité.
+        </p>
+        <ul>
+            <li>Si je valide le rendez-vous, l'acompte est débité puis déduit du prix le jour J.</li>
+            <li>Si je ne peux pas vous recevoir, l'empreinte est libérée sans aucun frais.</li>
+            <li>Sans réponse de ma part sous 7 jours, la demande est annulée et l'empreinte libérée.</li>
+        </ul>
+
+        <h2>Annulation et retard</h2>
+        <p>
+            Les conditions d'annulation gratuite et le sort de l'acompte en cas d'absence
+            seront précisés ici avant l'ouverture de la réservation en ligne.
+        </p>
+
+        <h2>Points de fidélité</h2>
+        <p>
+            Chaque prestation réalisée vous rapporte des points. Vous pouvez les utiliser
+            comme réduction lors d'une prochaine réservation en ligne.
+        </p>
+    </div>
+{% endblock %}

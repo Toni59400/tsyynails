@@ -17,4 +17,17 @@ class HoraireOuvertureRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, HoraireOuverture::class);
     }
+
+    /**
+     * @return list<HoraireOuverture>
+     */
+    public function findToutesOrdonnees(): array
+    {
+        /** @var list<HoraireOuverture> */
+        return $this->createQueryBuilder('h')
+            ->orderBy('h.jourSemaine', 'ASC')
+            ->addOrderBy('h.heureDebut', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }

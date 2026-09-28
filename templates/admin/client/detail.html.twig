@@ -1,0 +1,102 @@
+{% extends '@EasyAdmin/crud/detail.html.twig' %}
+
+{% set client = entity.instance %}
+
+{% block main %}
+    <div class="fiche-cliente">
+        <div class="tdb-tuiles">
+            <div class="tdb-tuile tdb-tuile--principale">
+                <span class="tdb-tuile__libelle">Points fidélité</span>
+                <span class="tdb-tuile__valeur">{{ fidelite.solde }}</span>
+                <span class="tdb-tuile__detail">soit {{ (fidelite.solde * fidelite.valeur_point)|euros }} de réduction</span>
+            </div>
+            <div class="tdb-tuile">
+                <span class="tdb-tuile__libelle">Carte fidélité</span>
+                {% if fidelite.carte %}
+                    <span class="tdb-tuile__valeur tdb-tuile__valeur--texte">Associée</span>
+                    <span class="tdb-tuile__detail">depuis le {{ fidelite.carte.associeeAt|date('d/m/Y') }}</span>
+                {% else %}
+                    <span class="tdb-tuile__valeur tdb-tuile__valeur--texte">Aucune</span>
+                    <span class="tdb-tuile__detail">À associer en scannant une carte au salon</span>
+                {% endif %}
+            </div>
+            <div class="tdb-tuile">
+                <span class="tdb-tuile__libelle">Visites</span>
+                <span class="tdb-tuile__valeur">{{ visites }}</span>
+                <span class="tdb-tuile__detail">
+                    {% if client.derniereVisiteAt %}Dernière le {{ client.derniereVisiteAt|date('d/m/Y') }}{% else %}Aucune visite{% endif %}
+                    {% if non_honorees > 0 %} · {{ non_honorees }} absence{{ non_honorees > 1 ? 's' }}{% endif %}
+                </span>
+            </div>
+        </div>
+
+        <div class="tdb-colonnes">
+            <section class="tdb-carte" aria-labelledby="titre-coordonnees">
+                <h2 id="titre-coordonnees" class="tdb-carte__titre">Coordonnées</h2>
+                {{ parent() }}
+            </section>
+
+            <section class="tdb-carte" aria-labelledby="titre-correction">
+                <h2 id="titre-correction" class="tdb-carte__titre">Corriger les points</h2>
+                <p class="tdb-aide">Geste commercial, oubli, erreur : la correction est tracée avec votre nom et sa raison.</p>
+                <form method="post" action="{{ path('admin_client_points', {entityId: client.id}) }}" class="correction-points">
+                    <div class="mb-3">
+                        <label class="form-label" for="delta">Points à ajouter</label>
+                        <input class="form-control" type="number" id="delta" name="delta" required step="1"
+                               min="-{{ correction_max }}" max="{{ correction_max }}" aria-describedby="aide-delta">
+                        <div class="form-text" id="aide-delta">Nombre négatif pour retirer des points, par exemple -20.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="commentaire">Raison</label>
+                        <input class="form-control" type="text" id="commentaire" name="commentaire" required maxlength="255">
+                    </div>
+                    <input type="hidden" name="_token" value="{{ csrf_token('points_client_' ~ client.id) }}">
+                    <button type="submit" class="btn btn-primary">Enregistrer la correction</button>
+                </form>
+            </section>
+        </div>
+
+        <section class="tdb-carte" aria-labelledby="titre-historique-points">
+            <h2 id="titre-historique-points" class="tdb-carte__titre">Historique des points</h2>
+            {% if fidelite.mouvements is empty %}
+                <p class="tdb-vide">Aucun mouvement de points.</p>
+            {% else %}
+                <div class="table-responsive">
+                    <table class="table datagrid">
+                        <thead>
+                            <tr>
+                                <th scope="col">Date</th>
+                                <th scope="col">Motif</th>
+                                <th scope="col">Détail</th>
+                                <th scope="col" class="text-end">Points</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for m in fidelite.mouvements %}
+                                <tr>
+                                    <td>{{ m.createdAt|date('d/m/Y') }}</td>
+                                    <td>{{ m.motif.libelle }}</td>
+                                    <td>
+                                        {% if m.reservation %}{{ m.reservation.prestation.nom }} du {{ m.reservation.debut|date('d/m/Y') }}{% endif %}
+                                        {% if m.commentaire %}{{ m.commentaire }}{% endif %}
+                                        {% if m.auteur %}<span class="text-muted">· par {{ m.auteur }}</span>{% endif %}
+                                    </td>
+                                    <td class="text-end points-delta points-delta--{{ m.delta > 0 ? 'gain' : 'perte' }}">{{ m.delta > 0 ? '+' }}{{ m.delta }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </section>
+
+        <section class="tdb-carte" aria-labelledby="titre-historique-rdv">
+            <h2 id="titre-historique-rdv" class="tdb-carte__titre">Derniers rendez-vous</h2>
+            {% if reservations is empty %}
+                <p class="tdb-vide">Aucun rendez-vous.</p>
+            {% else %}
+                {{ include('admin/_liste_rdv.html.twig', {reservations: reservations, avec_cliente: false}) }}
+            {% endif %}
+        </section>
+    </div>
+{% endblock %}

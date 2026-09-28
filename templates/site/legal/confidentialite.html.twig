@@ -1,0 +1,80 @@
+{% extends 'layout/public.html.twig' %}
+
+{% block title %}Politique de confidentialité · {{ salon.nom }}{% endblock %}
+
+{% block contenu %}
+    <div class="conteneur page page--texte">
+        <h1>Politique de confidentialité</h1>
+        {{ include('site/legal/_provisoire.html.twig') }}
+
+        <h2>Responsable du traitement</h2>
+        <p>
+            {{ salon.nom }}, {{ salon.adresse }}, {{ salon.code_postal }} {{ salon.ville }}.
+            Contact : <a href="mailto:{{ salon.email }}">{{ salon.email }}</a>.
+        </p>
+
+        <h2>Données collectées et finalités</h2>
+        <div class="tableau-defilant">
+            <table>
+                <thead>
+                    <tr><th scope="col">Données</th><th scope="col">Pourquoi</th><th scope="col">Base légale</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Prénom, nom, téléphone, email</td>
+                        <td>Gérer vos rendez-vous, vous envoyer la confirmation et le rappel</td>
+                        <td>Exécution du contrat</td>
+                    </tr>
+                    <tr>
+                        <td>Historique des rendez-vous et points de fidélité</td>
+                        <td>Programme de fidélité, suivi de vos prestations</td>
+                        <td>Exécution du contrat</td>
+                    </tr>
+                    <tr>
+                        <td>Allergies et contre-indications (facultatif)</td>
+                        <td>Adapter les produits utilisés à votre santé</td>
+                        <td>Votre consentement explicite, retirable à tout moment</td>
+                    </tr>
+                    <tr>
+                        <td>Données de paiement de l'acompte</td>
+                        <td>Bloquer puis encaisser l'acompte</td>
+                        <td>Exécution du contrat ; traitées uniquement par Stripe</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <p>
+            Vos informations de santé sont chiffrées et ne sont visibles que par la prothésiste.
+            Aucun numéro de carte bancaire n'est stocké sur ce site.
+        </p>
+
+        <h2>Durées de conservation</h2>
+        <ul>
+            <li>Fiche cliente : 3 ans après votre dernier rendez-vous, puis anonymisation.</li>
+            <li>Pièces comptables (réservations payées) : 10 ans, obligation légale, sans votre identité après anonymisation.</li>
+            <li>Journaux techniques : 1 an au maximum.</li>
+        </ul>
+
+        <h2>Destinataires et sous-traitants</h2>
+        <ul>
+            <li>OVH (hébergement du site et des emails), France.</li>
+            <li>Stripe (paiement de l'acompte), Union européenne et États-Unis, sous clauses contractuelles types.</li>
+        </ul>
+        <p>Vos données ne sont jamais vendues ni utilisées pour de la publicité.</p>
+
+        <h2>Cookies</h2>
+        <p>
+            Ce site utilise uniquement des cookies indispensables à son fonctionnement
+            (session, protection des formulaires). Aucun cookie publicitaire ni de mesure d'audience :
+            aucun consentement n'est donc demandé.
+        </p>
+
+        <h2>Vos droits</h2>
+        <p>
+            Vous pouvez accéder à vos données, les corriger, les exporter, les faire supprimer,
+            retirer votre consentement ou vous opposer à un traitement en écrivant à
+            <a href="mailto:{{ salon.email }}">{{ salon.email }}</a>.
+            En cas de désaccord, vous pouvez saisir la CNIL (<a href="https://www.cnil.fr" rel="noopener">cnil.fr</a>).
+        </p>
+    </div>
+{% endblock %}

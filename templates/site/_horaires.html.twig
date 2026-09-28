@@ -1,0 +1,15 @@
+{# Horaires de la semaine ; compact = pied de page. #}
+<dl class="horaires{{ compact|default(false) ? ' horaires--compact' }}">
+    {% for jour in horaires_semaine() %}
+        <div class="horaires__jour">
+            <dt>{{ jour.jour }}</dt>
+            <dd>
+                {% for plage in jour.plages %}
+                    {{ plage.heureDebut|heure }} – {{ plage.heureFin|heure }}{% if not loop.last %}, {% endif %}
+                {% else %}
+                    <span class="horaires__ferme">Fermé</span>
+                {% endfor %}
+            </dd>
+        </div>
+    {% endfor %}
+</dl>

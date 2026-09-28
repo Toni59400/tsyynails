@@ -1,9 +1,134 @@
 {% extends '@EasyAdmin/page/content.html.twig' %}
 
-{% block page_title %}Bonjour{% endblock %}
+{% block content_title %}Tableau de bord{% endblock %}
 
 {% block main %}
-    <p>Bienvenue dans l'administration de Tsyynails.</p>
-    <p>Utilisez le menu pour gérer les prestations, les horaires, les congés et les fiches clientes.
-        Les demandes de réservation et le suivi des points arriveront avec les prochaines étapes.</p>
+<div class="tdb">
+    {# Aujourd'hui et à venir #}
+    <div class="tdb-tuiles">
+        <a class="tdb-tuile" href="{{ path('admin_agenda_index', {vue: 'jour'}) }}">
+            <span class="tdb-tuile__libelle">Rendez-vous aujourd'hui</span>
+            <span class="tdb-tuile__valeur">{{ tdb.rdv_aujourdhui|length }}</span>
+        </a>
+        <a class="tdb-tuile" href="{{ path('admin_agenda_index', {vue: 'semaine'}) }}">
+            <span class="tdb-tuile__libelle">Rendez-vous cette semaine</span>
+            <span class="tdb-tuile__valeur">{{ tdb.rdv_semaine }}</span>
+            <span class="tdb-tuile__detail">{{ (tdb.semaine.ca_realise + tdb.semaine.ca_prevu)|euros }} attendus</span>
+        </a>
+        <a class="tdb-tuile{{ tdb.en_attente is not empty ? ' tdb-tuile--alerte' }}" href="#demandes">
+            <span class="tdb-tuile__libelle">Demandes à valider</span>
+            <span class="tdb-tuile__valeur">{{ tdb.en_attente|length }}</span>
+            {% if tdb.en_attente_urgentes > 0 %}
+                <span class="tdb-tuile__detail">dont {{ tdb.en_attente_urgentes }} bientôt expirée{{ tdb.en_attente_urgentes > 1 ? 's' }}</span>
+            {% endif %}
+        </a>
+    </div>
+
+    <div class="tdb-colonnes">
+        <section class="tdb-carte" aria-labelledby="titre-aujourdhui">
+            <h2 id="titre-aujourdhui" class="tdb-carte__titre">Aujourd'hui</h2>
+            {% if tdb.rdv_aujourdhui is empty %}
+                <p class="tdb-vide">Aucun rendez-vous aujourd'hui.</p>
+            {% else %}
+                {{ include('admin/_liste_rdv.html.twig', {reservations: tdb.rdv_aujourdhui, avec_date: false}) }}
+            {% endif %}
+        </section>
+
+        <section class="tdb-carte" aria-labelledby="titre-prochains">
+            <h2 id="titre-prochains" class="tdb-carte__titre">Prochains rendez-vous</h2>
+            {% if tdb.prochains_rdv is empty %}
+                <p class="tdb-vide">Aucun rendez-vous à venir.</p>
+            {% else %}
+                {{ include('admin/_liste_rdv.html.twig', {reservations: tdb.prochains_rdv, avec_date: true}) }}
+            {% endif %}
+            <a class="tdb-carte__lien" href="{{ path('admin_agenda_index') }}">Ouvrir l'agenda</a>
+        </section>
+    </div>
+
+    {% if tdb.en_attente is not empty %}
+        <section id="demandes" class="tdb-carte" aria-labelledby="titre-demandes">
+            <h2 id="titre-demandes" class="tdb-carte__titre">Demandes en attente de validation</h2>
+            <p class="tdb-aide">La carte de la cliente est bloquée pendant {{ constant('App\\Service\\Statistiques\\TableauDeBord::JOURS_AVANT_EXPIRATION') }} jours au maximum : au-delà, la demande est annulée automatiquement.</p>
+            {{ include('admin/_liste_rdv.html.twig', {reservations: tdb.en_attente, avec_date: true, avec_demande: true}) }}
+        </section>
+    {% endif %}
+
+    {# Chiffre d'affaires filtrable #}
+    <section class="tdb-carte" aria-labelledby="titre-ca">
+        <div class="tdb-periode">
+            <h2 id="titre-ca" class="tdb-carte__titre">
+                Activité
+                {% if tdb.periode == 'jour' %}du {{ tdb.debut|date_fr('EEEE d MMMM yyyy') }}
+                {% elseif tdb.periode == 'semaine' %}du {{ tdb.debut|date_fr('d MMMM') }} au {{ tdb.fin.modify('-1 day')|date_fr('d MMMM yyyy') }}
+                {% elseif tdb.periode == 'mois' %}de {{ tdb.debut|date_fr('MMMM yyyy') }}
+                {% else %}de {{ tdb.debut|date('Y') }}{% endif %}
+            </h2>
+            <nav class="tdb-periode__choix" aria-label="Période">
+                {% for cle, libelle in periodes %}
+                    <a href="{{ path('admin', {periode: cle}) }}" {% if cle == tdb.periode %}aria-current="page"{% endif %}>{{ libelle }}</a>
+                {% endfor %}
+            </nav>
+            <nav class="tdb-periode__navigation" aria-label="Changer de période">
+                <a class="btn btn-secondary btn-sm" href="{{ path('admin', {periode: tdb.periode, date: tdb.precedente|date('Y-m-d')}) }}" aria-label="Période précédente"><i class="fa fa-chevron-left" aria-hidden="true"></i></a>
+                {% if not tdb.en_cours %}
+                    <a class="btn btn-secondary btn-sm" href="{{ path('admin', {periode: tdb.periode}) }}">Période actuelle</a>
+                {% endif %}
+                <a class="btn btn-secondary btn-sm" href="{{ path('admin', {periode: tdb.periode, date: tdb.suivante|date('Y-m-d')}) }}" aria-label="Période suivante"><i class="fa fa-chevron-right" aria-hidden="true"></i></a>
+            </nav>
+        </div>
+
+        <div class="tdb-tuiles tdb-tuiles--ca">
+            <div class="tdb-tuile tdb-tuile--principale">
+                <span class="tdb-tuile__libelle">Chiffre d'affaires réalisé</span>
+                <span class="tdb-tuile__valeur">{{ tdb.ca|euros }}</span>
+                <span class="tdb-tuile__detail">
+                    {% if tdb.evolution is null %}
+                        Pas de comparaison possible
+                    {% else %}
+                        <span class="tdb-evolution tdb-evolution--{{ tdb.evolution >= 0 ? 'hausse' : 'baisse' }}">
+                            {{ tdb.evolution >= 0 ? '+' : '−' }}{{ tdb.evolution|abs }} %
+                        </span>
+                        par rapport à la période précédente ({{ tdb.ca_precedent|euros }})
+                    {% endif %}
+                </span>
+            </div>
+            <div class="tdb-tuile">
+                <span class="tdb-tuile__libelle">Prévu (rendez-vous confirmés)</span>
+                <span class="tdb-tuile__valeur">{{ tdb.ca_prevu|euros }}</span>
+            </div>
+            <div class="tdb-tuile">
+                <span class="tdb-tuile__libelle">Prestations réalisées</span>
+                <span class="tdb-tuile__valeur">{{ tdb.prestations_realisees }}</span>
+                <span class="tdb-tuile__detail">Panier moyen {{ tdb.panier_moyen|euros }}</span>
+            </div>
+            <div class="tdb-tuile">
+                <span class="tdb-tuile__libelle">Rendez-vous non honorés</span>
+                <span class="tdb-tuile__valeur">{{ tdb.non_honores }}</span>
+                <span class="tdb-tuile__detail">{{ tdb.taux_non_honores }} % des rendez-vous passés</span>
+            </div>
+            <div class="tdb-tuile">
+                <span class="tdb-tuile__libelle">Nouvelles clientes</span>
+                <span class="tdb-tuile__valeur">{{ tdb.nouvelles_clientes }}</span>
+            </div>
+        </div>
+
+        <p class="tdb-aide">Chiffre d'affaires = prestations honorées, au prix payé après réduction fidélité.</p>
+
+        {% if tdb.meilleures_prestations is not empty %}
+            <h3 class="tdb-sous-titre">Prestations les plus demandées</h3>
+            <div class="table-responsive">
+                <table class="table datagrid">
+                    <thead>
+                        <tr><th scope="col">Prestation</th><th scope="col" class="text-end">Réalisées</th><th scope="col" class="text-end">Chiffre d'affaires</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for ligne in tdb.meilleures_prestations %}
+                            <tr><td>{{ ligne.nom }}</td><td class="text-end">{{ ligne.nombre }}</td><td class="text-end">{{ ligne.ca|euros }}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </section>
+</div>
 {% endblock %}

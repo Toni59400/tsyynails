@@ -1,0 +1,67 @@
+{% extends 'base.html.twig' %}
+
+{% block meta %}
+    <meta name="description" content="{% block description %}{{ salon.nom }}, {{ salon.activite|lower }} à {{ salon.ville }} : pose gel, semi-permanent, nail art. Réservez votre rendez-vous en ligne.{% endblock %}">
+    <link rel="canonical" href="{{ url(app.current_route ?? 'app_accueil', app.current_route_parameters) }}">
+{% endblock %}
+
+{% block body %}
+    <a class="lien-evitement" href="#contenu">Aller au contenu</a>
+
+    <header class="entete">
+        <div class="entete__interieur conteneur">
+            <a class="entete__marque" href="{{ path('app_accueil') }}">{{ salon.nom }}</a>
+            <a class="entete__reserver bouton bouton--compact" href="{{ path('app_reservation') }}">Réserver</a>
+            <nav class="navigation" aria-label="Navigation principale">
+                <ul class="navigation__liste">
+                    {% for route, libelle in {
+                        app_accueil: 'Accueil',
+                        app_prestations: 'Prestations',
+                        app_galerie: 'Galerie',
+                        app_infos: 'Infos pratiques',
+                    } %}
+                        <li>
+                            <a class="navigation__lien" href="{{ path(route) }}"
+                               {% if app.current_route == route %}aria-current="page"{% endif %}>{{ libelle }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main id="contenu">
+        {% for type in ['succes', 'erreur'] %}
+            {% for message in app.flashes(type) %}
+                <div class="conteneur">
+                    <div class="alerte alerte--{{ type }}" role="{{ type == 'erreur' ? 'alert' : 'status' }}">{{ message }}</div>
+                </div>
+            {% endfor %}
+        {% endfor %}
+
+        {% block contenu %}{% endblock %}
+    </main>
+
+    <footer class="pied">
+        <div class="conteneur pied__grille">
+            <section aria-labelledby="pied-salon">
+                <h2 id="pied-salon" class="pied__titre">{{ salon.nom }}</h2>
+                {{ include('site/_adresse.html.twig') }}
+            </section>
+            <section aria-labelledby="pied-horaires">
+                <h2 id="pied-horaires" class="pied__titre">Horaires</h2>
+                {{ include('site/_horaires.html.twig', {compact: true}) }}
+            </section>
+            <section aria-labelledby="pied-liens">
+                <h2 id="pied-liens" class="pied__titre">Informations</h2>
+                <ul class="pied__liens">
+                    <li><a href="{{ path('app_conditions') }}">Conditions de réservation</a></li>
+                    <li><a href="{{ path('app_confidentialite') }}">Confidentialité</a></li>
+                    <li><a href="{{ path('app_mentions_legales') }}">Mentions légales</a></li>
+                    <li><a href="{{ path('app_login') }}">Espace pro</a></li>
+                </ul>
+            </section>
+        </div>
+        <p class="pied__copyright conteneur">© {{ 'now'|date('Y') }} {{ salon.nom }}</p>
+    </footer>
+{% endblock %}

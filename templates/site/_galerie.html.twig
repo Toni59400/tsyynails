@@ -1,0 +1,11 @@
+<ul class="galerie">
+    {% for photo in photos %}
+        <li class="galerie__item">
+            <figure>
+                <img src="{{ asset('uploads/galerie/' ~ photo.fichier) }}" alt="{{ photo.legende }}"
+                     width="600" height="600" loading="lazy" decoding="async">
+                <figcaption>{{ photo.legende }}</figcaption>
+            </figure>
+        </li>
+    {% endfor %}
+</ul>

@@ -23,3 +23,6 @@
 /phpunit.xml
 /.phpunit.cache/
 ###< phpunit/phpunit ###
+
+# Fichiers envoyés depuis l'admin (photos de la galerie)
+/public/uploads/

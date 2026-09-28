@@ -1,0 +1,41 @@
+{# Vue mois : un calendrier de 5 ou 6 semaines ; un clic sur un jour ouvre la vue jour. #}
+<div class="agenda-mois" role="table" aria-label="Rendez-vous du mois">
+    <div class="agenda-mois__semaine agenda-mois__semaine--entete" role="row">
+        {% for nom in ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'] %}
+            <span role="columnheader">{{ nom }}</span>
+        {% endfor %}
+    </div>
+
+    {% for semaine in agenda.jours|batch(7) %}
+        <div class="agenda-mois__semaine" role="row">
+            {% for jour in semaine %}
+                {% set classes = [
+                    'agenda-mois__jour',
+                    jour.dans_le_mois ? '' : 'agenda-mois__jour--hors-mois',
+                    jour.ouvert ? '' : 'agenda-mois__jour--ferme',
+                    jour.indisponibilites is empty ? '' : 'agenda-mois__jour--fermeture',
+                    jour.date == aujourdhui ? 'agenda-mois__jour--aujourdhui' : '',
+                ] %}
+                <a class="{{ classes|filter(c => c)|join(' ') }}" role="cell"
+                   href="{{ path('admin_agenda_index', {vue: 'jour', date: jour.date|date('Y-m-d')}) }}">
+                    <span class="agenda-mois__numero">{{ jour.date|date('j') }}</span>
+                    {% if jour.reservations is not empty %}
+                        <span class="agenda-mois__total">{{ jour.reservations|length }} rdv</span>
+                        <ul class="agenda-mois__liste">
+                            {% for item in jour.reservations|slice(0, 3) %}
+                                <li class="agenda-mois__rdv agenda-mois__rdv--{{ item.reservation.statut.value }}">
+                                    {{ item.reservation.debut|date('G:i') }} {{ item.reservation.client.prenom }}
+                                </li>
+                            {% endfor %}
+                            {% if jour.reservations|length > 3 %}
+                                <li class="agenda-mois__plus">+ {{ jour.reservations|length - 3 }}</li>
+                            {% endif %}
+                        </ul>
+                    {% elseif jour.indisponibilites is not empty %}
+                        <span class="agenda-mois__fermeture">{{ (jour.indisponibilites|first).indisponibilite.motif ?: 'Fermé' }}</span>
+                    {% endif %}
+                </a>
+            {% endfor %}
+        </div>
+    {% endfor %}
+</div>

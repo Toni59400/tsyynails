@@ -1,0 +1,31 @@
+{% props prestation, titre = 'h3', lien_reservation = true, photos = [] %}
+
+<article {{ attributes.defaults({class: 'carte-prestation' ~ (photos is empty ? '' : ' carte-prestation--photo')}) }}>
+    {% if photos is not empty %}
+        <img class="carte-prestation__photo" src="{{ asset('uploads/galerie/' ~ (photos|first).fichier) }}"
+             alt="{{ (photos|first).legende }}" width="600" height="400" loading="lazy" decoding="async">
+    {% endif %}
+    <{{ titre }} class="carte-prestation__nom">{{ prestation.nom }}</{{ titre }}>
+    {% if prestation.description %}
+        <p class="carte-prestation__description">{{ prestation.description }}</p>
+    {% endif %}
+    <ul class="carte-prestation__details" aria-label="Détails">
+        <li><span class="visuellement-cache">Prix : </span><strong>{{ prestation.prixCentimes|euros }}</strong></li>
+        <li><span class="visuellement-cache">Durée : </span>{{ prestation.dureeMinutes|duree }}</li>
+        {% if prestation.points > 0 %}
+            <li>{{ prestation.points }} points fidélité</li>
+        {% endif %}
+    </ul>
+    <div class="carte-prestation__actions">
+        {% if lien_reservation %}
+            <a class="bouton bouton--secondaire" href="{{ path('app_reservation_creneau', {id: prestation.id}) }}">
+                Réserver<span class="visuellement-cache"> : {{ prestation.nom }}</span>
+            </a>
+        {% endif %}
+        {% if photos|length > 1 %}
+            <a class="carte-prestation__lien" href="{{ path('app_galerie', {prestation: prestation.id}) }}">
+                {{ photos|length }} réalisations<span class="visuellement-cache"> : {{ prestation.nom }}</span>
+            </a>
+        {% endif %}
+    </div>
+</article>

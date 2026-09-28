@@ -1,0 +1,9 @@
+{# Fil d'étapes du tunnel ; etape = numéro de l'étape en cours. #}
+<ol class="tunnel-etapes" aria-label="Étapes de la réservation">
+    {% for numero, libelle in {1: 'Prestation', 2: 'Créneau', 3: 'Récapitulatif'} %}
+        <li class="tunnel-etapes__item{{ numero < etape ? ' tunnel-etapes__item--faite' }}"
+            {% if numero == etape %}aria-current="step"{% endif %}>
+            {{ libelle }}
+        </li>
+    {% endfor %}
+</ol>
