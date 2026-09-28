@@ -15,6 +15,10 @@ if (!is_dir(dirname(__DIR__).'/vendor')) {
     throw new LogicException('Dépendances manquantes : lancez "composer install".');
 }
 
+// Silencieux quand tout va bien (pas d'email de logs OVH à chaque heure) ;
+// les erreurs restent journalisées par Monolog et font échouer la tâche.
+$_SERVER['argv'][] = '--quiet';
+
 require_once dirname(__DIR__).'/vendor/autoload_runtime.php';
 
 return static function (array $context) {
