@@ -62,7 +62,7 @@ final class SiteController extends AbstractController
 
         return $this->render('site/prestation.html.twig', [
             'prestation' => $prestation,
-            'photos' => $this->photos->findPubliees(12, null, $prestation),
+            'photos' => $this->photos->findPubliees(null, null, $prestation),
             'autres' => array_values(array_filter($this->prestations->findActives(), static fn (Prestation $p): bool => $p !== $prestation)),
             'acompte_pourcentage' => $this->tarification->acomptePourcentage(),
         ]);

@@ -68,4 +68,33 @@ class PhotoRepository extends ServiceEntityRepository
 
         return $parPrestation;
     }
+
+    /** Ordre d'affichage à donner à une nouvelle photo : après les existantes. */
+    public function prochainOrdre(): int
+    {
+        return 1 + (int) $this->createQueryBuilder('p')->select('COALESCE(MAX(p.ordre), -1)')->getQuery()->getSingleScalarResult();
+    }
+
+    /**
+     * Nombre de photos (publiées ou non) par prestation, en une requête.
+     *
+     * @return array<int, int>
+     */
+    public function nombreParPrestation(): array
+    {
+        /** @var list<array{prestation: int|string, nombre: int|string}> $lignes */
+        $lignes = $this->createQueryBuilder('p')
+            ->select('IDENTITY(p.prestation) AS prestation', 'COUNT(p.id) AS nombre')
+            ->andWhere('p.prestation IS NOT NULL')
+            ->groupBy('p.prestation')
+            ->getQuery()
+            ->getArrayResult();
+
+        $nombres = [];
+        foreach ($lignes as $ligne) {
+            $nombres[(int) $ligne['prestation']] = (int) $ligne['nombre'];
+        }
+
+        return $nombres;
+    }
 }

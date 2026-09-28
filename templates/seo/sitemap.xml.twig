@@ -13,7 +13,7 @@
 {% for prestation in prestations %}
     <url>
         <loc>{{ url('app_prestation', {slug: prestation.slug}) }}</loc>
-{% for photo in (photos_par_prestation[prestation.id] ?? [])|slice(0, 20) %}
+{% for photo in (photos_par_prestation[prestation.id] ?? [])|slice(0, 1000) %}
         <image:image><image:loc>{{ absolute_url(asset('uploads/galerie/' ~ photo.fichier)) }}</image:loc></image:image>
 {% endfor %}
     </url>

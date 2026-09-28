@@ -69,6 +69,7 @@ final class DashboardController extends AbstractDashboardController
         yield MenuItem::section('Catalogue');
         yield MenuItem::linkTo(PrestationCrudController::class, 'Prestations', 'fa fa-hand-sparkles');
         yield MenuItem::linkTo(PhotoCrudController::class, 'Photos', 'fa fa-images');
+        yield MenuItem::linkToRoute('Importer des photos', 'fa fa-upload', 'admin_photos_import_index');
         yield MenuItem::linkTo(InspirationCrudController::class, 'Thèmes d\'inspiration', 'fa fa-wand-magic-sparkles');
         yield MenuItem::linkTo(QuestionFrequenteCrudController::class, 'Questions fréquentes', 'fa fa-circle-question');
 

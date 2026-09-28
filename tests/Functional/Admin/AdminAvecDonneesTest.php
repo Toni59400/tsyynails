@@ -6,11 +6,13 @@ namespace App\Tests\Functional\Admin;
 
 use App\Entity\Client;
 use App\Entity\Photo;
+use App\Entity\Prestation;
 use App\Entity\User;
 use App\Enum\MotifMouvementPoints;
 use App\Repository\ClientRepository;
 use App\Repository\MouvementPointsRepository;
 use App\Repository\PhotoRepository;
+use App\Repository\PrestationRepository;
 use App\Tests\Functional\CreationUtilisateurTrait;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -18,6 +20,7 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\DomCrawler\Field\FileFormField;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 /**
  * Écrans de l'admin sur une base remplie par les données de démonstration.
@@ -138,6 +141,100 @@ final class AdminAvecDonneesTest extends WebTestCase
         self::assertFileExists($chemin);
         self::assertStringNotContainsString('GPS', (string) file_get_contents($chemin));
         unlink($chemin);
+    }
+
+    public function testLaListeDesPrestationsProposeDAjouterDesPhotos(): void
+    {
+        $prestation = $this->prestation();
+
+        $crawler = $this->client->request('GET', '/admin/prestation');
+        self::assertResponseIsSuccessful();
+        $lien = $crawler->filter('a[href*="/admin/photos/import"][href*="prestation='.$prestation->getId().'"]');
+        self::assertGreaterThan(0, $lien->count());
+
+        $crawler = $this->client->request('GET', '/admin/photos/import?prestation='.$prestation->getId());
+        self::assertResponseIsSuccessful();
+        self::assertSame((string) $prestation->getId(), $crawler->filter('#import-prestation option[selected]')->attr('value'));
+    }
+
+    public function testLImportEnLotEnregistreChaquePhotoSurLaPrestation(): void
+    {
+        $prestation = $this->prestation();
+        $photos = static::getContainer()->get(PhotoRepository::class);
+        $avant = \count($photos->findBy(['prestation' => $prestation]));
+        $jeton = $this->client->request('GET', '/admin/photos/import')->filter('input[name="_token"]')->attr('value');
+
+        for ($i = 0; $i < 3; ++$i) {
+            $this->client->request('POST', '/admin/photos/import/fichier', [
+                '_token' => $jeton,
+                'prestation' => (string) $prestation->getId(),
+                'publiee' => '1',
+            ], ['photo' => $this->fichierPng('ma-photo.png')]);
+            self::assertResponseStatusCodeSame(201);
+        }
+
+        $importees = $photos->findBy(['prestation' => $prestation], ['id' => 'DESC'], 3);
+        self::assertCount($avant + 3, $photos->findBy(['prestation' => $prestation]));
+        foreach ($importees as $photo) {
+            self::assertMatchesRegularExpression('/^[0-9a-f]{40}\.png$/', $photo->getFichier());
+            self::assertSame('Réalisation '.$prestation->getNom(), $photo->getLegende());
+            self::assertTrue($photo->isPubliee());
+            $chemin = static::getContainer()->getParameter('app.dossier_galerie').'/'.$photo->getFichier();
+            self::assertFileExists($chemin);
+            self::assertStringNotContainsString('GPS', (string) file_get_contents($chemin));
+            unlink($chemin);
+        }
+
+        // Aucune limite d'affichage : toutes les photos publiées apparaissent sur la page de la prestation.
+        $publiees = \count($photos->findBy(['prestation' => $prestation, 'publiee' => true]));
+        $crawler = $this->client->request('GET', '/prestations/'.$prestation->getSlug());
+        self::assertResponseIsSuccessful();
+        self::assertCount($publiees, $crawler->filter('img[src*="/uploads/galerie/"]:not(.prestation-entete__photo)'));
+    }
+
+    public function testLImportRefuseUnFichierQuiNEstPasUneImage(): void
+    {
+        $jeton = $this->client->request('GET', '/admin/photos/import')->filter('input[name="_token"]')->attr('value');
+        $fichier = sys_get_temp_dir().'/faux-'.bin2hex(random_bytes(4)).'.png';
+        file_put_contents($fichier, '<?php echo "non";');
+
+        $this->client->request('POST', '/admin/photos/import/fichier', ['_token' => $jeton], [
+            'photo' => new UploadedFile($fichier, 'faux.png', null, null, true),
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertArrayHasKey('erreur', json_decode((string) $this->client->getResponse()->getContent(), true));
+    }
+
+    public function testLImportSansJetonCsrfEstRefuse(): void
+    {
+        $this->client->request('POST', '/admin/photos/import/fichier', ['_token' => 'faux'], ['photo' => $this->fichierPng('x.png')]);
+
+        self::assertResponseStatusCodeSame(403);
+    }
+
+    public function testLaCommandeDOptimisationSeRelanceSansErreur(): void
+    {
+        $testeur = new CommandTester((new Application(self::$kernel))->find('app:photos:optimiser'));
+
+        self::assertSame(0, $testeur->execute([]));
+        self::assertStringContainsString('photo(s) optimisée(s)', $testeur->getDisplay());
+    }
+
+    private function fichierPng(string $nom): UploadedFile
+    {
+        $fichier = sys_get_temp_dir().'/import-test-'.bin2hex(random_bytes(4)).'.png';
+        file_put_contents($fichier, $this->pngAvecMetadonnees());
+
+        return new UploadedFile($fichier, $nom, 'image/png', null, true);
+    }
+
+    private function prestation(): Prestation
+    {
+        $prestation = static::getContainer()->get(PrestationRepository::class)->findOneBy(['active' => true], ['ordre' => 'ASC']);
+        self::assertInstanceOf(Prestation::class, $prestation);
+
+        return $prestation;
     }
 
     private function formulaireEasyAdmin(Crawler $crawler): \Symfony\Component\DomCrawler\Form

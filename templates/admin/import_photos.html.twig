@@ -1,0 +1,66 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block content_title %}Importer des photos{% endblock %}
+
+{% block page_actions %}
+    <a class="btn btn-secondary" href="{{ path('admin_photo_index') }}"><i class="fa fa-images" aria-hidden="true"></i> Toutes les photos</a>
+{% endblock %}
+
+{% block main %}
+    <form class="tdb-carte import-photos" data-import-photos
+          data-url="{{ path('admin_photos_import_fichier') }}" data-url-photos="{{ path('admin_photo_index') }}">
+        <p class="tdb-aide">
+            Sélectionnez autant de photos que vous voulez (JPEG, PNG ou WebP, {{ taille_max|replace({'M': ' Mo'}) }} maximum chacune) :
+            elles sont envoyées une par une, redimensionnées et débarrassées de leurs informations cachées (GPS, téléphone).
+            Revenez ici quand vous voulez pour en ajouter d'autres.
+        </p>
+
+        <div class="mb-3">
+            <label class="form-label" for="import-fichiers">Photos</label>
+            <input class="form-control" type="file" id="import-fichiers" name="photos" accept="image/jpeg,image/png,image/webp" multiple required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="import-prestation">Prestation illustrée</label>
+            <select class="form-select" id="import-prestation" name="prestation">
+                <option value="">Aucune (photo d'inspiration seulement)</option>
+                {% for p in prestations %}
+                    <option value="{{ p.id }}" {% if p.id == prestation_choisie %}selected{% endif %}>{{ p.nom }}{{ p.active ? '' : ' (masquée)' }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        {% if inspirations is not empty %}
+            <fieldset class="mb-3">
+                <legend class="form-label">Thèmes d'inspiration</legend>
+                {% for i in inspirations %}
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="import-theme-{{ i.id }}" name="themes[]" value="{{ i.id }}">
+                        <label class="form-check-label" for="import-theme-{{ i.id }}">{{ i.nom }}</label>
+                    </div>
+                {% endfor %}
+            </fieldset>
+        {% endif %}
+
+        <div class="mb-3">
+            <label class="form-label" for="import-legende">Description commune (facultatif)</label>
+            <input class="form-control" type="text" id="import-legende" name="legende" maxlength="200"
+                   placeholder="Ex. : French rose poudré sur ongles courts" aria-describedby="aide-legende">
+            <div class="form-text" id="aide-legende">Lue par les lecteurs d'écran et affichée sous la photo. Vous pourrez l'affiner photo par photo ensuite. Vide : « Réalisation + nom de la prestation ».</div>
+        </div>
+
+        <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="import-publiee" name="publiee" value="1" checked>
+            <label class="form-check-label" for="import-publiee">Visibles sur le site immédiatement</label>
+        </div>
+
+        <input type="hidden" name="_token" value="{{ csrf_token(constant('App\\Controller\\Admin\\ImportPhotosController::JETON_CSRF')) }}">
+        <button type="submit" class="btn btn-primary btn-lg" data-import-bouton>Importer les photos</button>
+
+        <div class="import-photos__progression" data-import-progression hidden>
+            <p class="import-photos__resume" data-import-resume role="status" aria-live="polite"></p>
+            <progress max="1" value="0" data-import-barre></progress>
+            <ul class="import-photos__liste" data-import-liste></ul>
+        </div>
+    </form>
+{% endblock %}

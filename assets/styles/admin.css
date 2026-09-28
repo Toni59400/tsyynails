@@ -999,3 +999,40 @@ a.tdb-tuile:hover {
     --statut: var(--adm-texte-doux);
     --statut-fond: var(--adm-fermeture-fond);
 }
+
+/* Import de photos en lot */
+.import-photos {
+    max-width: 48rem;
+}
+
+.import-photos__progression {
+    margin-top: 1.25rem;
+}
+
+.import-photos__progression progress {
+    width: 100%;
+    height: 12px;
+}
+
+.import-photos__liste {
+    max-height: 18rem;
+    margin: 0.75rem 0 0;
+    padding: 0;
+    overflow-y: auto;
+    list-style: none;
+    font-size: 0.9rem;
+}
+
+.import-photos__liste li {
+    padding: 0.3rem 0;
+    border-bottom: 1px solid var(--adm-bordure);
+}
+
+.import-photos__ok {
+    color: var(--adm-confirmee);
+}
+
+.import-photos__erreur {
+    color: var(--adm-non-honoree);
+    font-weight: 600;
+}

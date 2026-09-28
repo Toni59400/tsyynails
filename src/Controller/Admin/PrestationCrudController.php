@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Entity\Prestation;
+use App\Repository\PhotoRepository;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
@@ -18,6 +21,13 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
  */
 final class PrestationCrudController extends AbstractCrudController
 {
+    /** @var array<int, int>|null nombre de photos par prestation, chargé une fois pour la liste */
+    private ?array $nombrePhotos = null;
+
+    public function __construct(private readonly PhotoRepository $photos)
+    {
+    }
+
     public static function getEntityFqcn(): string
     {
         return Prestation::class;
@@ -37,6 +47,18 @@ final class PrestationCrudController extends AbstractCrudController
             ->setSearchFields(['nom', 'description']);
     }
 
+    public function configureActions(Actions $actions): Actions
+    {
+        // Ajout de photos à tout moment, en lot, pour cette prestation.
+        $ajouterPhotos = Action::new('ajouterPhotos', 'Ajouter des photos', 'fa fa-images')
+            ->linkToRoute('admin_photos_import_index', static fn (Prestation $p): array => ['prestation' => $p->getId()]);
+
+        return $actions
+            ->add(Crud::PAGE_INDEX, $ajouterPhotos)
+            ->add(Crud::PAGE_DETAIL, $ajouterPhotos)
+            ->add(Crud::PAGE_EDIT, $ajouterPhotos);
+    }
+
     public function configureFields(string $pageName): iterable
     {
         yield TextField::new('nom');
@@ -49,5 +71,10 @@ final class PrestationCrudController extends AbstractCrudController
         yield IntegerField::new('dureeMinutes', 'Durée (min)')->setHelp('Multiple de 15 minutes.');
         yield IntegerField::new('ordre', 'Ordre d\'affichage')->hideOnIndex();
         yield BooleanField::new('active', 'Visible sur le site');
+        // Pas une colonne : nombre de photos liées, calculé à partir de l'identifiant.
+        yield IntegerField::new('id', 'Photos')
+            ->onlyOnIndex()
+            ->setSortable(false)
+            ->formatValue(fn ($id, ?Prestation $p): int => null === $p ? 0 : ($this->nombrePhotos ??= $this->photos->nombreParPrestation())[$p->getId()] ?? 0);
     }
 }

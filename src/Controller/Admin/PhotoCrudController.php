@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Entity\Photo;
-use App\Service\Media\NettoyeurMetadonnees;
+use App\Service\Media\ImportPhotos;
+use App\Service\Media\OptimiseurPhoto;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
@@ -29,7 +32,7 @@ final class PhotoCrudController extends AbstractCrudController
     /** Relatif au dossier du projet, identique au paramètre app.dossier_galerie. */
     public const DOSSIER_UPLOAD = 'public/uploads/galerie';
 
-    public function __construct(private readonly NettoyeurMetadonnees $nettoyeur)
+    public function __construct(private readonly OptimiseurPhoto $optimiseur)
     {
     }
 
@@ -53,6 +56,13 @@ final class PhotoCrudController extends AbstractCrudController
             ->setPageTitle(Crud::PAGE_INDEX, 'Galerie photos');
     }
 
+    public function configureActions(Actions $actions): Actions
+    {
+        return $actions->add(Crud::PAGE_INDEX, Action::new('importer', 'Importer des photos', 'fa fa-upload')
+            ->linkToRoute('admin_photos_import_index')
+            ->createAsGlobalAction());
+    }
+
     public function configureFilters(Filters $filters): Filters
     {
         return $filters
@@ -69,14 +79,14 @@ final class PhotoCrudController extends AbstractCrudController
             // Nom aléatoire : le nom d'origine du fichier n'est jamais conservé.
             ->setUploadedFileNamePattern('[randomhash].[extension]')
             ->setFileConstraints(new Image(
-                maxSize: '8M',
+                maxSize: ImportPhotos::TAILLE_MAX,
                 mimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
                 mimeTypesMessage: 'Formats acceptés : JPEG, PNG ou WebP.',
             ))
             ->setFormTypeOption('upload_new', $this->enregistrer(...))
             ->setFormTypeOption('allow_delete', false)
             ->setRequired(Crud::PAGE_NEW === $pageName)
-            ->setHelp('JPEG, PNG ou WebP, 8 Mo maximum. Les informations cachées de la photo (position GPS, modèle de téléphone) sont retirées automatiquement.');
+            ->setHelp('JPEG, PNG ou WebP, 15 Mo maximum, redimensionnée automatiquement. Pour ajouter plusieurs photos d\'un coup, utilisez « Importer des photos ». Les informations cachées de la photo (position GPS, modèle de téléphone) sont retirées automatiquement.');
 
         yield TextField::new('legende', 'Description')
             ->setHelp('Lue par les lecteurs d\'écran et affichée sous la photo. Exemple : « French rose poudré sur ongles courts ».');
@@ -100,7 +110,7 @@ final class PhotoCrudController extends AbstractCrudController
         $destination = $fichier->move($dossier, basename($nom));
 
         try {
-            $this->nettoyeur->nettoyerFichier($destination->getPathname());
+            $this->optimiseur->optimiser($destination->getPathname());
         } catch (\Throwable $erreur) {
             @unlink($destination->getPathname());
 
