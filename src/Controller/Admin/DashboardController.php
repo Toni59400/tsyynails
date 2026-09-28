@@ -52,7 +52,10 @@ final class DashboardController extends AbstractDashboardController
 
     public function configureAssets(): Assets
     {
-        return Assets::new()->addAssetMapperEntry('admin');
+        // Feuille de style en <link> (et non importée dans admin.js) : compatible avec la CSP de production.
+        return Assets::new()
+            ->addCssFile('styles/admin.css')
+            ->addAssetMapperEntry('admin');
     }
 
     public function configureMenuItems(): iterable

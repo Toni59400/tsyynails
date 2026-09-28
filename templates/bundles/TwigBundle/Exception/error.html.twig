@@ -7,7 +7,7 @@
     <meta name="robots" content="noindex">
     <title>Un souci technique · {{ salon.nom }}</title>
     <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
-    {{ importmap('app', {nonce: csp_nonce('script')}) }}
+    <link rel="stylesheet" href="{{ asset('styles/app.css') }}">
 </head>
 <body>
     <main class="auth">

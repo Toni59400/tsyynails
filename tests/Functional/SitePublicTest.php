@@ -137,6 +137,22 @@ final class SitePublicTest extends WebTestCase
         self::assertSelectorExists('#realisations .galerie__item');
     }
 
+    /**
+     * Régression : un import CSS dans le JavaScript devient un module « data: » dans l'importmap,
+     * refusé par la CSP de production (script-src sans data:), ce qui bloquait tout le JavaScript
+     * (paiement Stripe compris). Les styles doivent être chargés par des balises <link>.
+     */
+    public function testLImportmapNeContientAucunModuleDataRefuseParLaCsp(): void
+    {
+        foreach (['/', '/reservation', '/connexion'] as $url) {
+            $crawler = $this->client->request('GET', $url);
+
+            $importmap = $crawler->filter('script[type="importmap"]')->text();
+            self::assertStringNotContainsString('data:', $importmap, $url);
+            self::assertGreaterThan(0, $crawler->filter('link[rel="stylesheet"][href*="/assets/styles/app"]')->count(), $url);
+        }
+    }
+
     public function testLeSitemapListeLesPagesPubliques(): void
     {
         $this->client->request('GET', '/sitemap.xml');

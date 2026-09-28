@@ -15,6 +15,11 @@
     <meta name="twitter:card" content="summary_large_image">
 {% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('styles/pages/public.css') }}">
+{% endblock %}
+
 {% block body %}
     <a class="lien-evitement" href="#contenu">Aller au contenu</a>
 

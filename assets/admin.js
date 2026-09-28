@@ -1,7 +1,8 @@
 /*
- * Point d'entrée de l'administration (EasyAdmin) : écrans sur mesure (tableau de bord, agenda, fiches).
+ * Point d'entrée JavaScript de l'administration (EasyAdmin).
+ * La feuille de style admin.css est ajoutée par DashboardController::configureAssets() (balise <link>) :
+ * un import CSS ici deviendrait un module « data: », refusé par la CSP de production.
  */
-import './styles/admin.css';
 
 // Actions importantes (débit, refus, annulation) : confirmation avant l'envoi.
 // Pas d'attribut onsubmit en ligne, interdit par la politique de sécurité (CSP).

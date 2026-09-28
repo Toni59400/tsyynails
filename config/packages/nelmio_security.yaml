@@ -21,18 +21,20 @@ when@prod:
             hsts_subdomains: true
 
         # Scripts inline autorisés uniquement via nonce : {{ csp_nonce('script') }}
+        # Jamais de « data: » dans script-src : les feuilles de style ne doivent donc pas être importées
+        # dans le JavaScript (AssetMapper les transformerait en modules data:), mais chargées en <link>.
         # Stripe : https://docs.stripe.com/security/guide#content-security-policy
         csp:
             enabled: true
             enforce:
                 level1_fallback: false
                 default-src: ["'self'"]
-                script-src: ["'self'", 'https://js.stripe.com']
+                script-src: ["'self'", 'https://js.stripe.com', 'https://*.js.stripe.com']
                 style-src: ["'self'"]
                 img-src: ["'self'", 'data:', 'https://*.stripe.com']
                 font-src: ["'self'"]
                 connect-src: ["'self'", 'https://api.stripe.com']
-                frame-src: ['https://js.stripe.com', 'https://hooks.stripe.com']
+                frame-src: ['https://js.stripe.com', 'https://*.js.stripe.com', 'https://hooks.stripe.com']
                 form-action: ["'self'"]
                 frame-ancestors: ["'none'"]
                 base-uri: ["'self'"]

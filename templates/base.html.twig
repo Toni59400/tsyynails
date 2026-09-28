@@ -13,6 +13,7 @@
         {% if verification_google %}<meta name="google-site-verification" content="{{ verification_google }}">{% endif %}
         {% if verification_bing %}<meta name="msvalidate.01" content="{{ verification_bing }}">{% endif %}
         {% block stylesheets %}
+            <link rel="stylesheet" href="{{ asset('styles/app.css') }}">
         {% endblock %}
 
         {% block javascripts %}
