@@ -52,3 +52,5 @@ services:
 when@test:
     parameters:
         app.dossier_galerie: '%kernel.project_dir%/var/test/galerie'
+    services:
+        App\Tests\Double\ReponsesHttpSimulees: ~

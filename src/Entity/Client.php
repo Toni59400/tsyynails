@@ -84,6 +84,14 @@ class Client
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $avertissementPointsAt = null;
 
+    /** Dernier email « votre avis compte », au plus un par an. */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $demandeAvisAt = null;
+
+    /** La cliente ne souhaite plus recevoir de demande d'avis (lien de l'email). */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $refusDemandesAvisAt = null;
+
     public function __construct(string $prenom, string $nom, string $telephone)
     {
         $this->prenom = trim($prenom);
@@ -253,6 +261,26 @@ class Client
     public function marquerAvertissementPoints(\DateTimeImmutable $at): void
     {
         $this->avertissementPointsAt = $at;
+    }
+
+    public function getDemandeAvisAt(): ?\DateTimeImmutable
+    {
+        return $this->demandeAvisAt;
+    }
+
+    public function marquerDemandeAvis(\DateTimeImmutable $at): void
+    {
+        $this->demandeAvisAt = $at;
+    }
+
+    public function refuseDemandesAvis(): bool
+    {
+        return null !== $this->refusDemandesAvisAt;
+    }
+
+    public function refuserDemandesAvis(\DateTimeImmutable $at): void
+    {
+        $this->refusDemandesAvisAt ??= $at;
     }
 
     public function getCodeParrainage(): ?string

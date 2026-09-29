@@ -19,3 +19,6 @@ when@test:
         test: true
         session:
             storage_factory_id: session.storage.factory.mock_file
+        # Aucun appel réseau réel pendant les tests (IndexNow…)
+        http_client:
+            mock_response_factory: App\Tests\Double\ReponsesHttpSimulees

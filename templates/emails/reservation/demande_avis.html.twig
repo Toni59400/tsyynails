@@ -1,0 +1,18 @@
+{% extends 'emails/_base.html.twig' %}
+{% block contenu %}
+    <p>Bonjour {{ reservation.client.prenom }},</p>
+    <p>Merci d'être venue au salon pour votre {{ reservation.prestation.nom|lower }} !</p>
+    <p>
+        Si vous avez une minute, votre avis sur Google m'aiderait énormément : c'est grâce à vos retours
+        que d'autres clientes découvrent le salon. Quelques mots suffisent, et tous les avis sont les bienvenus.
+    </p>
+    <p style="margin:20px 0;">
+        <a href="{{ lien_avis }}" style="display:inline-block;padding:12px 22px;border-radius:999px;background:#7a4747;color:#ffffff;text-decoration:none;font-weight:bold;">Laisser un avis sur Google</a>
+    </p>
+    <p>Une remarque à me faire directement ? Répondez simplement à cet email.</p>
+    <p>À très bientôt,<br>{{ salon.nom }}</p>
+    <p style="font-size:13px;color:#6f625e;">
+        Vous recevez cet email au plus une fois par an, après un rendez-vous.
+        <a href="{{ lien_refus }}" style="color:#7a4747;">Ne plus recevoir ces demandes</a>
+    </p>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends 'layout/public.html.twig' %}
+
+{% block title %}Demandes d'avis · {{ salon.nom }}{% endblock %}
+
+{% block meta %}
+    {{ parent() }}
+    <meta name="robots" content="noindex">
+{% endblock %}
+
+{% block contenu %}
+    <div class="conteneur page page--texte">
+        <h1>Demandes d'avis</h1>
+        {% if enregistre %}
+            <p role="status">C'est noté : vous ne recevrez plus d'invitation à laisser un avis. Vos rappels de rendez-vous continuent normalement.</p>
+            <p><a class="bouton" href="{{ path('app_accueil') }}">Retour au site</a></p>
+        {% else %}
+            <p>Après un rendez-vous, je vous envoie parfois (une fois par an au plus) une invitation à laisser un avis sur Google.</p>
+            <form method="post" action="{{ app.request.uri }}">
+                <button type="submit" class="bouton">Ne plus recevoir ces demandes</button>
+            </form>
+        {% endif %}
+    </div>
+{% endblock %}

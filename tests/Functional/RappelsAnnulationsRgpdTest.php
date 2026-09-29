@@ -189,6 +189,63 @@ final class RappelsAnnulationsRgpdTest extends WebTestCase
 
     // ---------- Outils ----------
 
+    // ---------- Demande d'avis Google ----------
+
+    public function testLaDemandeDAvisPartLeLendemainUneSeuleFoisParCliente(): void
+    {
+        $hier = $this->reservationHonoree('-20 hours');
+        $this->reservationHonoree('-30 hours');
+        $this->reservationHonoree('-3 hours', $this->cliente('Emma'));
+
+        $this->commande('app:avis:demander', ['--toute-heure' => true]);
+        $this->commande('app:avis:demander', ['--toute-heure' => true]);
+
+        self::assertEmailCount(1, message: 'Une seule demande pour Léa malgré deux rendez-vous et deux exécutions ; Emma est venue trop récemment.');
+        self::assertNotNull($this->cliente('Léa')->getDemandeAvisAt());
+        self::assertNull($this->cliente('Emma')->getDemandeAvisAt());
+        $email = self::getMailerMessage();
+        self::assertInstanceOf(Email::class, $email);
+        self::assertSame((string) $hier->getEmailNotification(), $email->getTo()[0]->getAddress());
+        self::assertStringContainsString('https://g.page/r/test/review', (string) $email->getHtmlBody());
+    }
+
+    public function testLeLienDeRefusArreteLesDemandesDAvis(): void
+    {
+        $this->reservationHonoree('-20 hours');
+        $this->commande('app:avis:demander', ['--toute-heure' => true]);
+        $email = self::getMailerMessage();
+        self::assertInstanceOf(Email::class, $email);
+        self::assertSame(1, preg_match('#href="(https?://[^"]*/avis/ne-plus-demander[^"]*)"#', (string) $email->getHtmlBody(), $lien));
+        $url = html_entity_decode($lien[1]);
+
+        $this->client->request('GET', str_replace('client=', 'client=9', $url));
+        self::assertResponseStatusCodeSame(404, 'Lien modifié : signature invalide.');
+
+        // Ouvrir le lien ne suffit pas (logiciels qui visitent les liens des emails) : il faut confirmer.
+        $crawler = $this->client->request('GET', $url);
+        self::assertResponseIsSuccessful();
+        self::assertFalse($this->cliente('Léa')->refuseDemandesAvis());
+        $this->client->submit($crawler->selectButton('Ne plus recevoir ces demandes')->form());
+        self::assertResponseIsSuccessful();
+        self::assertTrue($this->cliente('Léa')->refuseDemandesAvis());
+
+        // Même un an plus tard, plus aucune demande.
+        $this->cliente('Léa')->marquerDemandeAvis(new \DateTimeImmutable('-2 years'));
+        $this->em()->flush();
+        $this->reservationHonoree('-22 hours');
+        $this->commande('app:avis:demander', ['--toute-heure' => true]);
+        self::assertEmailCount(0);
+    }
+
+    private function reservationHonoree(string $quand, ?Client $cliente = null): Reservation
+    {
+        $reservation = $this->reservationConfirmee($quand, $cliente);
+        $reservation->changerStatut(StatutReservation::HONOREE, new \DateTimeImmutable());
+        $this->em()->flush();
+
+        return $reservation;
+    }
+
     private function reservationConfirmee(string $dans, ?Client $cliente = null): Reservation
     {
         $prestation = static::getContainer()->get(PrestationRepository::class)->findOneBy(['nom' => 'Semi-permanent mains']);

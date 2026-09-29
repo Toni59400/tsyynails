@@ -244,6 +244,33 @@ class ReservationRepository extends ServiceEntityRepository
     }
 
     /**
+     * Rendez-vous honorés entre deux dates dont la cliente peut recevoir une demande d'avis :
+     * pas anonymisée, pas de refus, pas de demande depuis $derniereDemandeAvant.
+     *
+     * @return list<Reservation>
+     */
+    public function findDemandesAvisAEnvoyer(\DateTimeImmutable $apres, \DateTimeImmutable $avant, \DateTimeImmutable $derniereDemandeAvant): array
+    {
+        /** @var list<Reservation> */
+        return $this->createQueryBuilder('r')
+            ->addSelect('c')
+            ->innerJoin('r.client', 'c')
+            ->andWhere('r.statut = :honoree')
+            ->andWhere('r.debut > :apres')
+            ->andWhere('r.debut <= :avant')
+            ->andWhere('c.anonymiseAt IS NULL')
+            ->andWhere('c.refusDemandesAvisAt IS NULL')
+            ->andWhere('c.demandeAvisAt IS NULL OR c.demandeAvisAt < :derniere')
+            ->setParameter('honoree', StatutReservation::HONOREE)
+            ->setParameter('apres', $apres)
+            ->setParameter('avant', $avant)
+            ->setParameter('derniere', $derniereDemandeAvant)
+            ->orderBy('r.debut', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * Date de la dernière demande de réservation par cliente (activité pour la durée de conservation).
      *
      * @return array<int, \DateTimeImmutable>

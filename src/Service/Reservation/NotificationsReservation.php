@@ -71,6 +71,18 @@ final class NotificationsReservation
     }
 
     /**
+     * Le lendemain d'un rendez-vous honoré : invitation (sans contrepartie) à laisser un avis Google.
+     * Envoyée à toutes les clientes de la même façon, comme l'exigent les règles de Google.
+     */
+    public function demandeAvis(Reservation $reservation, string $lienAvis, string $lienRefus): void
+    {
+        $this->envoyerALaCliente($reservation, 'Votre avis compte beaucoup pour moi', 'emails/reservation/demande_avis.html.twig', [
+            'lien_avis' => $lienAvis,
+            'lien_refus' => $lienRefus,
+        ]);
+    }
+
+    /**
      * @param bool $acompteConserve acompte débité et non remboursé (annulation à moins de 48 h)
      */
     public function annulee(Reservation $reservation, bool $acompteConserve = false): void

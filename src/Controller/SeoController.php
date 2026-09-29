@@ -10,6 +10,7 @@ use App\Repository\PrestationRepository;
 use App\Repository\QuestionFrequenteRepository;
 use App\Repository\RecompenseFideliteRepository;
 use App\Service\Reservation\Tarification;
+use App\Service\Seo\IndexNow;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -17,7 +18,7 @@ use Symfony\Component\Routing\Attribute\Route;
 final class SeoController extends AbstractController
 {
     /** Pages publiques fixes, dans l'ordre du sitemap. */
-    private const PAGES = [
+    public const PAGES = [
         'app_accueil',
         'app_prestations',
         'app_galerie',
@@ -64,6 +65,17 @@ final class SeoController extends AbstractController
             'paliers' => $recompenses->findActives(),
             'acompte_pourcentage' => $tarification->acomptePourcentage(),
         ]), 'text/plain');
+    }
+
+    /** Clé IndexNow, publiée pour prouver que les signalements viennent bien du site. */
+    #[Route('/indexnow-cle.txt', name: 'app_indexnow_cle', methods: ['GET'], format: 'txt')]
+    public function cleIndexNow(IndexNow $indexNow): Response
+    {
+        if (!$indexNow->estActive()) {
+            throw $this->createNotFoundException();
+        }
+
+        return $this->texte($indexNow->cle(), 'text/plain');
     }
 
     private function texte(string $contenu, string $type): Response

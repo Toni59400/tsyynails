@@ -17,7 +17,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 #[AsCommand(name: 'app:taches:horaires', description: 'Lance les tâches planifiées de chaque heure')]
 final class TachesHorairesCommand extends Command
 {
-    public const TACHES = ['app:reservations:expirer', 'app:rappels:envoyer', 'app:fidelite:expirer', 'app:rgpd:purger'];
+    public const TACHES = ['app:reservations:expirer', 'app:rappels:envoyer', 'app:fidelite:expirer', 'app:rgpd:purger', 'app:avis:demander'];
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
