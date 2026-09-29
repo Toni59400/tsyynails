@@ -96,6 +96,9 @@
         <p class="pied__copyright conteneur">© {{ 'now'|date('Y') }} {{ salon.nom }}</p>
     </footer>
     {% if google_tag_manager %}
+        {# Événements de mesure d'audience préparés par le serveur, envoyés seulement après accord (assets/mesure.js). #}
+        {% for evenement in app.flashes('mesure') %}<template data-mesure="{{ evenement|json_encode }}"></template>{% endfor %}
+        {% block mesure %}{% endblock %}
         {{ include('site/_consentement.html.twig') }}
     </div>
     {% endif %}

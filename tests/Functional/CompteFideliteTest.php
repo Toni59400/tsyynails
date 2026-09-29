@@ -48,6 +48,7 @@ final class CompteFideliteTest extends WebTestCase
         $this->inscrire('nouvelle@example.com', '06 39 98 70 01');
 
         self::assertSelectorTextContains('h1', 'Plus qu\'une étape');
+        self::assertSelectorExists('template[data-mesure*="inscription"]');
         self::assertEmailCount(1);
         // Les emails capturés ne concernent que la dernière requête : le lien est lu tout de suite.
         $lien = $this->lienDuDernierEmail('/inscription/confirmer');

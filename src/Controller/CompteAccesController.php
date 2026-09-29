@@ -53,6 +53,7 @@ final class CompteAccesController extends AbstractController
             }
 
             $this->comptes->inscrire($inscription);
+            $this->addFlash('mesure', ['event' => 'inscription', 'methode' => 'formulaire']);
 
             return $this->render('compte/verifiez_email.html.twig', ['email' => $inscription->email]);
         }

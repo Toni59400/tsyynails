@@ -7,6 +7,8 @@
     <meta name="robots" content="noindex">
 {% endblock %}
 
+{% block mesure %}{% if mesure %}<template data-mesure="{{ mesure|json_encode }}"></template>{% endif %}{% endblock %}
+
 {% block contenu %}
     {% set statut = reservation.statut.value %}
     <div class="conteneur page">

@@ -154,9 +154,13 @@ final class ReservationController extends AbstractController
             }
 
             if (!$user instanceof User && $coordonnees->creerCompte) {
-                $this->addFlash('succes', $this->comptes->inscrireDepuisReservation($reservation, $coordonnees->email, (string) $coordonnees->motDePasse)
+                $compteCree = $this->comptes->inscrireDepuisReservation($reservation, $coordonnees->email, (string) $coordonnees->motDePasse);
+                $this->addFlash('succes', $compteCree
                     ? 'Votre compte est créé : confirmez votre adresse avec le lien reçu par email pour cumuler vos points.'
                     : 'Un compte existe déjà avec cette adresse : connectez-vous pour retrouver vos points.');
+                if ($compteCree) {
+                    $this->addFlash('mesure', ['event' => 'inscription', 'methode' => 'reservation']);
+                }
             }
 
             return $this->redirectToRoute('app_reservation_paiement', ['jeton' => $reservation->getJetonSuivi()]);
@@ -196,7 +200,7 @@ final class ReservationController extends AbstractController
      * Si le webhook n'est pas encore passé, l'état de l'empreinte est vérifié directement auprès de Stripe.
      */
     #[Route('/suivi/{jeton<[A-Za-z0-9_-]{22}>}', name: 'app_reservation_suivi', methods: ['GET'])]
-    public function suivi(string $jeton): Response
+    public function suivi(string $jeton, Request $request): Response
     {
         $reservation = $this->reservationParJeton($jeton);
 
@@ -209,6 +213,10 @@ final class ReservationController extends AbstractController
 
         return $this->render('reservation/suivi.html.twig', [
             'reservation' => $reservation,
+            // Retour de Stripe après la saisie de la carte : la demande est envoyée (mesure d'audience, si acceptée).
+            'mesure' => 'succeeded' === $request->query->getString('redirect_status')
+                && \in_array($reservation->getStatut(), [StatutReservation::EN_ATTENTE, StatutReservation::CONFIRMEE], true)
+                ? self::evenementReservation($reservation) : null,
             'limite_annulation' => $this->workflow->limiteAnnulationGratuite($reservation),
         ]);
     }
@@ -226,7 +234,8 @@ final class ReservationController extends AbstractController
 
         $this->workflow->empreinteAutorisee($this->reservationParJeton($jeton));
 
-        return $this->redirectToRoute('app_reservation_suivi', ['jeton' => $jeton]);
+        // Même adresse de retour que Stripe.
+        return $this->redirectToRoute('app_reservation_suivi', ['jeton' => $jeton, 'redirect_status' => 'succeeded']);
     }
 
     /** Fiche de la cliente connectée, s'il y en a une (un compte admin n'en a pas). */
@@ -255,5 +264,22 @@ final class ReservationController extends AbstractController
         if (!$prestation->isActive()) {
             throw new NotFoundHttpException('Prestation indisponible.');
         }
+    }
+
+    /**
+     * Événement de mesure d'audience, sans donnée personnelle (ni identité ni jeton de suivi).
+     *
+     * @return array<string, string|float>
+     */
+    private static function evenementReservation(Reservation $reservation): array
+    {
+        return [
+            'event' => 'reservation_demandee',
+            'transaction_id' => 'R'.$reservation->getId(),
+            'prestation' => $reservation->getPrestation()->getNom(),
+            'value' => $reservation->getPrixCentimes() / 100,
+            'acompte' => $reservation->getAcompteCentimes() / 100,
+            'currency' => 'EUR',
+        ];
     }
 }

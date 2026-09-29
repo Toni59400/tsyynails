@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
+import { COOKIE_CONSENTEMENT, VERSION_CONSENTEMENT, choixConsentement, envoyerEvenementsEnAttente } from '../mesure.js';
 
 /*
  * Consentement aux cookies de mesure d'audience (recommandations CNIL) :
@@ -8,8 +9,6 @@ import { Controller } from '@hotwired/stimulus';
  * - retirer son accord supprime les cookies Google Analytics déjà déposés.
  * Mode de consentement Google v2 : publicité toujours refusée, mesure d'audience selon le choix.
  */
-const COOKIE = 'tsyynails_consentement';
-const VERSION = 1; // à augmenter si les finalités changent : le choix est alors redemandé
 const DUREE_SECONDES = 6 * 30 * 24 * 3600;
 const COOKIES_GOOGLE = /^(_ga|_ga_.+|_gid|_gat.*|_gcl_.+)$/;
 
@@ -18,7 +17,7 @@ export default class extends Controller {
     static values = { gtm: String };
 
     connect() {
-        const choix = lireChoix();
+        const choix = choixConsentement();
         if (choix === null) {
             this.bandeauTarget.hidden = false;
         } else if (choix.statistiques) {
@@ -46,15 +45,15 @@ export default class extends Controller {
     /** Lien « Gérer les cookies » du pied de page : rouvre le bandeau avec le choix actuel. */
     ouvrir(evenement) {
         evenement.preventDefault();
-        this.statistiquesTarget.checked = lireChoix()?.statistiques === true;
+        this.statistiquesTarget.checked = choixConsentement()?.statistiques === true;
         this.detailsTarget.hidden = false;
         this.bandeauTarget.hidden = false;
         this.titreTarget.focus();
     }
 
     enregistrer(statistiques) {
-        const valeur = encodeURIComponent(JSON.stringify({ v: VERSION, statistiques, date: new Date().toISOString() }));
-        document.cookie = `${COOKIE}=${valeur}; Max-Age=${DUREE_SECONDES}; Path=/; SameSite=Lax${location.protocol === 'https:' ? '; Secure' : ''}`;
+        const valeur = encodeURIComponent(JSON.stringify({ v: VERSION_CONSENTEMENT, statistiques, date: new Date().toISOString() }));
+        document.cookie = `${COOKIE_CONSENTEMENT}=${valeur}; Max-Age=${DUREE_SECONDES}; Path=/; SameSite=Lax${location.protocol === 'https:' ? '; Secure' : ''}`;
 
         if (statistiques) {
             this.chargerGtm();
@@ -73,6 +72,8 @@ export default class extends Controller {
         consentementGoogle('update', { analytics_storage: 'granted' });
         // Une seule fois par visite : Turbo conserve la page et ses scripts d'une navigation à l'autre.
         if (window.tsyynailsGtmCharge) {
+            envoyerEvenementsEnAttente();
+
             return;
         }
         window.tsyynailsGtmCharge = true;
@@ -81,6 +82,7 @@ export default class extends Controller {
         script.async = true;
         script.src = `https://www.googletagmanager.com/gtm.js?id=${encodeURIComponent(identifiant)}`;
         document.head.appendChild(script);
+        envoyerEvenementsEnAttente();
     }
 }
 
@@ -115,17 +117,4 @@ function retirerStatistiques() {
             document.cookie = `${nom}=; Max-Age=0; Path=/${domaine ? `; Domain=${domaine}` : ''}`;
         });
     });
-}
-
-function lireChoix() {
-    const brut = document.cookie.split('; ').find((c) => c.startsWith(`${COOKIE}=`));
-    if (!brut) {
-        return null;
-    }
-    try {
-        const choix = JSON.parse(decodeURIComponent(brut.slice(COOKIE.length + 1)));
-        return choix.v === VERSION && typeof choix.statistiques === 'boolean' ? choix : null;
-    } catch {
-        return null;
-    }
 }

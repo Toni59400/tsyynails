@@ -51,11 +51,20 @@ final class ReservationParcoursTest extends WebTestCase
         self::assertResponseIsSuccessful();
         $this->client->submit($crawler->selectButton('Simuler l\'empreinte bancaire')->form());
 
-        self::assertResponseRedirects('/reservation/suivi/'.$reservation->getJetonSuivi());
+        self::assertResponseRedirects('/reservation/suivi/'.$reservation->getJetonSuivi().'?redirect_status=succeeded');
         self::assertEmailCount(2, message: 'Accusé de réception à la cliente et alerte à la prothésiste.');
-        $this->client->followRedirect();
+        $crawler = $this->client->followRedirect();
         self::assertSelectorTextContains('h1', 'Demande envoyée');
         self::assertSame(StatutReservation::EN_ATTENTE, $this->recharger($reservation)->getStatut());
+
+        // Mesure d'audience : la demande est signalée une fois, sans donnée personnelle ni jeton de suivi.
+        $mesure = json_decode((string) $crawler->filter('template[data-mesure]')->attr('data-mesure'), true);
+        self::assertSame('reservation_demandee', $mesure['event']);
+        self::assertSame('Semi-permanent mains', $mesure['prestation']);
+        self::assertSame(9, $mesure['acompte']);
+        self::assertStringNotContainsString($reservation->getJetonSuivi(), (string) json_encode($mesure));
+        $crawler = $this->client->request('GET', '/reservation/suivi/'.$reservation->getJetonSuivi());
+        self::assertCount(0, $crawler->filter('template[data-mesure]'), 'Pas de nouvel événement en revenant par le lien de l\x27email.');
     }
 
     public function testUnCreneauPrisPendantLaSaisieEstRefuse(): void
