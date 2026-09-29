@@ -9,6 +9,7 @@ use App\Repository\PhotoRepository;
 use App\Repository\PrestationRepository;
 use App\Repository\QuestionFrequenteRepository;
 use App\Repository\RecompenseFideliteRepository;
+use App\Repository\SupplementRepository;
 use App\Service\Reservation\Tarification;
 use App\Service\Seo\IndexNow;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -57,10 +58,12 @@ final class SeoController extends AbstractController
         PrestationRepository $prestations,
         QuestionFrequenteRepository $questions,
         RecompenseFideliteRepository $recompenses,
+        SupplementRepository $supplements,
         Tarification $tarification,
     ): Response {
         return $this->texte($this->renderView('seo/llms.txt.twig', [
             'prestations' => $prestations->findActives(),
+            'supplements' => $supplements->findBy(['active' => true], ['ordre' => 'ASC']),
             'questions' => $questions->findPubliees(),
             'paliers' => $recompenses->findActives(),
             'acompte_pourcentage' => $tarification->acomptePourcentage(),

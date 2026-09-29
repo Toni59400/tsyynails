@@ -7,7 +7,7 @@
                     {% if avec_date ?? true %}{{ r.debut|date_fr('EEE d MMM')|capitalize }}, {% endif %}{{ r.debut|heure }}
                 </span>
                 <span class="liste-rdv__quoi">
-                    {% if avec_cliente ?? true %}<strong>{{ r.client.nomComplet }}</strong> · {% endif %}{{ r.prestation.nom }}
+                    {% if avec_cliente ?? true %}<strong>{{ r.client.nomComplet }}</strong> · {% endif %}{{ r.prestation.nom }}{% if r.supplementNom %} + {{ r.supplementNom }}{% endif %}
                     {% if avec_demande ?? false %}
                         <span class="liste-rdv__demande">demandée {{ r.createdAt|date_fr("d MMM 'à' H'h'mm") }}</span>
                     {% endif %}

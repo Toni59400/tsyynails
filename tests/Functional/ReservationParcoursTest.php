@@ -199,6 +199,52 @@ final class ReservationParcoursTest extends WebTestCase
         self::assertResponseStatusCodeSame(404);
     }
 
+    public function testUnSupplementNailArtAllongeLeRendezVousEtAjouteSonPrix(): void
+    {
+        $prestation = $this->prestation('Semi-permanent mains');
+        $crawler = $this->client->request('GET', '/reservation/'.$prestation->getId());
+
+        // Niveau 1 proposé partout, niveau 2 réservé aux poses : absent ici.
+        self::assertStringContainsString('Nail art niveau 1', $crawler->filter('.options-resa')->text());
+        self::assertStringNotContainsString('Nail art niveau 2', $crawler->filter('.options-resa')->text());
+
+        $crawler = $this->client->submit($crawler->filter('.options-resa')->form(), ['supplement' => $crawler->filter('.options-resa input[value!=""]')->attr('value')]);
+        self::assertSelectorTextContains('.recap-court', 'Semi-permanent mains + Nail art niveau 1');
+        self::assertStringContainsString('supplement=', (string) $crawler->filter('a.creneau')->first()->attr('href'), 'Le choix suit la cliente jusqu\'au récapitulatif.');
+
+        $crawler = $this->client->click($crawler->filter('a.creneau')->first()->link());
+        self::assertSelectorTextContains('.recap', 'Nail art niveau 1');
+        $formulaire = $crawler->selectButton('Continuer vers l\'acompte')->form();
+        $this->remplir($formulaire, '06 39 98 55 55');
+        $this->client->submit($formulaire);
+        self::assertResponseRedirects();
+
+        $jeton = basename((string) $this->client->getResponse()->headers->get('Location'));
+        $reservation = static::getContainer()->get(ReservationRepository::class)->findOneBy(['jetonSuivi' => $jeton]);
+        self::assertInstanceOf(Reservation::class, $reservation);
+        self::assertSame('Nail art niveau 1', $reservation->getSupplementNom());
+        self::assertSame(3500, $reservation->getPrixCentimes(), '30 € + 5 € de nail art.');
+        self::assertSame(500, $reservation->getSupplementPrixCentimes());
+        self::assertSame(1100, $reservation->getAcompteCentimes(), '30 % de 35 €, arrondi à l\'euro supérieur.');
+        self::assertSame(60 + 15, (int) (($reservation->getFin()->getTimestamp() - $reservation->getDebut()->getTimestamp()) / 60));
+    }
+
+    public function testUnSupplementNonProposePourLaPrestationEstRefuse(): void
+    {
+        $prestation = $this->prestation('Semi-permanent mains');
+        $niveau2 = static::getContainer()->get(\App\Repository\SupplementRepository::class)->findOneBy(['nom' => 'Nail art niveau 2']);
+        self::assertInstanceOf(\App\Entity\Supplement::class, $niveau2);
+        $crawler = $this->client->request('GET', '/reservation/'.$prestation->getId());
+        $lien = (string) $crawler->filter('a.creneau')->first()->attr('href');
+
+        // Adresse modifiée à la main : le niveau 2 n'est pas proposé sur cette prestation.
+        $this->client->request('GET', $lien.'?supplement='.$niveau2->getId());
+
+        self::assertResponseRedirects('/reservation/'.$prestation->getId());
+        $this->client->followRedirect();
+        self::assertSelectorTextContains('.alerte--erreur', 'plus proposé');
+    }
+
     private function reserver(string $nomPrestation, string $telephone, string $prenom = 'Zoé'): Reservation
     {
         $prestation = $this->prestation($nomPrestation);

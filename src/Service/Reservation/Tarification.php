@@ -6,6 +6,7 @@ namespace App\Service\Reservation;
 
 use App\Entity\Parametre;
 use App\Entity\Prestation;
+use App\Entity\Supplement;
 use App\Repository\ParametreRepository;
 
 /**
@@ -22,10 +23,16 @@ final class Tarification
         return $this->parametres->valeur(Parametre::ACOMPTE_POURCENTAGE);
     }
 
-    /** Acompte calculé sur le prix restant après la réduction fidélité. */
-    public function acompteCentimes(Prestation $prestation, int $reductionCentimes = 0): int
+    /** Prix total : prestation + supplément éventuel. */
+    public static function prixCentimes(Prestation $prestation, ?Supplement $supplement = null): int
     {
-        return self::calculerAcompte($prestation->getPrixCentimes() - $reductionCentimes, $this->acomptePourcentage());
+        return $prestation->getPrixCentimes() + ($supplement?->getPrixCentimes() ?? 0);
+    }
+
+    /** Acompte calculé sur le prix total restant après la réduction fidélité. */
+    public function acompteCentimes(Prestation $prestation, int $reductionCentimes = 0, ?Supplement $supplement = null): int
+    {
+        return self::calculerAcompte(self::prixCentimes($prestation, $supplement) - $reductionCentimes, $this->acomptePourcentage());
     }
 
     /** Arrondi à l'euro supérieur, sans dépasser le prix. */

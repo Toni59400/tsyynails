@@ -40,8 +40,20 @@ class Reservation
     #[ORM\Column(length: 20, enumType: StatutReservation::class)]
     private StatutReservation $statut = StatutReservation::PAIEMENT_EN_COURS;
 
+    /** Prix total : prestation + supplément éventuel. */
     #[ORM\Column]
     private int $prixCentimes;
+
+    /** Supplément choisi (nail art…) ; nom et prix copiés pour que l'historique ne change pas. */
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(onDelete: 'SET NULL')]
+    private ?Supplement $supplement = null;
+
+    #[ORM\Column(length: 120, nullable: true)]
+    private ?string $supplementNom = null;
+
+    #[ORM\Column]
+    private int $supplementPrixCentimes = 0;
 
     #[ORM\Column]
     private int $acompteCentimes;
@@ -96,16 +108,21 @@ class Reservation
         int $acompteCentimes,
         int $reductionCentimes = 0,
         int $pointsUtilises = 0,
+        ?Supplement $supplement = null,
     ) {
-        if ($reductionCentimes < 0 || $reductionCentimes > $prestation->getPrixCentimes()) {
+        $prix = $prestation->getPrixCentimes() + ($supplement?->getPrixCentimes() ?? 0);
+        if ($reductionCentimes < 0 || $reductionCentimes > $prix) {
             throw new \InvalidArgumentException('Réduction invalide.');
         }
 
         $this->client = $client;
         $this->prestation = $prestation;
         $this->debut = $debut;
-        $this->fin = $debut->modify(\sprintf('+%d minutes', $prestation->getDureeMinutes()));
-        $this->prixCentimes = $prestation->getPrixCentimes();
+        $this->fin = $debut->modify(\sprintf('+%d minutes', $prestation->getDureeMinutes() + ($supplement?->getDureeMinutes() ?? 0)));
+        $this->prixCentimes = $prix;
+        $this->supplement = $supplement;
+        $this->supplementNom = $supplement?->getNom();
+        $this->supplementPrixCentimes = $supplement?->getPrixCentimes() ?? 0;
         $this->acompteCentimes = $acompteCentimes;
         $this->reductionCentimes = $reductionCentimes;
         $this->pointsUtilises = $pointsUtilises;
@@ -131,6 +148,21 @@ class Reservation
     public function getDebut(): \DateTimeImmutable
     {
         return $this->debut;
+    }
+
+    public function getSupplement(): ?Supplement
+    {
+        return $this->supplement;
+    }
+
+    public function getSupplementNom(): ?string
+    {
+        return $this->supplementNom;
+    }
+
+    public function getSupplementPrixCentimes(): int
+    {
+        return $this->supplementPrixCentimes;
     }
 
     public function getFin(): \DateTimeImmutable

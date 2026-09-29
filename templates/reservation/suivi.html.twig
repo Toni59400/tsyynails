@@ -55,6 +55,7 @@
             {{ include('reservation/_recap.html.twig', {
                 prestation: reservation.prestation, debut: reservation.debut, fin: reservation.fin,
                 prix: reservation.prixCentimes, acompte: reservation.acompteCentimes, reduction: reservation.reductionCentimes,
+                supplement_nom: reservation.supplementNom, supplement_prix: reservation.supplementPrixCentimes,
             }) }}
         </div>
     </div>

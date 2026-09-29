@@ -10,6 +10,7 @@ use App\Entity\Parametre;
 use App\Entity\Prestation;
 use App\Entity\RecompenseFidelite;
 use App\Entity\Reservation;
+use App\Entity\Supplement;
 use App\Enum\MotifMouvementPoints;
 use App\Enum\StatutReservation;
 use App\Repository\ClientRepository;
@@ -62,6 +63,7 @@ final class ReservationWorkflow
         CoordonneesCliente $coordonnees,
         ?Client $clienteConnectee = null,
         ?RecompenseFidelite $recompense = null,
+        ?Supplement $supplement = null,
     ): Reservation {
         if (null !== $recompense && null === $clienteConnectee) {
             throw new \LogicException('Les points ne s\'utilisent qu\'avec un compte.');
@@ -77,7 +79,10 @@ final class ReservationWorkflow
 
         try {
             // Revérifié sous verrou : le créneau a pu être pris depuis l'affichage.
-            if (!$prestation->isActive() || !$this->calculateur->estDisponible($prestation, $debut)) {
+            if (null !== $supplement && !$supplement->estProposePour($prestation)) {
+                throw new \LogicException('Ce supplément n\x27est plus proposé : choisissez à nouveau votre créneau.');
+            }
+            if (!$prestation->isActive() || !$this->calculateur->estDisponible($prestation, $debut, $supplement?->getDureeMinutes() ?? 0)) {
                 throw new CreneauIndisponibleException();
             }
 
@@ -86,7 +91,7 @@ final class ReservationWorkflow
             // Revérifiée sous verrou : le solde a pu changer depuis l'affichage.
             $reduction = 0;
             if (null !== $recompense) {
-                if (!\in_array($recompense, $this->fidelite->utilisablesEnLigne($cliente, $prestation), true)) {
+                if (!\in_array($recompense, $this->fidelite->utilisablesEnLigne($cliente, $prestation, $supplement), true)) {
                     throw new \LogicException('Cette récompense n\'est pas utilisable sur ce rendez-vous.');
                 }
                 $reduction = $recompense->getValeurCentimes();
@@ -96,9 +101,10 @@ final class ReservationWorkflow
                 $cliente,
                 $prestation,
                 $debut,
-                $this->tarification->acompteCentimes($prestation, $reduction),
+                $this->tarification->acompteCentimes($prestation, $reduction, $supplement),
                 $reduction,
                 $recompense?->getSeuilPoints() ?? 0,
+                $supplement,
             );
             $reservation->setEmailContact($coordonnees->email);
             $reservation->accepterConditions($this->clock->now());
@@ -114,7 +120,7 @@ final class ReservationWorkflow
         try {
             $empreinte = $this->paiement->creerEmpreinte(
                 $reservation->getAcompteCentimes(),
-                \sprintf('Acompte %s du %s', $prestation->getNom(), $debut->format('d/m/Y H:i')),
+                \sprintf('Acompte %s%s du %s', $prestation->getNom(), null !== $supplement ? ' + '.$supplement->getNom() : '', $debut->format('d/m/Y H:i')),
                 ['reservation' => (string) $reservation->getId()],
             );
         } catch (\Throwable $erreur) {

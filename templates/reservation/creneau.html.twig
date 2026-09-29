@@ -14,10 +14,37 @@
         {% if horizon_fidele %}
             <p class="alerte alerte--succes">Cliente fidèle : vous pouvez réserver plus longtemps à l'avance.</p>
         {% endif %}
+        {% set duree_totale = prestation.dureeMinutes + (supplement ? supplement.dureeMinutes : 0) %}
+        {% set prix_total = prestation.prixCentimes + (supplement ? supplement.prixCentimes : 0) %}
         <p class="recap-court">
-            <strong>{{ prestation.nom }}</strong> · {{ prestation.dureeMinutes|duree }} · {{ prestation.prixCentimes|euros }}
+            <strong>{{ prestation.nom }}</strong>{% if supplement %} + {{ supplement.nom }}{% endif %}
+            · {{ duree_totale|duree }} · {{ prix_total|euros }}
             · <a href="{{ path('app_reservation') }}">changer</a>
         </p>
+
+        {% if supplements is not empty %}
+            {# Choix avant le créneau : un supplément allonge le rendez-vous. Sans JavaScript, le bouton recharge les créneaux. #}
+            <form method="get" action="{{ path('app_reservation_creneau', {id: prestation.id}) }}" class="options-resa" data-controller="envoi-auto">
+                <fieldset>
+                    <legend class="options-resa__titre">Envie d'un nail art ?</legend>
+                    <div class="options-resa__liste">
+                        <label class="option-resa">
+                            <input type="radio" name="supplement" value="" {% if not supplement %}checked{% endif %} data-action="envoi-auto#envoyer">
+                            <span class="option-resa__nom">Sans supplément</span>
+                        </label>
+                        {% for s in supplements %}
+                            <label class="option-resa">
+                                <input type="radio" name="supplement" value="{{ s.id }}" {% if supplement and supplement.id == s.id %}checked{% endif %} data-action="envoi-auto#envoyer">
+                                <span class="option-resa__nom">{{ s.nom }}</span>
+                                <span class="option-resa__prix">+ {{ s.prixCentimes|euros }}{% if s.dureeMinutes > 0 %} · + {{ s.dureeMinutes|duree }}{% endif %}</span>
+                                {% if s.description %}<span class="option-resa__description">{{ s.description }}</span>{% endif %}
+                            </label>
+                        {% endfor %}
+                    </div>
+                </fieldset>
+                <button type="submit" class="bouton bouton--secondaire bouton--compact" data-envoi-auto-target="bouton">Mettre à jour les créneaux</button>
+            </form>
+        {% endif %}
 
         {# Le changement de jour ne recharge que ce cadre (Turbo Frame). #}
         <turbo-frame id="creneaux" data-turbo-action="advance">
@@ -34,7 +61,7 @@
                                 <span class="visuellement-cache">, aucun créneau</span>
                             </span>
                         {% else %}
-                            <a class="jour" href="{{ path('app_reservation_creneau', {id: prestation.id, jour: date}) }}"
+                            <a class="jour" href="{{ path('app_reservation_creneau', {id: prestation.id, jour: date}|merge(parametres_supplement)) }}"
                                {% if date == jour %}aria-current="date"{% endif %}>
                                 <span class="jour__nom">{{ jour_date|date_fr('EEE') }}</span>
                                 <span class="jour__numero">{{ jour_date|date_fr('d') }}</span>
@@ -61,7 +88,7 @@
                             {% for creneau in liste %}
                                 <li>
                                     <a class="creneau" data-turbo-frame="_top"
-                                       href="{{ path('app_reservation_recapitulatif', {id: prestation.id, creneau: creneau|date(format_creneau)}) }}">
+                                       href="{{ path('app_reservation_recapitulatif', {id: prestation.id, creneau: creneau|date(format_creneau)}|merge(parametres_supplement)) }}">
                                         {{ creneau|heure }}
                                     </a>
                                 </li>

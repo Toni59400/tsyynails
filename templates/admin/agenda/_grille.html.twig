@@ -44,7 +44,7 @@
                        href="{{ path('admin_reservation_detail', {entityId: r.id}) }}">
                         <span class="agenda-rdv__heure">{{ r.debut|heure }} – {{ r.fin|heure }}</span>
                         <strong class="agenda-rdv__cliente">{{ r.client.nomComplet }}</strong>
-                        <span class="agenda-rdv__prestation">{{ r.prestation.nom }}</span>
+                        <span class="agenda-rdv__prestation">{{ r.prestation.nom }}{% if r.supplementNom %} + {{ r.supplementNom }}{% endif %}</span>
                         <span class="agenda-rdv__statut">{{ r.statut.libelle }}</span>
                     </a>
                 {% endfor %}

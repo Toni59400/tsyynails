@@ -145,6 +145,16 @@ final class AdminAvecDonneesTest extends WebTestCase
         unlink($chemin);
     }
 
+    public function testLesSupplementsSeGerentDansLAdmin(): void
+    {
+        $crawler = $this->client->request('GET', '/admin/supplement');
+
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('Nail art niveau 1', $crawler->filter('tbody')->text());
+        $this->client->request('GET', '/admin/supplement/new');
+        self::assertResponseIsSuccessful();
+    }
+
     public function testLaListeDesPrestationsProposeDAjouterDesPhotos(): void
     {
         $prestation = $this->prestation();

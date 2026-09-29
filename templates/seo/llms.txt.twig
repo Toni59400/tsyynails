@@ -21,7 +21,13 @@
 {% for prestation in prestations %}- [{{ prestation.nom }}]({{ url('app_prestation', {slug: prestation.slug}) }}) : {{ (prestation.prixCentimes / 100)|number_format(prestation.prixCentimes % 100 ? 2 : 0, ',', ' ') }} €, {{ prestation.dureeMinutes }} minutes.{% if prestation.description %} {{ prestation.description }}{% endif %}
 
 {% endfor %}
+{% if supplements is not empty %}
+### Suppléments (à choisir en réservant)
 
+{% for s in supplements %}- {{ s.nom }} : + {{ (s.prixCentimes / 100)|number_format(s.prixCentimes % 100 ? 2 : 0, ',', ' ') }} €{% if s.dureeMinutes > 0 %}, + {{ s.dureeMinutes }} minutes{% endif %}{% if s.prestations is not empty %} (sur {{ s.prestations|map(p => p.nom)|join(', ') }}){% endif %}.{% if s.description %} {{ s.description }}{% endif %}
+
+{% endfor %}
+{% endif %}
 ## Programme de fidélité
 
 - 1 point par euro payé (avec un compte client), crédité après chaque rendez-vous.

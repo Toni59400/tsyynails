@@ -15,6 +15,7 @@ use App\Entity\Photo;
 use App\Entity\Prestation;
 use App\Entity\RecompenseFidelite;
 use App\Entity\Reservation;
+use App\Entity\Supplement;
 use App\Enum\MotifMouvementPoints;
 use App\Enum\StatutReservation;
 use App\Enum\TypeRecompense;
@@ -172,6 +173,13 @@ final class ChargerDonneesDemoCommand extends Command
         $horaires = $this->creerHoraires();
         $indisponibilites = $this->creerIndisponibilites($maintenant);
         $prestations = $this->creerPrestations();
+        // Nail art : proposé sur toutes les prestations (niveau 1) ; le niveau 2, plus long, seulement sur les poses.
+        $this->entityManager->persist((new Supplement('Nail art niveau 1', 500, 15))->setDescription('Décor simple sur 2 ongles : paillettes, points, ligne.')->setOrdre(1));
+        $niveau2 = (new Supplement('Nail art niveau 2', 1000, 30))->setDescription('Décor travaillé sur 4 ongles : dessins, strass, effets.')->setOrdre(2);
+        foreach (array_slice($prestations, 0, 2) as $pose) {
+            $niveau2->addPrestation($pose);
+        }
+        $this->entityManager->persist($niveau2);
         $inspirations = $this->creerInspirations();
         $nombrePhotos = $this->creerPhotos($prestations, $inspirations);
         $clientes = $this->creerClientes($maintenant);
@@ -199,7 +207,7 @@ final class ChargerDonneesDemoCommand extends Command
     private function purger(): void
     {
         foreach ([MouvementPoints::class, CarteFidelite::class, Reservation::class, Client::class, Photo::class, Inspiration::class,
-            RecompenseFidelite::class, Prestation::class, HoraireOuverture::class, Indisponibilite::class, Parametre::class] as $classe) {
+            RecompenseFidelite::class, Supplement::class, Prestation::class, HoraireOuverture::class, Indisponibilite::class, Parametre::class] as $classe) {
             $this->entityManager->createQuery(\sprintf('DELETE FROM %s e', $classe))->execute();
         }
 

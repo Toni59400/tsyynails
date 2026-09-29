@@ -1326,3 +1326,75 @@ a.jour:hover {
     min-height: 0;
     line-height: inherit;
 }
+
+/* Suppléments du tunnel de réservation (nail art…) */
+.options-resa {
+    margin-block: calc(var(--space) * 3);
+}
+
+.options-resa fieldset {
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.options-resa__titre {
+    margin-bottom: var(--space);
+    font-family: var(--font-heading);
+    font-size: 1.2rem;
+}
+
+.options-resa__liste {
+    display: grid;
+    gap: var(--space);
+}
+
+@media (min-width: 48rem) {
+    .options-resa__liste {
+        grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    }
+}
+
+.option-resa {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0 var(--space);
+    align-items: baseline;
+    min-height: 44px;
+    padding: calc(var(--space) * 1.5);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-surface);
+    cursor: pointer;
+}
+
+.option-resa:has(input:checked) {
+    border-color: var(--color-primary-ink);
+    box-shadow: inset 0 0 0 1px var(--color-primary-ink);
+    background: var(--color-surface-douce);
+}
+
+.option-resa:has(input:focus-visible) {
+    box-shadow: var(--focus-ring);
+}
+
+.option-resa input {
+    width: 1.1rem;
+    height: 1.1rem;
+    accent-color: var(--color-primary-ink);
+}
+
+.option-resa__nom {
+    font-weight: 600;
+}
+
+.option-resa__prix,
+.option-resa__description {
+    grid-column: 2;
+    color: var(--color-muted);
+    font-size: 0.95rem;
+}
+
+.options-resa .bouton {
+    margin-top: var(--space);
+}

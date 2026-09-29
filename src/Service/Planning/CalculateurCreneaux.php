@@ -32,9 +32,11 @@ final class CalculateurCreneaux
     }
 
     /**
+     * @param int $minutesEnPlus durée d'un supplément choisi (nail art…)
+     *
      * @return array<string, list<\DateTimeImmutable>> créneaux par jour (clé Y-m-d), jours sans créneau inclus
      */
-    public function creneauxParJour(Prestation $prestation, \DateTimeImmutable $premierJour, int $nombreJours): array
+    public function creneauxParJour(Prestation $prestation, \DateTimeImmutable $premierJour, int $nombreJours, int $minutesEnPlus = 0): array
     {
         $debut = $premierJour->setTime(0, 0);
         $fin = $debut->modify(\sprintf('+%d days', $nombreJours));
@@ -50,12 +52,12 @@ final class CalculateurCreneaux
         $delaiHeures = $this->parametres->valeur(Parametre::DELAI_MIN_RESERVATION_HEURES);
         $pasAvant = $this->clock->now()->modify(\sprintf('+%d hours', $delaiHeures));
 
-        return self::calculer($this->horaires->findToutesOrdonnees(), $occupations, $prestation->getDureeMinutes(), $debut, $nombreJours, $pasAvant);
+        return self::calculer($this->horaires->findToutesOrdonnees(), $occupations, $prestation->getDureeMinutes() + $minutesEnPlus, $debut, $nombreJours, $pasAvant);
     }
 
-    public function estDisponible(Prestation $prestation, \DateTimeImmutable $debut): bool
+    public function estDisponible(Prestation $prestation, \DateTimeImmutable $debut, int $minutesEnPlus = 0): bool
     {
-        $creneaux = $this->creneauxParJour($prestation, $debut, 1)[$debut->format('Y-m-d')] ?? [];
+        $creneaux = $this->creneauxParJour($prestation, $debut, 1, $minutesEnPlus)[$debut->format('Y-m-d')] ?? [];
 
         foreach ($creneaux as $creneau) {
             if ($creneau == $debut) {

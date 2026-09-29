@@ -21,6 +21,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\MoneyField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\DateTimeFilter;
 use Psr\Clock\ClockInterface;
@@ -85,6 +86,7 @@ final class ReservationCrudController extends AbstractCrudController
         yield DateTimeField::new('debut', 'Rendez-vous')->setFormat('EEE dd/MM/yyyy HH:mm');
         yield AssociationField::new('client', 'Cliente');
         yield AssociationField::new('prestation');
+        yield TextField::new('supplementNom', 'Supplément')->formatValue(static fn (?string $nom): string => $nom ?? '—');
         yield ChoiceField::new('statut')->setChoices($this->choixStatuts())->renderAsBadges([
             StatutReservation::PAIEMENT_EN_COURS->value => 'secondary',
             StatutReservation::EN_ATTENTE->value => 'warning',

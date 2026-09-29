@@ -10,11 +10,13 @@ use App\Entity\Parametre;
 use App\Entity\Prestation;
 use App\Entity\RecompenseFidelite;
 use App\Entity\Reservation;
+use App\Entity\Supplement;
 use App\Enum\MotifMouvementPoints;
 use App\Repository\MouvementPointsRepository;
 use App\Repository\ParametreRepository;
 use App\Repository\RecompenseFideliteRepository;
 use App\Repository\ReservationRepository;
+use App\Service\Reservation\Tarification;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
@@ -59,12 +61,12 @@ final class ProgrammeFidelite
     }
 
     /**
-     * Récompenses qu'une cliente peut utiliser en ligne sur cette prestation :
-     * réduction, points suffisants, et pas plus que le plafond du prix.
+     * Récompenses qu'une cliente peut utiliser en ligne sur cette prestation (et son supplément) :
+     * réduction, points suffisants, et pas plus que le plafond du prix total.
      *
      * @return list<RecompenseFidelite>
      */
-    public function utilisablesEnLigne(Client $client, Prestation $prestation): array
+    public function utilisablesEnLigne(Client $client, Prestation $prestation, ?Supplement $supplement = null): array
     {
         $solde = $this->solde($client);
 
@@ -72,7 +74,7 @@ final class ProgrammeFidelite
             $this->paliers(),
             fn (RecompenseFidelite $r): bool => $r->estUtilisableEnLigne()
                 && $r->getSeuilPoints() <= $solde
-                && $this->respecteLePlafond($r, $prestation->getPrixCentimes()),
+                && $this->respecteLePlafond($r, Tarification::prixCentimes($prestation, $supplement)),
         ));
     }
 

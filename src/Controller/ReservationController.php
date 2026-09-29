@@ -8,11 +8,13 @@ use App\Entity\Client;
 use App\Entity\Prestation;
 use App\Entity\RecompenseFidelite;
 use App\Entity\Reservation;
+use App\Entity\Supplement;
 use App\Entity\User;
 use App\Enum\StatutReservation;
 use App\Form\CoordonneesType;
 use App\Repository\PrestationRepository;
 use App\Repository\ReservationRepository;
+use App\Repository\SupplementRepository;
 use App\Service\Compte\ComptesClientes;
 use App\Service\Fidelite\ProgrammeFidelite;
 use App\Service\Paiement\PaiementGateway;
@@ -42,6 +44,7 @@ final class ReservationController extends AbstractController
 
     public function __construct(
         private readonly PrestationRepository $prestations,
+        private readonly SupplementRepository $supplements,
         private readonly ReservationRepository $reservations,
         private readonly CalculateurCreneaux $calculateur,
         private readonly Tarification $tarification,
@@ -67,9 +70,11 @@ final class ReservationController extends AbstractController
     {
         $this->exigerActive($prestation);
 
+        // Supplément (nail art…) choisi avant le créneau : sa durée change les créneaux possibles.
+        $supplement = $this->supplements->findProposePour($prestation, $request->query->getString('supplement'));
         $horizon = $this->fidelite->horizonJours($this->ficheConnectee());
         $aujourdhui = $this->clock->now()->setTime(0, 0);
-        $creneauxParJour = $this->calculateur->creneauxParJour($prestation, $aujourdhui, $horizon);
+        $creneauxParJour = $this->calculateur->creneauxParJour($prestation, $aujourdhui, $horizon, $supplement?->getDureeMinutes() ?? 0);
 
         $jourDemande = $request->query->getString('jour');
         if (!\array_key_exists($jourDemande, $creneauxParJour)) {
@@ -79,6 +84,9 @@ final class ReservationController extends AbstractController
 
         return $this->render('reservation/creneau.html.twig', [
             'prestation' => $prestation,
+            'supplements' => $this->supplements->findProposesPour($prestation),
+            'supplement' => $supplement,
+            'parametres_supplement' => self::parametresSupplement($supplement),
             'creneaux_par_jour' => $creneauxParJour,
             'jour' => $jourDemande,
             'format_creneau' => self::FORMAT_CRENEAU,
@@ -102,11 +110,20 @@ final class ReservationController extends AbstractController
         $user = $this->getUser();
         $cliente = $this->ficheConnectee();
 
+        $choixSupplement = $request->query->getString('supplement');
+        $supplement = $this->supplements->findProposePour($prestation, $choixSupplement);
+        if ('' !== $choixSupplement && null === $supplement) {
+            $this->addFlash('erreur', 'Ce supplément n\x27est plus proposé. Choisissez à nouveau vos options et votre créneau.');
+
+            return $this->redirectToRoute('app_reservation_creneau', ['id' => $prestation->getId()]);
+        }
+        $minutesEnPlus = $supplement?->getDureeMinutes() ?? 0;
+
         // L'horizon (28 jours, plus pour les fidèles) est vérifié ici aussi : l'URL peut être forgée.
         $debut = \DateTimeImmutable::createFromFormat('!'.self::FORMAT_CRENEAU, $creneau);
         $limite = $this->clock->now()->setTime(0, 0)->modify(\sprintf('+%d days', $this->fidelite->horizonJours($cliente)));
-        if (false === $debut || $debut >= $limite || !$this->calculateur->estDisponible($prestation, $debut)) {
-            return $this->creneauPris($prestation);
+        if (false === $debut || $debut >= $limite || !$this->calculateur->estDisponible($prestation, $debut, $minutesEnPlus)) {
+            return $this->creneauPris($prestation, $supplement);
         }
 
         $coordonnees = new CoordonneesCliente();
@@ -116,7 +133,7 @@ final class ReservationController extends AbstractController
             $coordonnees->nom = $cliente->getNom();
             $coordonnees->telephone = (string) $cliente->getTelephone();
             $coordonnees->email = $user->getEmail();
-            $recompenses = $this->fidelite->utilisablesEnLigne($cliente, $prestation);
+            $recompenses = $this->fidelite->utilisablesEnLigne($cliente, $prestation, $supplement);
         } elseif ($user instanceof User) {
             $coordonnees->email = $user->getEmail();
         }
@@ -129,7 +146,7 @@ final class ReservationController extends AbstractController
         $formulaire->handleRequest($request);
 
         if ($formulaire->isSubmitted() && $formulaire->isValid()) {
-            $retour = $this->redirectToRoute('app_reservation_recapitulatif', ['id' => $prestation->getId(), 'creneau' => $creneau]);
+            $retour = $this->redirectToRoute('app_reservation_recapitulatif', ['id' => $prestation->getId(), 'creneau' => $creneau] + self::parametresSupplement($supplement));
             if (!$limiteur->create($request->getClientIp())->consume()->isAccepted()) {
                 $this->addFlash('erreur', 'Trop de demandes depuis votre connexion. Réessayez dans une heure ou appelez-moi.');
 
@@ -139,9 +156,9 @@ final class ReservationController extends AbstractController
             $recompense = null !== $cliente ? $formulaire->get('recompense')->getData() : null;
 
             try {
-                $reservation = $this->workflow->demander($prestation, $debut, $coordonnees, $cliente, $recompense instanceof RecompenseFidelite ? $recompense : null);
+                $reservation = $this->workflow->demander($prestation, $debut, $coordonnees, $cliente, $recompense instanceof RecompenseFidelite ? $recompense : null, $supplement);
             } catch (CreneauIndisponibleException) {
-                return $this->creneauPris($prestation);
+                return $this->creneauPris($prestation, $supplement);
             } catch (\LogicException $erreur) {
                 $this->addFlash('erreur', $erreur->getMessage());
 
@@ -168,13 +185,16 @@ final class ReservationController extends AbstractController
 
         return $this->render('reservation/recapitulatif.html.twig', [
             'prestation' => $prestation,
+            'supplement' => $supplement,
+            'parametres_supplement' => self::parametresSupplement($supplement),
+            'prix_total' => Tarification::prixCentimes($prestation, $supplement),
             'debut' => $debut,
-            'fin' => $debut->modify(\sprintf('+%d minutes', $prestation->getDureeMinutes())),
-            'acompte' => $this->tarification->acompteCentimes($prestation),
+            'fin' => $debut->modify(\sprintf('+%d minutes', $prestation->getDureeMinutes() + $minutesEnPlus)),
+            'acompte' => $this->tarification->acompteCentimes($prestation, 0, $supplement),
             'formulaire' => $formulaire,
             'cliente' => $cliente,
             'solde' => null === $cliente ? null : $this->fidelite->solde($cliente),
-            'points_gagnes' => $this->fidelite->pointsPour($prestation->getPrixCentimes()),
+            'points_gagnes' => $this->fidelite->pointsPour(Tarification::prixCentimes($prestation, $supplement)),
             'cible_connexion' => $request->getPathInfo(),
         ], new Response(status: $formulaire->isSubmitted() ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK));
     }
@@ -252,11 +272,23 @@ final class ReservationController extends AbstractController
             ?? throw $this->createNotFoundException('Réservation introuvable.');
     }
 
-    private function creneauPris(Prestation $prestation): Response
+    private function creneauPris(Prestation $prestation, ?Supplement $supplement = null): Response
     {
         $this->addFlash('erreur', 'Ce créneau n\'est plus disponible. Choisissez-en un autre.');
 
-        return $this->redirectToRoute('app_reservation_creneau', ['id' => $prestation->getId()]);
+        return $this->redirectToRoute('app_reservation_creneau', ['id' => $prestation->getId()] + self::parametresSupplement($supplement));
+    }
+
+    /**
+     * Le supplément suit la cliente d'étape en étape dans l'adresse (?supplement=ID).
+     *
+     * @return array<string, int>
+     */
+    private static function parametresSupplement(?Supplement $supplement): array
+    {
+        $id = $supplement?->getId();
+
+        return null === $id ? [] : ['supplement' => $id];
     }
 
     private function exigerActive(Prestation $prestation): void

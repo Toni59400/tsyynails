@@ -14,8 +14,8 @@
 
         <div class="tunnel-colonnes">
             <div>
-                {{ include('reservation/_recap.html.twig', {prix: prestation.prixCentimes}) }}
-                <p><a href="{{ path('app_reservation_creneau', {id: prestation.id, jour: debut|date('Y-m-d')}) }}">Changer de créneau</a></p>
+                {{ include('reservation/_recap.html.twig', {prix: prix_total, supplement_nom: supplement ? supplement.nom : null, supplement_prix: supplement ? supplement.prixCentimes : 0}) }}
+                <p><a href="{{ path('app_reservation_creneau', {id: prestation.id, jour: debut|date('Y-m-d')}|merge(parametres_supplement)) }}">Changer de créneau ou d'option</a></p>
             </div>
 
             {{ form_start(formulaire, {attr: {class: 'formulaire', novalidate: 'novalidate'}}) }}
