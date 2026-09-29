@@ -138,7 +138,7 @@ final class SeoExtension
             'description' => \sprintf('%s à %s : pose gel, remplissage, semi-permanent, nail art. Réservation en ligne.', $this->salon['activite'], $this->salon['ville']),
             'url' => $this->url('app_accueil'),
             'image' => $this->imagePartage($photo),
-            'logo' => $this->absolu($this->assets->getUrl('images/icone-576.png')),
+            'logo' => $this->absolu($this->assets->getUrl('images/logo-carre.png')),
             'telephone' => $this->salon['telephone'],
             'email' => $this->salon['email'],
             'priceRange' => [] === $prix ? null : \sprintf('%s € – %s €', self::euros(min($prix)), self::euros(max($prix))),

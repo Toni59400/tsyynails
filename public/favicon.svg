@@ -1,6 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="14" fill="#7a4747"/>
-  <rect x="22" y="10" width="20" height="36" rx="10" fill="#f2d4d0"/>
-  <path d="M22 20a10 10 0 0 1 20 0v2H22z" fill="#fbf7f4"/>
-  <text x="32" y="58" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="13" fill="#fbf7f4" letter-spacing="1">TSYY</text>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><title>Tsyynails</title><rect width="100" height="100" rx="22" fill="#fbf7f4"/><g fill="none" stroke="#9b7b6a" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M29 79 L29 52 C29 29 38 15 50 15 C62 15 71 29 71 52 L71 79 Q71 85 65 85 L35 85 Q29 85 29 79 Z"/><path d="M49 26 C56 27 61.5 36 61.5 57"/></g></svg>

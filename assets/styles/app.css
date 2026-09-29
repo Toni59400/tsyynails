@@ -86,10 +86,13 @@ a {
 
 .auth__marque {
     margin: 0 0 calc(var(--space) * 3);
-    font-family: var(--font-heading);
-    font-size: 1.75rem;
-    color: var(--color-primary-ink);
     text-align: center;
+}
+
+.auth__marque img {
+    display: inline-block;
+    width: auto;
+    height: 60px;
 }
 
 .auth h1 {

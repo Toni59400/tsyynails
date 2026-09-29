@@ -34,6 +34,7 @@ final class SitePublicTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorCount(1, 'h1');
         self::assertSelectorExists('a[href="/reservation"]');
+        self::assertSelectorExists('.entete__marque img[alt^="Tsyynails"][src*="logo-entete"]');
     }
 
     /**

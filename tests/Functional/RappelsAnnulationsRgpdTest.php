@@ -58,6 +58,7 @@ final class RappelsAnnulationsRgpdTest extends WebTestCase
         self::assertInstanceOf(Email::class, $email);
         self::assertStringContainsString('Rappel', (string) $email->getSubject());
         self::assertStringContainsString('Reste à régler', (string) $email->getHtmlBody());
+        self::assertMatchesRegularExpression('#<img src="https?://[^"]+/images/logo-email\.png"#', (string) $email->getHtmlBody(), 'Logo en adresse absolue, lisible par les messageries.');
     }
 
     // ---------- Annulation ----------

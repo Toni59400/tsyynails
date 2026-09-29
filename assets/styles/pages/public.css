@@ -98,11 +98,23 @@
 }
 
 .entete__marque {
-    font-family: var(--font-heading);
-    font-size: 1.6rem;
-    color: var(--color-primary-ink);
-    text-decoration: none;
-    letter-spacing: 0.02em;
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    border-radius: calc(var(--radius) / 2);
+}
+
+/* Logo (nom manuscrit) : 44 px de haut sur téléphone, un peu plus grand sur ordinateur. */
+.entete__marque img {
+    display: block;
+    width: auto;
+    height: 44px;
+}
+
+@media (min-width: 48rem) {
+    .entete__marque img {
+        height: 54px;
+    }
 }
 
 .navigation__liste {

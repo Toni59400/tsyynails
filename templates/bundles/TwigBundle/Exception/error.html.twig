@@ -12,7 +12,7 @@
 <body>
     <main class="auth">
         <div class="auth__carte">
-            <p class="auth__marque">{{ salon.nom }}</p>
+            <p class="auth__marque"><img src="{{ asset('images/logo-entete.png') }}" alt="{{ salon.nom }}" width="179" height="60"></p>
             <h1>Oups, un souci technique</h1>
             <p>La page n'a pas pu s'afficher. Réessayez dans quelques minutes.</p>
             <p>Pour un rendez-vous urgent : <a href="tel:{{ salon.telephone }}">{{ salon.telephone|telephone }}</a>.</p>

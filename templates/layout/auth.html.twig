@@ -7,7 +7,7 @@
 {% block body %}
     <main class="auth">
         <div class="auth__carte">
-            <p class="auth__marque">Tsyynails</p>
+            <p class="auth__marque"><a href="{{ path('app_accueil') }}"><img src="{{ asset('images/logo-entete.png') }}" alt="{{ salon.nom }}, accueil" width="179" height="60"></a></p>
             {% for message in app.flashes(['success', 'succes'])|reduce((tous, liste) => tous|merge(liste), []) %}
                 <div class="alerte alerte--succes" role="status">{{ message }}</div>
             {% endfor %}

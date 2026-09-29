@@ -5,7 +5,7 @@
 <body style="margin:0;padding:24px 12px;background:#fbf7f4;font-family:Arial,Helvetica,sans-serif;color:#3b3230;line-height:1.5;">
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:520px;margin:0 auto;background:#ffffff;border:1px solid #e8dcd6;border-radius:12px;">
         <tr><td style="padding:28px 24px;">
-            <p style="margin:0 0 20px;font-family:Georgia,serif;font-size:24px;color:#7a4747;">{{ salon.nom }}</p>
+            <p style="margin:0 0 20px;text-align:center;"><img src="{{ absolute_url(asset('images/logo-email.png')) }}" alt="{{ salon.nom }}" width="196" height="140" style="display:inline-block;border:0;width:196px;height:auto;"></p>
             {% block contenu %}{% endblock %}
             <p style="margin:28px 0 0;font-size:13px;color:#6f625e;">
                 {{ salon.nom }} · {{ salon.adresse }}, {{ salon.code_postal }} {{ salon.ville }}<br>

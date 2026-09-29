@@ -27,7 +27,7 @@
 
     <header class="entete">
         <div class="entete__interieur conteneur">
-            <a class="entete__marque" href="{{ path('app_accueil') }}">{{ salon.nom }}</a>
+            <a class="entete__marque" href="{{ path('app_accueil') }}"><img src="{{ asset('images/logo-entete.png') }}" alt="{{ salon.nom }}, accueil" width="143" height="48"></a>
             <div class="entete__actions">
                 {% if is_granted('ROLE_ADMIN') %}
                     <a class="entete__compte" href="{{ path('admin') }}">Admin</a>
