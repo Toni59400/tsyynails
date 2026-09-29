@@ -18,4 +18,16 @@
         <input type="hidden" name="_token" value="{{ csrf_token('reglages') }}">
         <button type="submit" class="btn btn-primary">Enregistrer</button>
     </form>
+
+    {% if indexnow_actif %}
+        <form method="post" action="{{ path('admin_reglages_indexnow') }}" class="tdb-carte reglages mt-4">
+            <h2 class="h5">Référencement</h2>
+            <p class="tdb-aide">
+                Chaque modification de prestation, photo, thème, question fréquente ou horaire est signalée automatiquement
+                à Bing (qui alimente aussi ChatGPT et Copilot). Ce bouton signale tout le site d'un coup, par exemple après de gros changements.
+            </p>
+            <input type="hidden" name="_token" value="{{ csrf_token('indexnow') }}">
+            <button type="submit" class="btn btn-secondary">Signaler tout le site à Bing</button>
+        </form>
+    {% endif %}
 {% endblock %}

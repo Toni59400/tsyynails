@@ -7,6 +7,8 @@ namespace App\Controller\Admin;
 use App\Entity\Parametre;
 use App\Entity\User;
 use App\Repository\ParametreRepository;
+use App\Service\Seo\IndexNow;
+use App\Service\Seo\PagesPubliques;
 use Doctrine\ORM\EntityManagerInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use Psr\Log\LoggerInterface;
@@ -16,7 +18,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
- * Réglages de la réservation et du programme de fidélité. Route : admin_reglages_index.
+ * Réglages de la réservation et du programme de fidélité. Routes : admin_reglages_index, admin_reglages_indexnow.
  */
 #[IsGranted(User::ROLE_ADMIN)]
 #[AdminRoute('/reglages', name: 'reglages')]
@@ -26,6 +28,8 @@ final class ReglagesController extends AbstractController
         private readonly ParametreRepository $parametres,
         private readonly EntityManagerInterface $entityManager,
         private readonly LoggerInterface $logger,
+        private readonly IndexNow $indexNow,
+        private readonly PagesPubliques $pages,
     ) {
     }
 
@@ -76,6 +80,27 @@ final class ReglagesController extends AbstractController
             ];
         }
 
-        return $this->render('admin/reglages.html.twig', ['reglages' => $reglages], new Response(status: [] === $erreurs ? 200 : 422));
+        return $this->render('admin/reglages.html.twig', [
+            'reglages' => $reglages,
+            'indexnow_actif' => $this->indexNow->estActive(),
+        ], new Response(status: [] === $erreurs ? 200 : 422));
+    }
+
+    /** Signale tout le site à Bing (IndexNow) : utile à la mise en service ou après de gros changements. */
+    #[AdminRoute('/indexnow', name: 'indexnow', options: ['methods' => ['POST']])]
+    public function indexNow(Request $request): Response
+    {
+        if (!$this->isCsrfTokenValid('indexnow', $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException('Jeton CSRF invalide.');
+        }
+
+        $urls = $this->pages->urls();
+        if ($this->indexNow->soumettre($urls, $this->pages->urlCleIndexNow())) {
+            $this->addFlash('success', \sprintf('%d pages signalées à Bing (IndexNow). Elles seront relues dans les prochaines heures.', \count($urls)));
+        } else {
+            $this->addFlash('danger', 'Signalement impossible pour le moment. Réessayez plus tard.');
+        }
+
+        return $this->redirectToRoute('admin_reglages_index');
     }
 }

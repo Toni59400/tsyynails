@@ -70,6 +70,23 @@ final class IndexNowTest extends WebTestCase
         @unlink(static::getContainer()->getParameter('app.dossier_galerie').'/'.$photo['fichier']);
     }
 
+    public function testLeBoutonDesReglagesSignaleToutLeSite(): void
+    {
+        $this->client->loginUser($this->creerUtilisateur('admin@example.com', [User::ROLE_ADMIN], totpActive: true));
+        $crawler = $this->client->request('GET', '/admin/reglages');
+        ReponsesHttpSimulees::$requetes = [];
+
+        $this->client->submit($crawler->selectButton('Signaler tout le site à Bing')->form());
+
+        self::assertResponseRedirects('/admin/reglages');
+        self::assertCount(1, ReponsesHttpSimulees::$requetes);
+        $this->client->followRedirect();
+        self::assertSelectorTextContains('.alert-success', 'pages signalées à Bing');
+
+        $this->client->request('POST', '/admin/reglages/indexnow', ['_token' => 'faux']);
+        self::assertResponseStatusCodeSame(403);
+    }
+
     public function testLaCommandeSignaleToutesLesPagesPubliques(): void
     {
         $testeur = new CommandTester((new Application(self::$kernel))->find('app:indexnow:soumettre'));
