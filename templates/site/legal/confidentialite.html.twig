@@ -72,15 +72,42 @@
         <ul>
             <li>OVH (hébergement du site et des emails), France.</li>
             <li>Stripe (paiement de l'acompte), Union européenne et États-Unis, sous clauses contractuelles types.</li>
+            {% if google_tag_manager %}
+                <li>Google Ireland Ltd (Google Analytics et Google Tag Manager, mesure d'audience, uniquement avec votre accord), Union européenne ; transferts possibles vers les États-Unis, encadrés par le cadre de protection des données UE–États-Unis (Data Privacy Framework) et des clauses contractuelles types.</li>
+            {% endif %}
         </ul>
         <p>Vos données ne sont jamais vendues ni utilisées pour de la publicité.</p>
 
-        <h2>Cookies</h2>
+        <h2 id="cookies">Cookies</h2>
+        <p>Un cookie est un petit fichier enregistré par votre navigateur. Ce site en utilise deux sortes.</p>
+
+        <h3>Cookies indispensables (sans consentement)</h3>
         <p>
-            Ce site utilise uniquement des cookies indispensables à son fonctionnement
-            (session, protection des formulaires). Aucun cookie publicitaire ni de mesure d'audience :
-            aucun consentement n'est donc demandé.
+            Ils sont nécessaires au fonctionnement du site et ne peuvent pas être désactivés :
+            session de connexion, protection des formulaires, paiement sécurisé de l'acompte (Stripe)
+            {%- if google_tag_manager %} et mémorisation de votre choix sur les cookies (cookie « tsyynails_consentement », 6 mois){% endif %}.
         </p>
+
+        {% if google_tag_manager %}
+            <h3>Cookies de mesure d'audience (avec votre accord)</h3>
+            <p>
+                Si vous l'acceptez, Google Analytics, chargé par Google Tag Manager, dépose des cookies
+                (« _ga » et « _ga_… ») pour compter les visites et comprendre quelles pages sont consultées
+                (pages vues, durée, type d'appareil, ville approximative, provenance des visites) afin d'améliorer le site.
+                Base légale : votre consentement. Durée : 13 mois au maximum pour les cookies, 14 mois pour les statistiques.
+                Aucune publicité ni aucun profilage publicitaire n'est réalisé ; la publicité personnalisée et le partage avec les services publicitaires de Google sont désactivés.
+            </p>
+            <p>
+                Tant que vous n'avez pas accepté, aucun script Google n'est chargé. Refuser n'a aucune conséquence
+                sur l'utilisation du site ni sur la réservation. Votre choix, accord comme refus, est conservé 6 mois, puis vous est redemandé.
+                Retirer votre accord supprime les cookies de mesure d'audience déposés sur ce site.
+            </p>
+            <p>
+                <button type="button" class="bouton bouton--secondaire" data-action="consentement#ouvrir">Gérer les cookies</button>
+            </p>
+        {% else %}
+            <p>Aucun cookie publicitaire ni de mesure d'audience n'est utilisé : aucun consentement n'est donc demandé.</p>
+        {% endif %}
 
         <h2>Vos droits</h2>
         <p>

@@ -36,7 +36,7 @@ description: Exigences RGPD et cybersécurité du projet Tsyynails. Utiliser pou
 - Case de consentement **non pré-cochée** pour les notes santé et pour toute newsletter (les rappels de rendez-vous sont transactionnels, sans consentement).
 - Pages obligatoires : mentions légales, politique de confidentialité (finalités, bases légales, durées, droits, contact, sous-traitants), CGV/conditions de réservation (acompte, annulation).
 - Sous-traitants à lister : OVH (hébergement, emails), Stripe (paiement), prestataire email éventuel (Brevo).
-- **Cookies** : uniquement les cookies strictement nécessaires (session, CSRF) → pas de bandeau. Aucun traceur tiers (Google Analytics, pixel Meta, police Google chargée depuis leurs serveurs) sans consentement préalable ; privilégier une mesure d'audience exemptée (Matomo configuré selon la CNIL) ou aucune.
+- **Cookies** : cookies strictement nécessaires (session, CSRF, Stripe, choix de consentement) sans bandeau. Mesure d’audience : Google Tag Manager/Analytics (`GOOGLE_TAG_MANAGER_ID`), injecté par le contrôleur Stimulus `consentement` **seulement après accord** (jamais de balise GTM ni d’iframe noscript dans le HTML) ; « Tout refuser » aussi visible que « Tout accepter », case non pré-cochée, choix conservé 6 mois, lien « Gérer les cookies » en pied de page, retrait = suppression des cookies `_ga`. Tout nouveau traceur (pixel Meta…) = nouvelle finalité dans le bandeau + `VERSION` augmentée + politique de confidentialité + CSP.
 - Polices et scripts **auto-hébergés** (AssetMapper), pas de CDN tiers.
 
 ## Cybersécurité

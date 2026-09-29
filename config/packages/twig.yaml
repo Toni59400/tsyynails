@@ -5,6 +5,8 @@ twig:
         # Balises de validation de propriété (Search Console, Bing Webmaster Tools), vides = absentes.
         verification_google: '%env(GOOGLE_SITE_VERIFICATION)%'
         verification_bing: '%env(BING_SITE_VERIFICATION)%'
+        # Conteneur Google Tag Manager (GTM-XXXX), vide = aucune mesure d'audience ni bandeau de cookies.
+        google_tag_manager: '%env(GOOGLE_TAG_MANAGER_ID)%'
 
 when@test:
     twig:

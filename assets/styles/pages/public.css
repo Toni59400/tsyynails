@@ -1246,3 +1246,83 @@ a.jour:hover {
     color: var(--color-success);
     font-weight: 600;
 }
+/* Bandeau de consentement aux cookies : non bloquant, « Tout refuser » aussi visible que « Tout accepter » */
+.consentement {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 50;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: calc(var(--space) * 2);
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    box-shadow: 0 -4px 16px rgb(59 50 48 / 12%);
+}
+
+.consentement[hidden] {
+    display: none;
+}
+
+.consentement__interieur {
+    max-width: var(--largeur-max);
+    margin-inline: auto;
+}
+
+.consentement__titre {
+    margin: 0 0 var(--space);
+    font-size: 1.2rem;
+}
+
+.consentement__titre:focus {
+    outline: none;
+}
+
+.consentement__details {
+    margin-block: calc(var(--space) * 2);
+    padding: calc(var(--space) * 2);
+    background: var(--color-surface-douce);
+    border-radius: var(--radius);
+}
+
+.consentement__ligne {
+    display: flex;
+    gap: var(--space);
+    align-items: flex-start;
+}
+
+.consentement__ligne input {
+    flex: none;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-top: 0.15rem;
+    accent-color: var(--color-primary-ink);
+}
+
+.consentement__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space);
+    align-items: center;
+}
+
+.consentement__actions .bouton {
+    flex: 1 1 10rem;
+}
+
+.consentement__personnaliser,
+.pied__cookies {
+    min-height: 44px;
+    padding: 0 var(--space);
+    border: 0;
+    background: none;
+    color: var(--color-primary-ink);
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.pied__cookies {
+    padding: 0;
+    min-height: 0;
+    line-height: inherit;
+}

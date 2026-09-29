@@ -1,0 +1,35 @@
+{# Bandeau de consentement aux cookies (contrôleur Stimulus « consentement »). Masqué tant que le JavaScript
+   n'a pas vérifié l'absence de choix : sans JavaScript, aucun traceur n'est chargé, donc rien à demander. #}
+<section class="consentement" role="region" aria-labelledby="consentement-titre" data-consentement-target="bandeau" hidden>
+    <div class="consentement__interieur">
+        <h2 class="consentement__titre" id="consentement-titre" tabindex="-1" data-consentement-target="titre">Votre accord pour les statistiques de visite</h2>
+        <p>
+            Avec votre accord, nous utilisons Google Analytics pour compter les visites et savoir quelles pages vous intéressent,
+            afin d'améliorer le site. Ces cookies ne servent jamais à la publicité.
+            Vous pouvez changer d'avis à tout moment grâce au lien « Gérer les cookies » en bas de chaque page.
+            <a href="{{ path('app_confidentialite') }}#cookies">En savoir plus</a>
+        </p>
+
+        <div class="consentement__details" data-consentement-target="details" hidden>
+            <p class="consentement__ligne">
+                <input type="checkbox" id="consentement-necessaires" checked disabled>
+                <label for="consentement-necessaires">
+                    <strong>Indispensables</strong> : connexion, sécurité des formulaires, paiement de l'acompte. Toujours actifs, sans consentement.
+                </label>
+            </p>
+            <p class="consentement__ligne">
+                <input type="checkbox" id="consentement-statistiques" data-consentement-target="statistiques">
+                <label for="consentement-statistiques">
+                    <strong>Mesure d'audience</strong> (Google Analytics, via Google Tag Manager) : pages vues, type d'appareil, provenance des visites. Données conservées 14 mois.
+                </label>
+            </p>
+            <button type="button" class="bouton bouton--secondaire" data-action="consentement#enregistrerDetails">Enregistrer mes choix</button>
+        </div>
+
+        <div class="consentement__actions">
+            <button type="button" class="bouton" data-action="consentement#refuser">Tout refuser</button>
+            <button type="button" class="bouton" data-action="consentement#accepter">Tout accepter</button>
+            <button type="button" class="consentement__personnaliser" data-action="consentement#personnaliser">Personnaliser</button>
+        </div>
+    </div>
+</section>

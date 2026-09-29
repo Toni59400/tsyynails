@@ -24,16 +24,18 @@ when@prod:
         # Jamais de « data: » dans script-src : les feuilles de style ne doivent donc pas être importées
         # dans le JavaScript (AssetMapper les transformerait en modules data:), mais chargées en <link>.
         # Stripe : https://docs.stripe.com/security/guide#content-security-policy
+        # Google Tag Manager / Analytics (chargés seulement après consentement) :
+        # https://developers.google.com/tag-platform/security/guides/csp
         csp:
             enabled: true
             enforce:
                 level1_fallback: false
                 default-src: ["'self'"]
-                script-src: ["'self'", 'https://js.stripe.com', 'https://*.js.stripe.com']
+                script-src: ["'self'", 'https://js.stripe.com', 'https://*.js.stripe.com', 'https://www.googletagmanager.com']
                 style-src: ["'self'"]
-                img-src: ["'self'", 'data:', 'https://*.stripe.com']
+                img-src: ["'self'", 'data:', 'https://*.stripe.com', 'https://www.googletagmanager.com', 'https://*.google-analytics.com']
                 font-src: ["'self'"]
-                connect-src: ["'self'", 'https://api.stripe.com']
+                connect-src: ["'self'", 'https://api.stripe.com', 'https://www.googletagmanager.com', 'https://*.google-analytics.com', 'https://*.analytics.google.com']
                 frame-src: ['https://js.stripe.com', 'https://*.js.stripe.com', 'https://hooks.stripe.com']
                 form-action: ["'self'"]
                 frame-ancestors: ["'none'"]

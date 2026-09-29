@@ -21,6 +21,8 @@
 {% endblock %}
 
 {% block body %}
+    {# Mesure d'audience seulement si Google Tag Manager est configuré, et chargée seulement après accord. #}
+    {% if google_tag_manager %}<div data-controller="consentement" data-consentement-gtm-value="{{ google_tag_manager }}">{% endif %}
     <a class="lien-evitement" href="#contenu">Aller au contenu</a>
 
     <header class="entete">
@@ -84,10 +86,17 @@
                     <li><a href="{{ path('app_conditions') }}">Conditions de réservation</a></li>
                     <li><a href="{{ path('app_confidentialite') }}">Confidentialité</a></li>
                     <li><a href="{{ path('app_mentions_legales') }}">Mentions légales</a></li>
+                    {% if google_tag_manager %}
+                        <li><button type="button" class="pied__cookies" data-action="consentement#ouvrir">Gérer les cookies</button></li>
+                    {% endif %}
                     <li><a href="{{ path('app_login') }}">Espace pro</a></li>
                 </ul>
             </section>
         </div>
         <p class="pied__copyright conteneur">© {{ 'now'|date('Y') }} {{ salon.nom }}</p>
     </footer>
+    {% if google_tag_manager %}
+        {{ include('site/_consentement.html.twig') }}
+    </div>
+    {% endif %}
 {% endblock %}
