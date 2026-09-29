@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Tests\Functional\Admin;
 
 use App\Entity\Client;
+use App\Entity\Inspiration;
 use App\Entity\Photo;
 use App\Entity\Prestation;
 use App\Entity\User;
 use App\Enum\MotifMouvementPoints;
 use App\Repository\ClientRepository;
+use App\Repository\InspirationRepository;
 use App\Repository\MouvementPointsRepository;
 use App\Repository\PhotoRepository;
 use App\Repository\PrestationRepository;
@@ -190,6 +192,31 @@ final class AdminAvecDonneesTest extends WebTestCase
         $crawler = $this->client->request('GET', '/prestations/'.$prestation->getSlug());
         self::assertResponseIsSuccessful();
         self::assertCount($publiees, $crawler->filter('img[src*="/uploads/galerie/"]:not(.prestation-entete__photo)'));
+    }
+
+    public function testLImportDUnePhotoDInspirationSansPrestation(): void
+    {
+        $theme = static::getContainer()->get(InspirationRepository::class)->findOneBy([]);
+        self::assertInstanceOf(Inspiration::class, $theme);
+        $jeton = $this->client->request('GET', '/admin/photos/import?prestation=')->filter('input[name="_token"]')->attr('value');
+
+        // Le formulaire envoie « prestation » vide quand « Aucune » est choisie.
+        $this->client->request('POST', '/admin/photos/import/fichier', [
+            '_token' => $jeton,
+            'prestation' => '',
+            'themes' => [(string) $theme->getId()],
+            'legende' => '',
+            'publiee' => '1',
+        ], ['photo' => $this->fichierPng('inspiration.png')]);
+
+        self::assertResponseStatusCodeSame(201);
+        $id = json_decode((string) $this->client->getResponse()->getContent(), true)['id'];
+        $photo = static::getContainer()->get(PhotoRepository::class)->find($id);
+        self::assertInstanceOf(Photo::class, $photo);
+        self::assertNull($photo->getPrestation());
+        self::assertSame([$theme->getId()], $photo->getInspirations()->map(static fn (Inspiration $i): ?int => $i->getId())->getValues());
+        self::assertSame('Inspiration '.$theme->getNom(), $photo->getLegende());
+        unlink(static::getContainer()->getParameter('app.dossier_galerie').'/'.$photo->getFichier());
     }
 
     public function testLImportRefuseUnFichierQuiNEstPasUneImage(): void

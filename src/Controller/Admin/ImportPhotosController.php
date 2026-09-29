@@ -42,7 +42,7 @@ final class ImportPhotosController extends AbstractController
         return $this->render('admin/import_photos.html.twig', [
             'prestations' => $this->prestations->findBy([], ['ordre' => 'ASC', 'nom' => 'ASC']),
             'inspirations' => $this->inspirations->findBy([], ['ordre' => 'ASC', 'nom' => 'ASC']),
-            'prestation_choisie' => $request->query->getInt('prestation'),
+            'prestation_choisie' => self::identifiant($request->query->getString('prestation')),
             'taille_max' => ImportPhotos::TAILLE_MAX,
         ]);
     }
@@ -60,14 +60,20 @@ final class ImportPhotosController extends AbstractController
             return new JsonResponse(['erreur' => 'Fichier non reçu (trop lourd pour le serveur ?).'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        $prestation = $this->prestations->find($request->request->getInt('prestation'));
+        // Champ vide = photo d'inspiration seule (getInt() refuse une chaîne vide).
+        $idPrestation = self::identifiant($request->request->getString('prestation'));
+        $prestation = null === $idPrestation ? null : $this->prestations->find($idPrestation);
         $themes = array_values(array_filter(array_map(
-            fn ($id) => $this->inspirations->find((int) $id),
+            fn ($id) => null === self::identifiant((string) $id) ? null : $this->inspirations->find((int) $id),
             $request->request->all('themes'),
         )));
         $legende = trim($request->request->getString('legende'));
         if ('' === $legende) {
-            $legende = $prestation instanceof Prestation ? 'Réalisation '.$prestation->getNom() : 'Réalisation';
+            $legende = match (true) {
+                $prestation instanceof Prestation => 'Réalisation '.$prestation->getNom(),
+                [] !== $themes => 'Inspiration '.$themes[0]->getNom(),
+                default => 'Réalisation',
+            };
         }
 
         try {
@@ -81,5 +87,10 @@ final class ImportPhotosController extends AbstractController
         $this->logger->info('Photo importée.', ['photo' => $photo->getId(), 'par' => $admin->getUserIdentifier()]);
 
         return new JsonResponse(['id' => $photo->getId(), 'fichier' => $photo->getFichier()], Response::HTTP_CREATED);
+    }
+
+    private static function identifiant(string $valeur): ?int
+    {
+        return ctype_digit($valeur) ? (int) $valeur : null;
     }
 }
