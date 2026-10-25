@@ -130,5 +130,7 @@
             </div>
         {% endif %}
     </section>
+    {# Version de PHP réellement utilisée par le site (suivi des correctifs de sécurité). #}
+    <p class="tdb-aide tdb-version">Serveur : PHP {{ constant('PHP_VERSION') }}</p>
 </div>
 {% endblock %}
