@@ -19,6 +19,7 @@
                     <twig:PrestationCard :prestation="prestation" titre="h2" :photos="photos_par_prestation[prestation.id] ?? []" />
                 {% endfor %}
             </div>
+            {{ include('site/_offre_duo.html.twig') }}
         {% endif %}
 
         <p class="page__note">

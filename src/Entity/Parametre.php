@@ -39,6 +39,24 @@ class Parametre
     public const PARRAINAGE_POINTS_FILLEULE = 'parrainage.points_filleule';
     /** Nombre maximal de filleules récompensées par marraine sur 12 mois. */
     public const PARRAINAGE_MAX_PAR_AN = 'parrainage.max_par_an';
+    /** Rendez-vous commençant à partir de cette heure : majoration du soir. */
+    public const MAJORATION_SOIR_HEURE = 'reservation.majoration_soir_heure';
+    /** Montant de la majoration du soir, en euros (0 = aucune). */
+    public const MAJORATION_SOIR_EUROS = 'reservation.majoration_soir_euros';
+    /** Offre « RDV duo » affichée et réservable en ligne (0/1). */
+    public const DUO_ACTIF = 'duo.actif';
+    /** Réduction du RDV duo, en % du prix des prestations. */
+    public const DUO_REDUCTION_POURCENTAGE = 'duo.reduction_pourcentage';
+    /** Points gagnés en rendez-vous sur 12 mois pour obtenir la réduction à vie (0 = désactivée). */
+    public const PRIVILEGE_SEUIL_POINTS = 'privilege.seuil_points';
+    /** Réduction à vie la première année, en %. */
+    public const PRIVILEGE_REDUCTION_DEPART = 'privilege.reduction_depart';
+    /** Réduction ajoutée chaque année de fidélité confirmée, en %. */
+    public const PRIVILEGE_REDUCTION_PAS = 'privilege.reduction_pas';
+    /** Plafond de la réduction à vie, en %. */
+    public const PRIVILEGE_REDUCTION_MAX = 'privilege.reduction_max';
+    /** Rendez-vous honorés par an pour garder (et augmenter) la réduction à vie. */
+    public const PRIVILEGE_VISITES_ANNUELLES = 'privilege.visites_annuelles';
 
     /**
      * Réglages proposés dans l'admin : libellé, aide, valeur par défaut, minimum, maximum.
@@ -58,7 +76,24 @@ class Parametre
         self::PARRAINAGE_POINTS_MARRAINE => ['Parrainage : points de la marraine', 'Versés au premier rendez-vous honoré de la filleule. 0 = parrainage désactivé.', 50, 0, 500],
         self::PARRAINAGE_POINTS_FILLEULE => ['Parrainage : points de la filleule', 'Versés à son premier rendez-vous honoré, en plus des points de la visite.', 25, 0, 500],
         self::PARRAINAGE_MAX_PAR_AN => ['Parrainage : filleules récompensées par an', 'Au-delà, les parrainages ne rapportent plus de points à la marraine pendant 12 mois.', 10, 1, 100],
+        self::MAJORATION_SOIR_HEURE => ['Majoration du soir : à partir de (heure)', 'Un rendez-vous qui COMMENCE à cette heure ou plus tard est majoré. Exemple : 19 = à partir de 19 h 00.', 19, 0, 23],
+        self::MAJORATION_SOIR_EUROS => ['Majoration du soir (euros)', 'Ajoutée au prix, jamais réduite par les remises. 0 = pas de majoration.', 0, 0, 100],
+        self::DUO_ACTIF => ['Proposer le RDV duo', 'Affiche l\'offre « RDV duo » (deux personnes à la suite) dans les prestations et la réservation en ligne.', 0, 0, 1],
+        self::DUO_REDUCTION_POURCENTAGE => ['RDV duo : réduction (%)', 'Sur le prix total des prestations du duo (hors majoration du soir).', 10, 0, 50],
+        self::PRIVILEGE_SEUIL_POINTS => ['Réduction à vie : points à gagner en 12 mois', 'Points gagnés grâce aux rendez-vous honorés des 12 derniers mois (≈ 10 à 11 rendez-vous). 0 = désactivée.', 340, 0, 5000],
+        self::PRIVILEGE_REDUCTION_DEPART => ['Réduction à vie : première année (%)', 'Accordée dès que le seuil est atteint.', 10, 0, 50],
+        self::PRIVILEGE_REDUCTION_PAS => ['Réduction à vie : bonus par année confirmée (%)', 'Ajouté à chaque anniversaire si la cliente a fait assez de rendez-vous dans l\'année.', 5, 0, 20],
+        self::PRIVILEGE_REDUCTION_MAX => ['Réduction à vie : plafond (%)', 'La réduction ne dépasse jamais ce pourcentage.', 20, 0, 50],
+        self::PRIVILEGE_VISITES_ANNUELLES => ['Réduction à vie : rendez-vous par an pour la garder', 'En dessous, à l\'anniversaire, la cliente perd sa réduction (elle peut la regagner en atteignant à nouveau le seuil).', 8, 1, 52],
     ];
+
+    /** Réglage oui / non (minimum 0, maximum 1) : affiché comme un interrupteur dans l'admin. */
+    public static function estOuiNon(string $cle): bool
+    {
+        $definition = self::DEFINITIONS[$cle] ?? null;
+
+        return null !== $definition && 0 === $definition[3] && 1 === $definition[4];
+    }
 
     #[ORM\Id]
     #[ORM\Column(length: 64)]

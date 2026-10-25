@@ -14,13 +14,17 @@
         {% if horizon_fidele %}
             <p class="alerte alerte--succes">Cliente fidèle : vous pouvez réserver plus longtemps à l'avance.</p>
         {% endif %}
-        {% set duree_totale = prestation.dureeMinutes + (supplement ? supplement.dureeMinutes : 0) %}
-        {% set prix_total = prestation.prixCentimes + (supplement ? supplement.prixCentimes : 0) %}
+        {% set duree_totale = prestation.dureeMinutes + (supplement ? supplement.dureeMinutes : 0) + (duo ? duo.dureeMinutes : 0) %}
+        {% set prix_total = prestation.prixCentimes + (supplement ? supplement.prixCentimes : 0) + (duo ? duo.prixCentimes : 0) %}
         <p class="recap-court">
-            <strong>{{ prestation.nom }}</strong>{% if supplement %} + {{ supplement.nom }}{% endif %}
-            · {{ duree_totale|duree }} · {{ prix_total|euros }}
-            · <a href="{{ path('app_reservation') }}">changer</a>
+            {% if duo %}<span class="badge-duo">RDV duo</span>{% endif %}
+            <strong>{{ prestation.nom }}</strong>{% if duo %} + {{ duo.nom }}{% endif %}{% if supplement %} + {{ supplement.nom }}{% endif %}
+            · {{ duree_totale|duree }} · {{ prix_total|euros }}{% if duo %} avant remise duo{% endif %}
+            · <a href="{{ path(duo ? 'app_reservation_duo' : 'app_reservation') }}">changer</a>
         </p>
+        {% if heure_majoration is not null %}
+            <p class="aide-majoration">Les rendez-vous qui commencent à partir de {{ heure_majoration }} h sont majorés de {{ majoration|euros }}.</p>
+        {% endif %}
 
         {% if supplements is not empty %}
             {# Choix avant le créneau : un supplément allonge le rendez-vous. Sans JavaScript, le bouton recharge les créneaux. #}
@@ -42,6 +46,7 @@
                         {% endfor %}
                     </div>
                 </fieldset>
+                {% if duo %}<input type="hidden" name="duo" value="{{ duo.id }}">{% endif %}
                 <button type="submit" class="bouton bouton--secondaire bouton--compact" data-envoi-auto-target="bouton">Mettre à jour les créneaux</button>
             </form>
         {% endif %}
@@ -61,7 +66,7 @@
                                 <span class="visuellement-cache">, aucun créneau</span>
                             </span>
                         {% else %}
-                            <a class="jour" href="{{ path('app_reservation_creneau', {id: prestation.id, jour: date}|merge(parametres_supplement)) }}"
+                            <a class="jour" href="{{ path('app_reservation_creneau', {id: prestation.id, jour: date}|merge(parametres_choix)) }}"
                                {% if date == jour %}aria-current="date"{% endif %}>
                                 <span class="jour__nom">{{ jour_date|date_fr('EEE') }}</span>
                                 <span class="jour__numero">{{ jour_date|date_fr('d') }}</span>
@@ -88,8 +93,11 @@
                             {% for creneau in liste %}
                                 <li>
                                     <a class="creneau" data-turbo-frame="_top"
-                                       href="{{ path('app_reservation_recapitulatif', {id: prestation.id, creneau: creneau|date(format_creneau)}|merge(parametres_supplement)) }}">
+                                       href="{{ path('app_reservation_recapitulatif', {id: prestation.id, creneau: creneau|date(format_creneau)}|merge(parametres_choix)) }}">
                                         {{ creneau|heure }}
+                                        {% if heure_majoration is not null and (creneau|date('G')) >= heure_majoration %}
+                                            <span class="creneau__majoration">+ {{ majoration|euros }}<span class="visuellement-cache"> de majoration du soir</span></span>
+                                        {% endif %}
                                     </a>
                                 </li>
                             {% endfor %}

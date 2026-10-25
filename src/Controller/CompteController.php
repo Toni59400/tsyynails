@@ -156,6 +156,10 @@ final class CompteController extends AbstractController
                 'prix_euros' => $r->getPrixCentimes() / 100,
                 'acompte_euros' => $r->getAcompteCentimes() / 100,
                 'reduction_euros' => $r->getReductionCentimes() / 100,
+                'remise_euros' => $r->getRemiseCentimes() / 100,
+                'majoration_soir_euros' => $r->getMajorationCentimes() / 100,
+                'duo_deuxieme_prestation' => $r->getPrestationDuoNom(),
+                'montant_du_euros' => $r->getMontantDuCentimes() / 100,
             ], $this->reservations->findPourClient($client, 1000));
             $donnees['points'] = [
                 'solde' => $this->fidelite->solde($client),

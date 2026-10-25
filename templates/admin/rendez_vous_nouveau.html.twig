@@ -1,0 +1,43 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+{% form_theme formulaire 'bootstrap_5_layout.html.twig' %}
+
+{% block content_title %}Nouveau rendez-vous{% endblock %}
+
+{% block main %}
+    {{ form_start(formulaire, {attr: {class: 'tdb-carte rdv-salon', novalidate: 'novalidate', 'data-controller': 'afficher-si-coche'}}) }}
+        <p class="tdb-aide">
+            Rendez-vous pris par téléphone ou au salon : il est confirmé tout de suite, sans acompte en ligne.
+            La majoration du soir et la réduction à vie de la cliente s'appliquent d'office.
+        </p>
+        {{ form_errors(formulaire) }}
+
+        <fieldset class="mb-3">
+            <legend class="h6">Cliente</legend>
+            {{ form_row(formulaire.telephone) }}
+            <div class="row">
+                <div class="col-sm-6">{{ form_row(formulaire.prenom) }}</div>
+                <div class="col-sm-6">{{ form_row(formulaire.nom) }}</div>
+            </div>
+            {{ form_row(formulaire.email) }}
+        </fieldset>
+
+        <fieldset class="mb-3">
+            <legend class="h6">Rendez-vous</legend>
+            {{ form_row(formulaire.prestation) }}
+            {{ form_row(formulaire.supplement) }}
+            <div class="row">
+                <div class="col-sm-6">{{ form_row(formulaire.date) }}</div>
+                <div class="col-sm-6">{{ form_row(formulaire.heure) }}</div>
+            </div>
+        </fieldset>
+
+        <fieldset class="mb-3 rdv-salon__duo">
+            <legend class="h6">RDV duo</legend>
+            {{ form_row(formulaire.duo) }}
+            {{ form_row(formulaire.prestationDuo) }}
+            {{ form_row(formulaire.remiseDuo) }}
+        </fieldset>
+
+        <button type="submit" class="btn btn-primary btn-lg">Confirmer le rendez-vous</button>
+    {{ form_end(formulaire) }}
+{% endblock %}

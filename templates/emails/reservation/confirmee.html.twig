@@ -1,13 +1,22 @@
 {% extends 'emails/_base.html.twig' %}
 {% block contenu %}
     <p>Bonjour {{ reservation.client.prenom }},</p>
-    <p>Bonne nouvelle : votre rendez-vous est <strong>confirmé</strong>. L'acompte de {{ reservation.acompteCentimes|euros }}
-        a été débité et sera déduit du prix le jour J.</p>
+    {% if reservation.acompteCentimes > 0 %}
+        <p>Bonne nouvelle : votre rendez-vous est <strong>confirmé</strong>. L'acompte de {{ reservation.acompteCentimes|euros }}
+            a été débité et sera déduit du prix le jour J.</p>
+    {% else %}
+        {# Rendez-vous pris par la prothésiste (téléphone, salon) : pas d'acompte en ligne. #}
+        <p>Votre rendez-vous est <strong>confirmé</strong>. Voici le récapitulatif.</p>
+    {% endif %}
     {{ include('emails/reservation/_recap.html.twig') }}
-    <p>Reste à régler au salon : <strong>{{ reservation.resteAPayerCentimes|euros }}</strong>.</p>
+    <p>{{ reservation.acompteCentimes > 0 ? 'Reste à régler au salon' : 'À régler au salon' }} : <strong>{{ reservation.resteAPayerCentimes|euros }}</strong>.</p>
     <p style="font-size:14px;color:#6f625e;">
-        Annulation gratuite jusqu'au <strong>{{ limite_annulation|date_fr("EEEE d MMMM 'à' H'h'mm") }}</strong> (48 h avant) :
-        l'acompte vous est alors remboursé. Après ce délai, ou en cas d'absence, l'acompte est conservé.
+        {% if reservation.acompteCentimes > 0 %}
+            Annulation gratuite jusqu'au <strong>{{ limite_annulation|date_fr("EEEE d MMMM 'à' H'h'mm") }}</strong> (48 h avant) :
+            l'acompte vous est alors remboursé. Après ce délai, ou en cas d'absence, l'acompte est conservé.
+        {% else %}
+            Un empêchement ? Merci de prévenir au moins 48 h avant.
+        {% endif %}
         Pour annuler ou déplacer, répondez à cet email ou appelez-moi au {{ salon.telephone|telephone }}.
     </p>
     {{ include('emails/reservation/_lien_suivi.html.twig') }}

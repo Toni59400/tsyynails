@@ -144,6 +144,15 @@ final class SiteController extends AbstractController
             'parrainage_marraine' => $this->parametres->valeur(Parametre::PARRAINAGE_POINTS_MARRAINE),
             'parrainage_filleule' => $this->parametres->valeur(Parametre::PARRAINAGE_POINTS_FILLEULE),
             'parrainage_max' => $this->parametres->valeur(Parametre::PARRAINAGE_MAX_PAR_AN),
+            'majoration_euros' => $this->parametres->valeur(Parametre::MAJORATION_SOIR_EUROS),
+            'majoration_heure' => $this->parametres->valeur(Parametre::MAJORATION_SOIR_HEURE),
+            'duo_actif' => $this->tarification->duoActif(),
+            'duo_reduction' => $this->parametres->valeur(Parametre::DUO_REDUCTION_POURCENTAGE),
+            'vie_seuil' => $this->parametres->valeur(Parametre::PRIVILEGE_SEUIL_POINTS),
+            'vie_depart' => $this->parametres->valeur(Parametre::PRIVILEGE_REDUCTION_DEPART),
+            'vie_pas' => $this->parametres->valeur(Parametre::PRIVILEGE_REDUCTION_PAS),
+            'vie_max' => $this->parametres->valeur(Parametre::PRIVILEGE_REDUCTION_MAX),
+            'vie_visites' => $this->parametres->valeur(Parametre::PRIVILEGE_VISITES_ANNUELLES),
         ]);
     }
 }

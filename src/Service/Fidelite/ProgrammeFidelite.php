@@ -7,16 +7,13 @@ namespace App\Service\Fidelite;
 use App\Entity\Client;
 use App\Entity\MouvementPoints;
 use App\Entity\Parametre;
-use App\Entity\Prestation;
 use App\Entity\RecompenseFidelite;
 use App\Entity\Reservation;
-use App\Entity\Supplement;
 use App\Enum\MotifMouvementPoints;
 use App\Repository\MouvementPointsRepository;
 use App\Repository\ParametreRepository;
 use App\Repository\RecompenseFideliteRepository;
 use App\Repository\ReservationRepository;
-use App\Service\Reservation\Tarification;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
@@ -61,12 +58,12 @@ final class ProgrammeFidelite
     }
 
     /**
-     * Récompenses qu'une cliente peut utiliser en ligne sur cette prestation (et son supplément) :
-     * réduction, points suffisants, et pas plus que le plafond du prix total.
+     * Récompenses qu'une cliente peut utiliser en ligne sur un rendez-vous de ce montant (après remise) :
+     * réduction, points suffisants, et pas plus que le plafond du montant.
      *
      * @return list<RecompenseFidelite>
      */
-    public function utilisablesEnLigne(Client $client, Prestation $prestation, ?Supplement $supplement = null): array
+    public function utilisablesEnLigne(Client $client, int $montantCentimes): array
     {
         $solde = $this->solde($client);
 
@@ -74,7 +71,7 @@ final class ProgrammeFidelite
             $this->paliers(),
             fn (RecompenseFidelite $r): bool => $r->estUtilisableEnLigne()
                 && $r->getSeuilPoints() <= $solde
-                && $this->respecteLePlafond($r, Tarification::prixCentimes($prestation, $supplement)),
+                && $this->respecteLePlafond($r, $montantCentimes),
         ));
     }
 
@@ -145,7 +142,7 @@ final class ProgrammeFidelite
      */
     public function crediterVisite(Reservation $reservation, ?string $auteur): int
     {
-        $points = $this->pointsPour($reservation->getPrixCentimes() - $reservation->getReductionCentimes());
+        $points = $this->pointsPour($reservation->getMontantDuCentimes());
         if ($points > 0) {
             $this->entityManager->persist(new MouvementPoints($reservation->getClient(), $points, MotifMouvementPoints::VISITE, $reservation, $auteur));
         }

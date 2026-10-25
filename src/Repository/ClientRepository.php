@@ -47,6 +47,23 @@ class ClientRepository extends ServiceEntityRepository
             ->getSingleScalarResult();
     }
 
+    /**
+     * Clientes ayant la réduction à vie dont l'anniversaire de révision tombe avant cette date.
+     *
+     * @return list<Client>
+     */
+    public function findPrivilegesARevoirAvant(\DateTimeImmutable $avant): array
+    {
+        /** @var list<Client> */
+        return $this->createQueryBuilder('c')
+            ->andWhere('c.privilegePourcentage > 0')
+            ->andWhere('c.privilegeRevisionAt <= :avant')
+            ->andWhere('c.anonymiseAt IS NULL')
+            ->setParameter('avant', $avant)
+            ->getQuery()
+            ->getResult();
+    }
+
     public function countCreeesEntre(\DateTimeImmutable $debut, \DateTimeImmutable $fin): int
     {
         return (int) $this->createQueryBuilder('c')

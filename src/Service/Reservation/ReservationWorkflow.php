@@ -17,6 +17,7 @@ use App\Repository\ClientRepository;
 use App\Repository\ParametreRepository;
 use App\Service\Fidelite\Parrainage;
 use App\Service\Fidelite\ProgrammeFidelite;
+use App\Service\Fidelite\ReductionAVie;
 use App\Service\Paiement\PaiementGateway;
 use App\Service\Planning\CalculateurCreneaux;
 use Doctrine\ORM\EntityManagerInterface;
@@ -43,6 +44,7 @@ final class ReservationWorkflow
         private readonly ProgrammeFidelite $fidelite,
         private readonly ParametreRepository $parametres,
         private readonly Parrainage $parrainage,
+        private readonly ReductionAVie $reductionAVie,
         private readonly ClockInterface $clock,
         private readonly LoggerInterface $logger,
     ) {
@@ -64,6 +66,7 @@ final class ReservationWorkflow
         ?Client $clienteConnectee = null,
         ?RecompenseFidelite $recompense = null,
         ?Supplement $supplement = null,
+        ?Prestation $prestationDuo = null,
     ): Reservation {
         if (null !== $recompense && null === $clienteConnectee) {
             throw new \LogicException('Les points ne s\'utilisent qu\'avec un compte.');
@@ -80,9 +83,15 @@ final class ReservationWorkflow
         try {
             // Revérifié sous verrou : le créneau a pu être pris depuis l'affichage.
             if (null !== $supplement && !$supplement->estProposePour($prestation)) {
-                throw new \LogicException('Ce supplément n\x27est plus proposé : choisissez à nouveau votre créneau.');
+                throw new \LogicException('Ce supplément n\'est plus proposé : choisissez à nouveau votre créneau.');
             }
-            if (!$prestation->isActive() || !$this->calculateur->estDisponible($prestation, $debut, $supplement?->getDureeMinutes() ?? 0)) {
+            if (null !== $prestationDuo && (!$this->tarification->duoActif() || !$prestationDuo->isActive())) {
+                throw new \LogicException('Le RDV duo n\'est plus proposé pour cette prestation : choisissez à nouveau.');
+            }
+            // Réduction à vie : seulement pour une cliente connectée (le prix affiché avant l'envoi en tient compte).
+            $devis = $this->tarification->devis($prestation, $supplement, $prestationDuo, $debut, $clienteConnectee);
+            $minutesEnPlus = $devis->dureeMinutes - $prestation->getDureeMinutes();
+            if (!$prestation->isActive() || !$this->calculateur->estDisponible($prestation, $debut, $minutesEnPlus)) {
                 throw new CreneauIndisponibleException();
             }
 
@@ -91,7 +100,7 @@ final class ReservationWorkflow
             // Revérifiée sous verrou : le solde a pu changer depuis l'affichage.
             $reduction = 0;
             if (null !== $recompense) {
-                if (!\in_array($recompense, $this->fidelite->utilisablesEnLigne($cliente, $prestation, $supplement), true)) {
+                if (!\in_array($recompense, $this->fidelite->utilisablesEnLigne($cliente, $devis->aPayerCentimes()), true)) {
                     throw new \LogicException('Cette récompense n\'est pas utilisable sur ce rendez-vous.');
                 }
                 $reduction = $recompense->getValeurCentimes();
@@ -101,10 +110,14 @@ final class ReservationWorkflow
                 $cliente,
                 $prestation,
                 $debut,
-                $this->tarification->acompteCentimes($prestation, $reduction, $supplement),
+                $this->tarification->acompte($devis, $reduction),
                 $reduction,
                 $recompense?->getSeuilPoints() ?? 0,
                 $supplement,
+                $prestationDuo,
+                $devis->majorationCentimes,
+                $devis->remisePourcentage,
+                $devis->remiseMotif,
             );
             $reservation->setEmailContact($coordonnees->email);
             $reservation->accepterConditions($this->clock->now());
@@ -120,7 +133,7 @@ final class ReservationWorkflow
         try {
             $empreinte = $this->paiement->creerEmpreinte(
                 $reservation->getAcompteCentimes(),
-                \sprintf('Acompte %s%s du %s', $prestation->getNom(), null !== $supplement ? ' + '.$supplement->getNom() : '', $debut->format('d/m/Y H:i')),
+                \sprintf('Acompte %s%s%s du %s', $prestation->getNom(), null !== $prestationDuo ? ' + '.$prestationDuo->getNom().' (duo)' : '', null !== $supplement ? ' + '.$supplement->getNom() : '', $debut->format('d/m/Y H:i')),
                 ['reservation' => (string) $reservation->getId()],
             );
         } catch (\Throwable $erreur) {
@@ -134,6 +147,64 @@ final class ReservationWorkflow
 
         $reservation->setStripePaymentIntentId($empreinte->identifiant);
         $this->entityManager->flush();
+
+        return $reservation;
+    }
+
+    /**
+     * Rendez-vous pris par la prothésiste (téléphone, au salon, RDV duo) : confirmé d'emblée, sans acompte en ligne.
+     * Les horaires d'ouverture ne sont pas imposés (rendez-vous du soir), mais le créneau doit être libre.
+     *
+     * @param int|null $remiseForcee pourcentage choisi par la prothésiste ; null = automatique (duo ou réduction à vie)
+     *
+     * @throws CreneauIndisponibleException
+     */
+    public function reserverParLeSalon(
+        Prestation $prestation,
+        \DateTimeImmutable $debut,
+        CoordonneesCliente $coordonnees,
+        string $auteur,
+        ?Supplement $supplement = null,
+        ?Prestation $prestationDuo = null,
+        ?int $remiseForcee = null,
+    ): Reservation {
+        $telephone = CoordonneesCliente::normaliserTelephone($coordonnees->telephone) ?? throw new \InvalidArgumentException('Téléphone invalide.');
+        $connexion = $this->entityManager->getConnection();
+        if (1 !== (int) $connexion->fetchOne('SELECT GET_LOCK(?, ?)', [self::VERROU, self::ATTENTE_VERROU_SECONDES])) {
+            throw new CreneauIndisponibleException();
+        }
+
+        try {
+            $cliente = $this->cliente($coordonnees, $telephone);
+            $devis = $this->tarification->devis($prestation, $supplement, $prestationDuo, $debut, $cliente, $remiseForcee);
+            if (!$this->calculateur->estLibre($debut, $debut->modify(\sprintf('+%d minutes', $devis->dureeMinutes)))) {
+                throw new CreneauIndisponibleException();
+            }
+
+            $reservation = new Reservation(
+                $cliente,
+                $prestation,
+                $debut,
+                0,
+                0,
+                0,
+                $supplement,
+                $prestationDuo,
+                $devis->majorationCentimes,
+                $devis->remisePourcentage,
+                $devis->remiseMotif,
+            );
+            $reservation->setEmailContact($coordonnees->email);
+            $reservation->changerStatut(StatutReservation::EN_ATTENTE, $this->clock->now());
+            $reservation->changerStatut(StatutReservation::CONFIRMEE, $this->clock->now());
+            $this->entityManager->persist($reservation);
+            $this->entityManager->flush();
+        } finally {
+            $connexion->fetchOne('SELECT RELEASE_LOCK(?)', [self::VERROU]);
+        }
+
+        $this->logger->notice('Rendez-vous pris par le salon.', ['reservation' => $reservation->getId(), 'par' => $auteur]);
+        $this->notifications->confirmee($reservation);
 
         return $reservation;
     }
@@ -234,6 +305,8 @@ final class ReservationWorkflow
         $this->fidelite->crediterVisite($reservation, $auteur);
         $this->entityManager->flush();
         $this->parrainage->recompenser($reservation);
+        // Seuil de la réduction à vie atteint grâce à ce rendez-vous ?
+        $this->reductionAVie->verifierSeuil($reservation->getClient());
     }
 
     public function nonHonorer(Reservation $reservation, string $auteur): void

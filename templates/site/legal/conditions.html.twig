@@ -40,6 +40,21 @@
             <li>Une demande pas encore validée peut être annulée à tout moment : rien n'a été débité.</li>
         </ul>
 
+        {% if majoration_euros > 0 or duo_actif %}
+            <h2 id="tarifs">Majoration du soir et RDV duo</h2>
+            <ul>
+                {% if majoration_euros > 0 %}
+                    <li>Un rendez-vous qui <strong>commence à {{ majoration_heure }} h ou plus tard</strong> est majoré de {{ majoration_euros }} € ;
+                        cette majoration n'est jamais réduite par les remises ou réductions.</li>
+                {% endif %}
+                {% if duo_actif %}
+                    <li>RDV duo : deux personnes, deux prestations enchaînées sur le même rendez-vous{% if duo_reduction > 0 %},
+                        avec {{ duo_reduction }} % de réduction sur le prix total des prestations{% endif %}.
+                        Cette remise ne se cumule pas avec la réduction fidélité à vie : la plus avantageuse s'applique.</li>
+                {% endif %}
+            </ul>
+        {% endif %}
+
         <h2 id="fidelite">Programme de fidélité</h2>
         <ul>
             <li>Le programme est gratuit et réservé aux clientes ayant créé un compte avec une adresse email confirmée.</li>
@@ -76,6 +91,16 @@
             <li>
                 Après {{ fidele_visites }} visites sur 12 mois, le statut « Cliente fidèle » permet de réserver plus longtemps à l'avance.
             </li>
+            {% if vie_seuil > 0 %}
+                <li id="reduction-a-vie">
+                    <strong>Réduction à vie</strong> : en gagnant {{ vie_seuil }} points grâce à vos rendez-vous sur 12 mois,
+                    vous obtenez {{ vie_depart }} % de réduction sur toutes vos prestations, appliquée d'office en réservant avec votre compte
+                    (hors majoration du soir ; cumulable avec une récompense de points).
+                    Chaque année, à la date anniversaire : avec au moins {{ vie_visites }} rendez-vous honorés dans l'année,
+                    elle augmente de {{ vie_pas }} % (dans la limite de {{ vie_max }} %) ; sinon elle prend fin, et peut être regagnée
+                    en cumulant à nouveau {{ vie_seuil }} points. Un email prévient 30 jours avant s'il manque des rendez-vous.
+                </li>
+            {% endif %}
             <li>
                 Les points n'ont aucune valeur monétaire : ils ne sont ni remboursables, ni échangeables contre de l'argent,
                 ni cessibles. La suppression du compte entraîne la perte des points.

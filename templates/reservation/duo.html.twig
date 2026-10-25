@@ -1,0 +1,31 @@
+{% extends 'layout/public.html.twig' %}
+
+{% block title %}RDV duo · {{ salon.nom }}{% endblock %}
+{% block description %}Réservez un RDV duo chez {{ salon.nom }} : deux prestations enchaînées{% if duo_reduction > 0 %} et {{ duo_reduction }} % de réduction sur le total{% endif %}.{% endblock %}
+
+{% block contenu %}
+    <div class="conteneur page">
+        {{ include('reservation/_etapes.html.twig', {etape: 1}) }}
+        <h1>RDV duo</h1>
+        <p class="page__intro">
+            Choisissez la prestation de chacune : elles s'enchaînent sur le même rendez-vous{% if duo_reduction > 0 %},
+            avec <strong>{{ duo_reduction }} % de réduction</strong> sur le prix total des deux prestations{% endif %}.
+        </p>
+
+        <form method="get" action="{{ path('app_reservation_duo') }}" class="formulaire formulaire--duo">
+            {% for personne in [1, 2] %}
+                <div class="champ">
+                    <label for="duo-personne{{ personne }}">{{ personne == 1 ? 'Première personne' : 'Deuxième personne' }}</label>
+                    <select id="duo-personne{{ personne }}" name="personne{{ personne }}" required>
+                        <option value="">Choisir une prestation</option>
+                        {% for p in prestations %}
+                            <option value="{{ p.id }}" {% if app.request.query.get('personne' ~ personne) == p.id %}selected{% endif %}>{{ p.nom }} · {{ p.prixCentimes|euros }} · {{ p.dureeMinutes|duree }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            {% endfor %}
+            <button type="submit" class="bouton">Voir les créneaux</button>
+        </form>
+        <p><a href="{{ path('app_reservation') }}">Réserver pour une seule personne</a></p>
+    </div>
+{% endblock %}

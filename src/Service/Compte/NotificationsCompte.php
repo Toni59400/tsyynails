@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Service\Compte;
 
 use App\Entity\Client;
+use App\Entity\Parametre;
 use App\Entity\User;
+use App\Repository\ParametreRepository;
 use Psr\Log\LoggerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -24,6 +26,7 @@ final class NotificationsCompte
     public function __construct(
         private readonly MailerInterface $mailer,
         private readonly LoggerInterface $logger,
+        private readonly ParametreRepository $parametres,
         #[Autowire('%app.salon%')] private readonly array $salon,
         #[Autowire(env: 'MAILER_EXPEDITEUR')] private readonly string $expediteur,
     ) {
@@ -61,6 +64,34 @@ final class NotificationsCompte
             'client' => $client,
             'points' => $points,
             'expiration' => $expiration,
+        ]);
+    }
+
+    /**
+     * Réduction à vie : accordée, renouvelée (+5 %), perdue, ou rappel avant l'anniversaire.
+     *
+     * @param 'accordee'|'renouvelee'|'perdue'|'rappel' $evenement
+     */
+    public function reductionAVie(Client $client, string $evenement, int $pourcentage, int $rendezVousManquants = 0, ?\DateTimeImmutable $echeance = null): void
+    {
+        if (null === $client->getEmail()) {
+            return;
+        }
+
+        $sujets = [
+            'accordee' => \sprintf('Vous avez gagné %d %% de réduction à vie', $pourcentage),
+            'renouvelee' => \sprintf('Votre réduction à vie passe à %d %%', $pourcentage),
+            'perdue' => 'Votre réduction à vie',
+            'rappel' => 'Gardez votre réduction à vie',
+        ];
+        $this->envoyer($client->getEmail(), $sujets[$evenement], 'emails/compte/reduction_a_vie.html.twig', [
+            'client' => $client,
+            'evenement' => $evenement,
+            'pourcentage' => $pourcentage,
+            'manquants' => $rendezVousManquants,
+            'echeance' => $echeance,
+            'visites_requises' => $this->parametres->valeur(Parametre::PRIVILEGE_VISITES_ANNUELLES),
+            'plafond' => $this->parametres->valeur(Parametre::PRIVILEGE_REDUCTION_MAX),
         ]);
     }
 

@@ -88,7 +88,7 @@ final class SitePublicTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('.recap', 'Semi-permanent mains');
         // Acompte de 30 % de 30 € recalculé côté serveur.
-        self::assertStringContainsString("9\u{00A0}€, déduit du prix", (string) $this->client->getResponse()->getContent());
+        self::assertStringContainsString("9\u{00A0}€, déduit du total", (string) $this->client->getResponse()->getContent());
     }
 
     public function testUnCreneauDejaReserveEstRefuse(): void

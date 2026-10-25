@@ -6,14 +6,25 @@
     <form method="post" class="tdb-carte reglages">
         <p class="tdb-aide">Les modifications s'appliquent immédiatement aux nouvelles réservations et aux prochains points crédités.</p>
         {% for reglage in reglages %}
-            <div class="mb-3">
-                <label class="form-label" for="reglage-{{ reglage.nom }}">{{ reglage.libelle }}</label>
-                <input class="form-control{{ reglage.erreur ? ' is-invalid' }}" type="number" id="reglage-{{ reglage.nom }}"
-                       name="reglages[{{ reglage.nom }}]" value="{{ reglage.valeur }}" min="{{ reglage.min }}" max="{{ reglage.max }}" step="1" required
-                       aria-describedby="aide-{{ reglage.nom }}">
-                <div class="form-text" id="aide-{{ reglage.nom }}">{{ reglage.aide }}</div>
-                {% if reglage.erreur %}<div class="invalid-feedback">{{ reglage.erreur }}</div>{% endif %}
-            </div>
+            {% if reglage.min == 0 and reglage.max == 1 %}
+                {# Réglage oui / non : interrupteur (le champ caché envoie 0 quand il est décoché). #}
+                <div class="mb-3 form-check form-switch">
+                    <input type="hidden" name="reglages[{{ reglage.nom }}]" value="0">
+                    <input class="form-check-input" type="checkbox" role="switch" id="reglage-{{ reglage.nom }}" name="reglages[{{ reglage.nom }}]" value="1"
+                           {% if reglage.valeur %}checked{% endif %} aria-describedby="aide-{{ reglage.nom }}">
+                    <label class="form-check-label" for="reglage-{{ reglage.nom }}">{{ reglage.libelle }}</label>
+                    <div class="form-text" id="aide-{{ reglage.nom }}">{{ reglage.aide }}</div>
+                </div>
+            {% else %}
+                <div class="mb-3">
+                    <label class="form-label" for="reglage-{{ reglage.nom }}">{{ reglage.libelle }}</label>
+                    <input class="form-control{{ reglage.erreur ? ' is-invalid' }}" type="number" id="reglage-{{ reglage.nom }}"
+                           name="reglages[{{ reglage.nom }}]" value="{{ reglage.valeur }}" min="{{ reglage.min }}" max="{{ reglage.max }}" step="1" required
+                           aria-describedby="aide-{{ reglage.nom }}">
+                    <div class="form-text" id="aide-{{ reglage.nom }}">{{ reglage.aide }}</div>
+                    {% if reglage.erreur %}<div class="invalid-feedback">{{ reglage.erreur }}</div>{% endif %}
+                </div>
+            {% endif %}
         {% endfor %}
         <input type="hidden" name="_token" value="{{ csrf_token('reglages') }}">
         <button type="submit" class="btn btn-primary">Enregistrer</button>

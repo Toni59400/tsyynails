@@ -12,6 +12,12 @@
                     {% if fidelite.etat.prochain %}Prochain palier : {{ fidelite.etat.prochain.nom }} ({{ fidelite.etat.prochain.seuilPoints }} pts){% else %}Tous les paliers atteints{% endif %}
                     {% if fidelite.etat.expiration %}<br>Valables jusqu'au {{ fidelite.etat.expiration|date('d/m/Y') }}{% endif %}
                     {% if fidelite.etat.fidele %}<br><strong>Cliente fidèle</strong>{% endif %}
+                    {% set vie = reduction_a_vie(client) %}
+                    {% if vie.pourcentage > 0 %}
+                        <br><strong>Réduction à vie : −{{ vie.pourcentage }} %</strong> ({{ vie.visites }}/{{ vie.visites_requises }} rdv cette année, bilan le {{ vie.revision|date('d/m/Y') }})
+                    {% elseif vie.active %}
+                        <br>Réduction à vie : {{ vie.points }}/{{ vie.seuil }} points sur 12 mois
+                    {% endif %}
                 </span>
             </div>
             <div class="tdb-tuile">

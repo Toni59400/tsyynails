@@ -86,3 +86,22 @@ document.addEventListener('submit', async (evenement) => {
     formulaire.querySelector('input[type="file"]').value = '';
     bouton.disabled = false;
 });
+
+/*
+ * Affiche des champs seulement quand une case est cochée (ex. : « RDV duo ? » du nouveau rendez-vous).
+ * Même balisage que le contrôleur Stimulus du site (data-afficher-si-coche-target="case" / "bloc"),
+ * Stimulus n'étant pas chargé dans l'admin. Sans JavaScript, tous les champs restent visibles.
+ */
+function basculerBlocs(conteneur) {
+    const coche = conteneur.querySelector('[data-afficher-si-coche-target="case"]')?.checked ?? true;
+    conteneur.querySelectorAll('[data-afficher-si-coche-target="bloc"]').forEach((bloc) => {
+        bloc.hidden = !coche;
+    });
+}
+document.querySelectorAll('[data-controller~="afficher-si-coche"]').forEach(basculerBlocs);
+document.addEventListener('change', (evenement) => {
+    const conteneur = evenement.target instanceof Element ? evenement.target.closest('[data-controller~="afficher-si-coche"]') : null;
+    if (conteneur && evenement.target.matches('[data-afficher-si-coche-target="case"]')) {
+        basculerBlocs(conteneur);
+    }
+});

@@ -34,6 +34,27 @@
         {% endfor %}
     </ul>
 
+    {% set vie = reduction_a_vie(client) %}
+    {% if vie.active %}
+        <div class="reduction-vie{{ vie.pourcentage > 0 ? ' reduction-vie--obtenue' }}">
+            {% if vie.pourcentage > 0 %}
+                <p class="reduction-vie__titre"><strong>Réduction à vie : −{{ vie.pourcentage }} %</strong> sur toutes vos prestations</p>
+                <p>
+                    Appliquée d'office quand vous réservez avec votre compte.
+                    Cette année : <strong>{{ vie.visites }} rendez-vous sur {{ vie.visites_requises }}</strong> pour la garder
+                    {%- if vie.pourcentage < vie.plafond %} et passer à {{ min(vie.pourcentage + vie.pas, vie.plafond) }} %{% endif %}
+                    (bilan le {{ vie.revision|date_fr('d MMMM yyyy') }}).
+                </p>
+            {% else %}
+                <p class="reduction-vie__titre"><strong>Réduction à vie de {{ vie.depart }} %</strong> : gagnez {{ vie.seuil }} points en 12 mois</p>
+                <div class="progression" role="progressbar" aria-valuemin="0" aria-valuemax="{{ vie.seuil }}" aria-valuenow="{{ vie.points }}" aria-label="Progression vers la réduction à vie">
+                    <span class="progression__barre progression__barre--{{ (vie.progression / 10)|round(0, 'floor') * 10 }}"></span>
+                </div>
+                <p>{{ vie.points }} points gagnés en rendez-vous ces 12 derniers mois. Ensuite, {{ vie.visites_requises }} rendez-vous par an suffisent pour la garder, avec +{{ vie.pas }} % chaque année (jusqu'à {{ vie.plafond }} %).</p>
+            {% endif %}
+        </div>
+    {% endif %}
+
     <p class="carte-fidelite__regles">
         {{ fidelite.points_par_euro }} point{{ fidelite.points_par_euro > 1 ? 's' }} par euro payé, crédité{{ fidelite.points_par_euro > 1 ? 's' }} après chaque rendez-vous.
         {% if fidelite.expiration %}

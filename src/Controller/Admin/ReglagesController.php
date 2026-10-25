@@ -45,7 +45,9 @@ final class ReglagesController extends AbstractController
 
             $valeurs = $request->request->all('reglages');
             foreach (Parametre::DEFINITIONS as $cle => [$libelle, , , $min, $max]) {
-                $valeur = filter_var($valeurs[str_replace('.', '_', $cle)] ?? null, \FILTER_VALIDATE_INT);
+                // Interrupteur oui / non décoché : rien n'est envoyé, cela vaut 0.
+                $defaut = Parametre::estOuiNon($cle) ? '0' : null;
+                $valeur = filter_var($valeurs[str_replace('.', '_', $cle)] ?? $defaut, \FILTER_VALIDATE_INT);
                 if (false === $valeur || $valeur < $min || $valeur > $max) {
                     $erreurs[$cle] = \sprintf('%s : nombre entier entre %d et %d.', $libelle, $min, $max);
                     continue;

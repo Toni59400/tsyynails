@@ -55,6 +55,16 @@ final class CalculateurCreneaux
         return self::calculer($this->horaires->findToutesOrdonnees(), $occupations, $prestation->getDureeMinutes() + $minutesEnPlus, $debut, $nombreJours, $pasAvant);
     }
 
+    /**
+     * Aucun rendez-vous ni congé sur [debut, fin[ : sert aux rendez-vous pris par la prothésiste,
+     * qui peuvent sortir des horaires d'ouverture (rendez-vous du soir…).
+     */
+    public function estLibre(\DateTimeImmutable $debut, \DateTimeImmutable $fin): bool
+    {
+        return [] === $this->reservations->findBloquantesEntre($debut, $fin)
+            && [] === $this->indisponibilites->findChevauchant($debut, $fin);
+    }
+
     public function estDisponible(Prestation $prestation, \DateTimeImmutable $debut, int $minutesEnPlus = 0): bool
     {
         $creneaux = $this->creneauxParJour($prestation, $debut, 1, $minutesEnPlus)[$debut->format('Y-m-d')] ?? [];

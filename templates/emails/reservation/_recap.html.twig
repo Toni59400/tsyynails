@@ -1,10 +1,14 @@
 <table role="presentation" cellspacing="0" cellpadding="0" style="width:100%;margin:16px 0;border-collapse:collapse;font-size:15px;">
-    <tr><td style="padding:6px 0;color:#6f625e;">Prestation</td><td style="padding:6px 0;text-align:right;"><strong>{{ reservation.prestation.nom }}</strong></td></tr>
-    {% if reservation.supplementNom %}
-        <tr><td style="padding:6px 0;color:#6f625e;">Supplément</td><td style="padding:6px 0;text-align:right;">{{ reservation.supplementNom }} (+ {{ reservation.supplementPrixCentimes|euros }})</td></tr>
-    {% endif %}
     <tr><td style="padding:6px 0;color:#6f625e;">Date</td><td style="padding:6px 0;text-align:right;">{{ reservation.debut|date_fr('EEEE d MMMM yyyy')|capitalize }}</td></tr>
     <tr><td style="padding:6px 0;color:#6f625e;">Horaire</td><td style="padding:6px 0;text-align:right;">{{ reservation.debut|heure }} – {{ reservation.fin|heure }}</td></tr>
-    <tr><td style="padding:6px 0;color:#6f625e;">Prix</td><td style="padding:6px 0;text-align:right;">{{ reservation.prixCentimes|euros }}</td></tr>
-    <tr><td style="padding:6px 0;color:#6f625e;">Acompte</td><td style="padding:6px 0;text-align:right;">{{ reservation.acompteCentimes|euros }}</td></tr>
+    {% for ligne in detail_prix(reservation) %}
+        <tr>
+            <td style="padding:6px 0;color:#6f625e;">{{ ligne.libelle }}</td>
+            <td style="padding:6px 0;text-align:right;">{% if loop.first %}<strong>{% endif %}{{ ligne.montant < 0 ? '− ' ~ (-ligne.montant)|euros : ligne.montant|euros }}{% if loop.first %}</strong>{% endif %}</td>
+        </tr>
+    {% endfor %}
+    <tr><td style="padding:6px 0;border-top:1px solid #e8dcd6;"><strong>Total</strong></td><td style="padding:6px 0;border-top:1px solid #e8dcd6;text-align:right;"><strong>{{ reservation.montantDuCentimes|euros }}</strong></td></tr>
+    {% if reservation.acompteCentimes > 0 %}
+        <tr><td style="padding:6px 0;color:#6f625e;">Acompte</td><td style="padding:6px 0;text-align:right;">{{ reservation.acompteCentimes|euros }}</td></tr>
+    {% endif %}
 </table>

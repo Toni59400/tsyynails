@@ -1,0 +1,23 @@
+{% extends 'emails/_base.html.twig' %}
+{% block contenu %}
+    <p>Bonjour {{ client.prenom }},</p>
+    {% if evenement == 'accordee' %}
+        <p>Merci pour votre fidélité ! Vous venez d'obtenir <strong>{{ pourcentage }} % de réduction à vie</strong> sur toutes vos prestations.</p>
+        <p>Elle s'applique d'office quand vous réservez avec votre compte. Pour la garder, il suffit de venir
+            <strong>{{ visites_requises }} fois par an</strong> : chaque année confirmée, elle augmente, dans la limite de {{ plafond }} %.</p>
+    {% elseif evenement == 'renouvelee' %}
+        <p>Une année de plus à vos côtés : votre réduction à vie passe à <strong>{{ pourcentage }} %</strong>. Merci !</p>
+    {% elseif evenement == 'rappel' %}
+        <p>Votre réduction à vie de <strong>{{ pourcentage }} %</strong> sera revue le <strong>{{ echeance|date_fr('d MMMM yyyy') }}</strong>.
+            Il vous manque <strong>{{ manquants }} rendez-vous</strong> d'ici là pour la garder (et la voir augmenter).</p>
+    {% else %}
+        <p>Votre réduction à vie a pris fin, faute d'assez de rendez-vous cette année.
+            Vous gardez vos points, et vous pouvez la regagner à tout moment en cumulant à nouveau les points nécessaires.</p>
+    {% endif %}
+    {% if evenement != 'perdue' %}
+        <p style="margin:20px 0;">
+            <a href="{{ url('app_reservation') }}" style="display:inline-block;padding:12px 22px;border-radius:999px;background:#7a4747;color:#ffffff;text-decoration:none;font-weight:bold;">Réserver un rendez-vous</a>
+        </p>
+    {% endif %}
+    <p style="font-size:13px;color:#6f625e;"><a href="{{ url('app_compte_fidelite') }}" style="color:#7a4747;">Voir ma fidélité</a></p>
+{% endblock %}

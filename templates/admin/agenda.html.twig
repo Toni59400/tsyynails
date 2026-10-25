@@ -14,6 +14,9 @@
 {% endblock %}
 
 {% block page_actions %}
+    <a class="btn btn-primary" href="{{ path('admin_rendez_vous_nouveau', vue == 'jour' ? {date: agenda.debut|date('Y-m-d')} : {}) }}">
+        <i class="fa fa-calendar-plus" aria-hidden="true"></i> Nouveau rendez-vous
+    </a>
     <a class="btn btn-secondary" href="{{ path('admin_reservation_index') }}">
         <i class="fa fa-list" aria-hidden="true"></i> Liste
     </a>

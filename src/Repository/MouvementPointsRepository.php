@@ -102,6 +102,36 @@ class MouvementPointsRepository extends ServiceEntityRepository
         return $gains;
     }
 
+    /**
+     * Points gagnés grâce aux rendez-vous honorés depuis cette date, par cliente (réduction à vie).
+     * Les points dépensés en récompenses ne font pas reculer ce total.
+     *
+     * @return array<int, int>
+     */
+    public function pointsVisitesParClientDepuis(\DateTimeImmutable $depuis, ?Client $client = null): array
+    {
+        $requete = $this->createQueryBuilder('m')
+            ->select('IDENTITY(m.client) AS client', 'SUM(m.delta) AS points')
+            ->andWhere('m.motif = :visite')
+            ->andWhere('m.delta > 0')
+            ->andWhere('m.createdAt >= :depuis')
+            ->setParameter('visite', MotifMouvementPoints::VISITE)
+            ->setParameter('depuis', $depuis)
+            ->groupBy('m.client');
+        if (null !== $client) {
+            $requete->andWhere('m.client = :client')->setParameter('client', $client);
+        }
+
+        /** @var list<array{client: int|string, points: int|string}> $lignes */
+        $lignes = $requete->getQuery()->getArrayResult();
+        $points = [];
+        foreach ($lignes as $ligne) {
+            $points[(int) $ligne['client']] = (int) $ligne['points'];
+        }
+
+        return $points;
+    }
+
     public function existePour(Client $client, MotifMouvementPoints $motif): bool
     {
         return null !== $this->findOneBy(['client' => $client, 'motif' => $motif]);

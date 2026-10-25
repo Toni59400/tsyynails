@@ -78,10 +78,10 @@ class ReservationRepository extends ServiceEntityRepository
         /** @var array<string, string|int|null> $ligne */
         $ligne = $this->createQueryBuilder('r')
             ->select(
-                'SUM(CASE WHEN r.statut = :honoree THEN r.prixCentimes - r.reductionCentimes ELSE 0 END) AS ca_realise',
+                'SUM(CASE WHEN r.statut = :honoree THEN r.prixCentimes - r.remiseCentimes - r.reductionCentimes ELSE 0 END) AS ca_realise',
                 'SUM(CASE WHEN r.statut = :honoree THEN 1 ELSE 0 END) AS honorees',
                 'SUM(CASE WHEN r.statut = :non_honoree THEN 1 ELSE 0 END) AS non_honorees',
-                'SUM(CASE WHEN r.statut = :confirmee THEN r.prixCentimes - r.reductionCentimes ELSE 0 END) AS ca_prevu',
+                'SUM(CASE WHEN r.statut = :confirmee THEN r.prixCentimes - r.remiseCentimes - r.reductionCentimes ELSE 0 END) AS ca_prevu',
                 'SUM(CASE WHEN r.statut = :confirmee THEN 1 ELSE 0 END) AS confirmees',
             )
             ->andWhere('r.debut >= :debut')
@@ -112,7 +112,7 @@ class ReservationRepository extends ServiceEntityRepository
     {
         /** @var list<array{nom: string, nombre: string|int, ca: string|int}> $lignes */
         $lignes = $this->createQueryBuilder('r')
-            ->select('p.nom AS nom', 'COUNT(r.id) AS nombre', 'SUM(r.prixCentimes - r.reductionCentimes) AS ca')
+            ->select('p.nom AS nom', 'COUNT(r.id) AS nombre', 'SUM(r.prixCentimes - r.remiseCentimes - r.reductionCentimes) AS ca')
             ->innerJoin('r.prestation', 'p')
             ->andWhere('r.statut = :honoree')
             ->andWhere('r.debut >= :debut')
@@ -204,6 +204,23 @@ class ReservationRepository extends ServiceEntityRepository
             ->setParameter('limite', $limite)
             ->getQuery()
             ->getResult();
+    }
+
+    /** Rendez-vous honorés commençant dans [$debut, $fin[ (année de fidélité de la réduction à vie). */
+    public function countHonoreesEntre(Client $client, \DateTimeImmutable $debut, \DateTimeImmutable $fin): int
+    {
+        return (int) $this->createQueryBuilder('r')
+            ->select('COUNT(r.id)')
+            ->andWhere('r.client = :client')
+            ->andWhere('r.statut = :statut')
+            ->andWhere('r.debut >= :debut')
+            ->andWhere('r.debut < :fin')
+            ->setParameter('client', $client)
+            ->setParameter('statut', StatutReservation::HONOREE)
+            ->setParameter('debut', $debut)
+            ->setParameter('fin', $fin)
+            ->getQuery()
+            ->getSingleScalarResult();
     }
 
     public function countHonoreesDepuis(Client $client, \DateTimeImmutable $depuis): int

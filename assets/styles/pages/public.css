@@ -1410,3 +1410,89 @@ a.jour:hover {
 .options-resa .bouton {
     margin-top: var(--space);
 }
+
+/* Détail du prix : remises en vert, total en évidence */
+.recap__remise dd {
+    color: var(--color-success);
+}
+
+.recap__total dt,
+.recap__total dd {
+    color: var(--color-text);
+    font-weight: 700;
+}
+
+/* Majoration du soir sur les créneaux concernés */
+.creneau {
+    line-height: 1.2;
+    padding-block: calc(var(--space) / 2);
+}
+
+.creneau__majoration {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 400;
+}
+
+.aide-majoration {
+    color: var(--color-muted);
+    font-size: 0.95rem;
+}
+
+/* Offre RDV duo */
+.carte-duo {
+    margin-block: calc(var(--space) * 4);
+    padding: calc(var(--space) * 3);
+    border: 1px solid var(--color-primary);
+    border-radius: var(--radius);
+    background: var(--color-surface-douce);
+}
+
+.carte-duo__titre {
+    margin: 0 0 var(--space);
+    font-size: 1.4rem;
+    color: var(--color-primary-ink);
+}
+
+.badge-duo {
+    display: inline-block;
+    margin-right: var(--space);
+    padding: 0 var(--space);
+    border-radius: 999px;
+    background: var(--color-primary-ink);
+    color: var(--color-on-primary);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.formulaire--duo {
+    max-width: 32rem;
+}
+
+.champ select {
+    width: 100%;
+    min-height: 44px;
+    padding: var(--space) calc(var(--space) * 1.5);
+    border: 1px solid var(--color-muted);
+    border-radius: calc(var(--radius) / 2);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
+}
+
+/* Réduction fidélité à vie (espace cliente) */
+.reduction-vie {
+    margin-block: calc(var(--space) * 2);
+    padding: calc(var(--space) * 2);
+    border-radius: var(--radius);
+    background: var(--color-surface-douce);
+}
+
+.reduction-vie--obtenue {
+    border: 1px solid var(--color-primary-ink);
+}
+
+.reduction-vie__titre {
+    margin-top: 0;
+    color: var(--color-primary-ink);
+}

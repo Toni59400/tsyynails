@@ -92,6 +92,25 @@ class Client
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $refusDemandesAvisAt = null;
 
+    /** Réduction à vie en cours (10, 15, 20 %…), 0 = aucune. */
+    #[ORM\Column]
+    private int $privilegePourcentage = 0;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $privilegeDepuis = null;
+
+    /** Anniversaire où l'on vérifie le nombre de rendez-vous de l'année écoulée. */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $privilegeRevisionAt = null;
+
+    /** Réduction perdue à cette date : seuls les points gagnés depuis comptent pour la regagner. */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $privilegePerduAt = null;
+
+    /** Email « il vous manque des rendez-vous » déjà envoyé pour la révision en cours. */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $privilegeAvertiAt = null;
+
     public function __construct(string $prenom, string $nom, string $telephone)
     {
         $this->prenom = trim($prenom);
@@ -158,7 +177,7 @@ class Client
 
     public function setEmail(?string $email): static
     {
-        $this->email = null === $email ? null : mb_strtolower(trim($email));
+        $this->email = null === $email || '' === trim($email) ? null : mb_strtolower(trim($email));
 
         return $this;
     }
@@ -248,6 +267,7 @@ class Client
         $this->supprimerNotesSante();
         $this->user = null;
         $this->codeParrainage = null;
+        $this->retirerPrivilege($at);
         $this->anonymiseAt = $at;
 
         return $this;
@@ -261,6 +281,61 @@ class Client
     public function marquerAvertissementPoints(\DateTimeImmutable $at): void
     {
         $this->avertissementPointsAt = $at;
+    }
+
+    public function getPrivilegePourcentage(): int
+    {
+        return $this->privilegePourcentage;
+    }
+
+    public function getPrivilegeDepuis(): ?\DateTimeImmutable
+    {
+        return $this->privilegeDepuis;
+    }
+
+    public function getPrivilegeRevisionAt(): ?\DateTimeImmutable
+    {
+        return $this->privilegeRevisionAt;
+    }
+
+    public function getPrivilegeAvertiAt(): ?\DateTimeImmutable
+    {
+        return $this->privilegeAvertiAt;
+    }
+
+    public function accorderPrivilege(int $pourcentage, \DateTimeImmutable $at): void
+    {
+        $this->privilegePourcentage = $pourcentage;
+        $this->privilegeDepuis = $at;
+        $this->privilegeRevisionAt = $at->modify('+1 year');
+        $this->privilegeAvertiAt = null;
+    }
+
+    /** Année confirmée : nouveau pourcentage, prochaine révision dans un an. */
+    public function renouvelerPrivilege(int $pourcentage): void
+    {
+        $this->privilegePourcentage = $pourcentage;
+        $this->privilegeRevisionAt = $this->privilegeRevisionAt?->modify('+1 year');
+        $this->privilegeAvertiAt = null;
+    }
+
+    public function getPrivilegePerduAt(): ?\DateTimeImmutable
+    {
+        return $this->privilegePerduAt;
+    }
+
+    public function retirerPrivilege(\DateTimeImmutable $at): void
+    {
+        $this->privilegePerduAt = $this->privilegePourcentage > 0 ? $at : $this->privilegePerduAt;
+        $this->privilegePourcentage = 0;
+        $this->privilegeDepuis = null;
+        $this->privilegeRevisionAt = null;
+        $this->privilegeAvertiAt = null;
+    }
+
+    public function marquerPrivilegeAverti(\DateTimeImmutable $at): void
+    {
+        $this->privilegeAvertiAt = $at;
     }
 
     public function getDemandeAvisAt(): ?\DateTimeImmutable

@@ -55,6 +55,32 @@ class Reservation
     #[ORM\Column]
     private int $supplementPrixCentimes = 0;
 
+    /** RDV duo : prestation de la deuxième personne, enchaînée après la première. */
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(onDelete: 'SET NULL')]
+    private ?Prestation $prestationDuo = null;
+
+    #[ORM\Column(length: 120, nullable: true)]
+    private ?string $prestationDuoNom = null;
+
+    #[ORM\Column]
+    private int $prestationDuoPrixCentimes = 0;
+
+    /** Majoration du soir (rendez-vous commençant tard), comprise dans le prix total, jamais remisée. */
+    #[ORM\Column]
+    private int $majorationCentimes = 0;
+
+    /** Remise en % sur les prestations et suppléments (duo, réduction à vie, ou fixée par l'admin). */
+    #[ORM\Column]
+    private int $remisePourcentage = 0;
+
+    #[ORM\Column]
+    private int $remiseCentimes = 0;
+
+    /** Origine de la remise : duo, privilege ou manuelle. */
+    #[ORM\Column(length: 20, nullable: true)]
+    private ?string $remiseMotif = null;
+
     #[ORM\Column]
     private int $acompteCentimes;
 
@@ -109,25 +135,48 @@ class Reservation
         int $reductionCentimes = 0,
         int $pointsUtilises = 0,
         ?Supplement $supplement = null,
+        ?Prestation $prestationDuo = null,
+        int $majorationCentimes = 0,
+        int $remisePourcentage = 0,
+        ?string $remiseMotif = null,
     ) {
-        $prix = $prestation->getPrixCentimes() + ($supplement?->getPrixCentimes() ?? 0);
-        if ($reductionCentimes < 0 || $reductionCentimes > $prix) {
+        if ($majorationCentimes < 0 || $remisePourcentage < 0 || $remisePourcentage > 100) {
+            throw new \InvalidArgumentException('Majoration ou remise invalide.');
+        }
+        // Prix total = prestations + supplément + majoration ; la remise ne porte pas sur la majoration.
+        $base = $prestation->getPrixCentimes() + ($prestationDuo?->getPrixCentimes() ?? 0) + ($supplement?->getPrixCentimes() ?? 0);
+        $remise = self::calculerRemise($base, $remisePourcentage);
+        $prix = $base + $majorationCentimes;
+        if ($reductionCentimes < 0 || $reductionCentimes > $prix - $remise) {
             throw new \InvalidArgumentException('Réduction invalide.');
         }
 
         $this->client = $client;
         $this->prestation = $prestation;
         $this->debut = $debut;
-        $this->fin = $debut->modify(\sprintf('+%d minutes', $prestation->getDureeMinutes() + ($supplement?->getDureeMinutes() ?? 0)));
+        $this->fin = $debut->modify(\sprintf('+%d minutes', $prestation->getDureeMinutes() + ($prestationDuo?->getDureeMinutes() ?? 0) + ($supplement?->getDureeMinutes() ?? 0)));
         $this->prixCentimes = $prix;
         $this->supplement = $supplement;
         $this->supplementNom = $supplement?->getNom();
         $this->supplementPrixCentimes = $supplement?->getPrixCentimes() ?? 0;
+        $this->prestationDuo = $prestationDuo;
+        $this->prestationDuoNom = $prestationDuo?->getNom();
+        $this->prestationDuoPrixCentimes = $prestationDuo?->getPrixCentimes() ?? 0;
+        $this->majorationCentimes = $majorationCentimes;
+        $this->remisePourcentage = $remisePourcentage;
+        $this->remiseCentimes = $remise;
+        $this->remiseMotif = $remise > 0 ? $remiseMotif : null;
         $this->acompteCentimes = $acompteCentimes;
         $this->reductionCentimes = $reductionCentimes;
         $this->pointsUtilises = $pointsUtilises;
         $this->createdAt = new \DateTimeImmutable();
         $this->jetonSuivi = rtrim(strtr(base64_encode(random_bytes(16)), '+/', '-_'), '=');
+    }
+
+    /** Remise arrondie au centime le plus proche. */
+    public static function calculerRemise(int $baseCentimes, int $pourcentage): int
+    {
+        return (int) round($baseCentimes * $pourcentage / 100);
     }
 
     public function getId(): ?int
@@ -148,6 +197,58 @@ class Reservation
     public function getDebut(): \DateTimeImmutable
     {
         return $this->debut;
+    }
+
+    public function getPrestationDuo(): ?Prestation
+    {
+        return $this->prestationDuo;
+    }
+
+    public function getPrestationDuoNom(): ?string
+    {
+        return $this->prestationDuoNom;
+    }
+
+    public function getPrestationDuoPrixCentimes(): int
+    {
+        return $this->prestationDuoPrixCentimes;
+    }
+
+    /** Prix de la prestation principale au moment de la réservation. */
+    public function getPrestationPrixCentimes(): int
+    {
+        return $this->prixCentimes - $this->majorationCentimes - $this->supplementPrixCentimes - $this->prestationDuoPrixCentimes;
+    }
+
+    public function estDuo(): bool
+    {
+        return null !== $this->prestationDuoNom;
+    }
+
+    public function getMajorationCentimes(): int
+    {
+        return $this->majorationCentimes;
+    }
+
+    public function getRemisePourcentage(): int
+    {
+        return $this->remisePourcentage;
+    }
+
+    public function getRemiseCentimes(): int
+    {
+        return $this->remiseCentimes;
+    }
+
+    public function getRemiseMotif(): ?string
+    {
+        return $this->remiseMotif;
+    }
+
+    /** Montant réellement payé par la cliente : prix total moins remise et récompense de points. */
+    public function getMontantDuCentimes(): int
+    {
+        return max(0, $this->prixCentimes - $this->remiseCentimes - $this->reductionCentimes);
     }
 
     public function getSupplement(): ?Supplement
@@ -214,7 +315,7 @@ class Reservation
 
     public function getResteAPayerCentimes(): int
     {
-        return max(0, $this->prixCentimes - $this->reductionCentimes - $this->acompteCentimes);
+        return max(0, $this->getMontantDuCentimes() - $this->acompteCentimes);
     }
 
     public function getStripePaymentIntentId(): ?string
@@ -263,7 +364,7 @@ class Reservation
 
     public function setEmailContact(?string $email): static
     {
-        $this->emailContact = null === $email ? null : mb_strtolower(trim($email));
+        $this->emailContact = null === $email || '' === trim($email) ? null : mb_strtolower(trim($email));
 
         return $this;
     }

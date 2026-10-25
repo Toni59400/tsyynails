@@ -1,0 +1,9 @@
+{# Offre « RDV duo » (réglage « Proposer le RDV duo »). Variable facultative : titre (h2 par défaut). #}
+{% set reduction_duo = offre_duo() %}
+{% if reduction_duo is not null %}
+    <article class="carte-duo">
+        <{{ titre|default('h2') }} class="carte-duo__titre">RDV duo{% if reduction_duo > 0 %} : −{{ reduction_duo }} % sur le total{% endif %}</{{ titre|default('h2') }}>
+        <p>Venez à deux, entre amies, en famille : vos deux prestations s'enchaînent sur le même rendez-vous{% if reduction_duo > 0 %}, et vous profitez de {{ reduction_duo }} % de réduction sur le prix total{% endif %}.</p>
+        <a class="bouton" href="{{ path('app_reservation_duo') }}">Réserver un RDV duo</a>
+    </article>
+{% endif %}

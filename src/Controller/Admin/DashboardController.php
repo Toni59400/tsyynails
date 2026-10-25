@@ -64,6 +64,7 @@ final class DashboardController extends AbstractDashboardController
 
         yield MenuItem::section('Activité');
         yield MenuItem::linkToRoute('Agenda', 'fa fa-calendar-days', 'admin_agenda_index');
+        yield MenuItem::linkToRoute('Nouveau rendez-vous', 'fa fa-calendar-plus', 'admin_rendez_vous_nouveau');
         yield MenuItem::linkTo(ClientCrudController::class, 'Clientes', 'fa fa-users');
 
         yield MenuItem::section('Catalogue');

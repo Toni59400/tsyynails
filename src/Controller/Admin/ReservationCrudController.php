@@ -86,6 +86,7 @@ final class ReservationCrudController extends AbstractCrudController
         yield DateTimeField::new('debut', 'Rendez-vous')->setFormat('EEE dd/MM/yyyy HH:mm');
         yield AssociationField::new('client', 'Cliente');
         yield AssociationField::new('prestation');
+        yield TextField::new('prestationDuoNom', 'Duo (2e personne)')->onlyOnDetail()->formatValue(static fn (?string $nom): string => $nom ?? '—');
         yield TextField::new('supplementNom', 'Supplément')->formatValue(static fn (?string $nom): string => $nom ?? '—');
         yield ChoiceField::new('statut')->setChoices($this->choixStatuts())->renderAsBadges([
             StatutReservation::PAIEMENT_EN_COURS->value => 'secondary',
@@ -94,7 +95,13 @@ final class ReservationCrudController extends AbstractCrudController
             StatutReservation::HONOREE->value => 'primary',
             StatutReservation::NON_HONOREE->value => 'danger',
         ]);
-        yield MoneyField::new('prixCentimes', 'Prix')->setCurrency('EUR')->setStoredAsCents();
+        yield MoneyField::new('prixCentimes', 'Prix total')->setCurrency('EUR')->setStoredAsCents()->onlyOnDetail();
+        yield MoneyField::new('majorationCentimes', 'Dont majoration du soir')->setCurrency('EUR')->setStoredAsCents()->onlyOnDetail();
+        yield IntegerField::new('remisePourcentage', 'Remise (%)')->onlyOnDetail()
+            ->formatValue(static fn (int $p, Reservation $r): string => 0 === $p ? '—' : \sprintf('%d %% (%s)', $p, ['duo' => 'RDV duo', 'privilege' => 'réduction à vie', 'manuelle' => 'saisie'][$r->getRemiseMotif() ?? 'manuelle'] ?? 'saisie'));
+        yield MoneyField::new('remiseCentimes', 'Montant de la remise')->setCurrency('EUR')->setStoredAsCents()->onlyOnDetail();
+        // Champ calculé (prix − remise − points) : pas de tri possible en base.
+        yield MoneyField::new('montantDuCentimes', 'À payer')->setCurrency('EUR')->setStoredAsCents()->setSortable(false);
         yield MoneyField::new('acompteCentimes', 'Acompte')->setCurrency('EUR')->setStoredAsCents()->onlyOnDetail();
         yield MoneyField::new('reductionCentimes', 'Réduction fidélité')->setCurrency('EUR')->setStoredAsCents()->onlyOnDetail();
         yield IntegerField::new('pointsUtilises', 'Points utilisés')->onlyOnDetail();
