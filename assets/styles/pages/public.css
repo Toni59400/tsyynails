@@ -1496,3 +1496,208 @@ a.jour:hover {
     margin-top: 0;
     color: var(--color-primary-ink);
 }
+
+/*
+ * Réduction fidélité à vie : encart sombre et doré (univers Instagram du salon),
+ * escalier des paliers 10 → 15 → 20 %. Contrastes vérifiés : ivoire et or sur noir > 7:1.
+ */
+.vie {
+    padding-block: calc(var(--space) * 7) calc(var(--space) * 4);
+    background: var(--color-noir);
+    color: var(--color-ivoire);
+}
+
+.vie__grille {
+    display: grid;
+    gap: calc(var(--space) * 5);
+    align-items: center;
+}
+
+@media (min-width: 56rem) {
+    .vie__grille {
+        grid-template-columns: 1.1fr 1fr;
+    }
+}
+
+.vie__surtitre {
+    color: var(--color-or);
+    letter-spacing: 0.3em;
+}
+
+.vie__titre {
+    margin: 0 0 calc(var(--space) * 2);
+    font-size: clamp(2.2rem, 7vw, 3.8rem);
+    line-height: 1.05;
+}
+
+.vie__titre em {
+    display: inline-block;
+    color: var(--color-or-clair);
+    font-style: italic;
+}
+
+.vie__intro {
+    max-width: 34rem;
+    margin: 0 0 calc(var(--space) * 3);
+    color: #e9e1dc;
+    font-size: 1.05rem;
+}
+
+.vie__intro strong {
+    color: var(--color-ivoire);
+}
+
+.vie__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(var(--space) * 1.5);
+}
+
+.vie .bouton {
+    background: var(--color-or);
+    color: var(--color-noir);
+}
+
+.vie .bouton:hover {
+    background: var(--color-ivoire);
+}
+
+.vie .bouton--secondaire {
+    background: transparent;
+    color: var(--color-ivoire);
+    box-shadow: inset 0 0 0 1px var(--color-ivoire);
+}
+
+.vie .bouton--secondaire:hover {
+    background: rgb(251 247 244 / 10%);
+}
+
+.vie a:not(.bouton) {
+    color: var(--color-or-clair);
+}
+
+/* Escalier : chaque année monte d'une marche. */
+.vie__paliers {
+    display: flex;
+    gap: var(--space);
+    align-items: flex-end;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.vie__palier {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: calc(var(--space) / 2);
+    min-height: 9rem;
+    padding: calc(var(--space) * 2) calc(var(--space) * 1.5);
+    border: 1px solid rgb(201 164 106 / 55%);
+    border-radius: var(--radius) var(--radius) 4px 4px;
+    background: linear-gradient(180deg, rgb(201 164 106 / 18%), rgb(201 164 106 / 4%));
+    text-align: center;
+}
+
+.vie__palier--2 {
+    min-height: 11.5rem;
+}
+
+.vie__palier--3,
+.vie__palier--4,
+.vie__palier--5 {
+    min-height: 14rem;
+    border-color: var(--color-or);
+    background: linear-gradient(180deg, rgb(201 164 106 / 38%), rgb(201 164 106 / 8%));
+}
+
+.vie__pourcentage {
+    color: var(--color-or-clair);
+    font-family: var(--font-heading);
+    font-size: clamp(1.7rem, 5vw, 2.4rem);
+    line-height: 1;
+}
+
+.vie__annee {
+    font-weight: 600;
+    letter-spacing: 0.04em;
+}
+
+.vie__condition {
+    color: #d8cec8;
+    font-size: 0.85rem;
+}
+
+.vie__mentions {
+    margin-top: calc(var(--space) * 4);
+    color: #cfc4be;
+    font-size: 0.85rem;
+}
+
+/* Bandeau (prestations, réservation) */
+.vie-bandeau {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(var(--space) * 1.5) calc(var(--space) * 3);
+    align-items: center;
+    justify-content: space-between;
+    margin-block: calc(var(--space) * 2) calc(var(--space) * 3);
+    padding: calc(var(--space) * 2) calc(var(--space) * 2.5);
+    border-radius: var(--radius);
+    background: var(--color-noir);
+    color: #e9e1dc;
+}
+
+.vie-bandeau__texte {
+    flex: 1 1 18rem;
+    margin: 0;
+}
+
+.vie-bandeau__accroche {
+    display: block;
+    color: var(--color-or-clair);
+    font-family: var(--font-heading);
+    font-size: 1.35rem;
+}
+
+.vie-bandeau .bouton {
+    background: var(--color-or);
+    color: var(--color-noir);
+}
+
+.vie-bandeau .bouton:hover {
+    background: var(--color-ivoire);
+}
+
+/* Rappel sous les boutons de l'accroche */
+.accroche__vie {
+    display: inline-flex;
+    gap: var(--space);
+    align-items: center;
+    min-height: 44px;
+    margin-top: calc(var(--space) * 2);
+    color: var(--color-text);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.accroche__vie:hover {
+    text-decoration: underline;
+}
+
+.accroche__vie-badge {
+    padding: 2px calc(var(--space) * 1.25);
+    border-radius: 999px;
+    background: var(--color-noir);
+    color: var(--color-or-clair);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.avantages__vedette {
+    padding: var(--space) calc(var(--space) * 1.5);
+    border-left: 3px solid var(--color-or);
+    background: var(--color-surface-douce);
+}

@@ -7,6 +7,7 @@
     <div class="conteneur page">
         {{ include('reservation/_etapes.html.twig', {etape: 1}) }}
         <h1>Quelle prestation souhaitez-vous ?</h1>
+        {{ include('site/_reduction_vie.html.twig', {format: 'bandeau', origine: 'reservation'}) }}
 
         {% if prestations is empty %}
             <p>La réservation en ligne ouvre bientôt. En attendant, <a href="{{ path('app_infos') }}#contact">contactez-moi</a>.</p>

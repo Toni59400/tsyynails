@@ -21,6 +21,13 @@
                     <a class="bouton" href="{{ path('app_reservation') }}">Réserver un rendez-vous</a>
                     <a class="bouton bouton--secondaire" href="{{ path('app_prestations') }}">Voir les prestations</a>
                 </div>
+                {% set programme = programme_vie() %}
+                {% if programme %}
+                    <a class="accroche__vie" href="#reduction-a-vie" data-mesure-clic="clic_reduction_vie" data-mesure-origine="accroche">
+                        <span class="accroche__vie-badge">Fidélité</span>
+                        Jusqu'à −{{ programme.plafond }} % à vie sur vos prestations
+                    </a>
+                {% endif %}
             </div>
             {% if photos is not empty %}
                 <img class="accroche__photo" src="{{ asset('uploads/galerie/' ~ photos|first.fichier) }}"
@@ -39,6 +46,20 @@
                     {% endfor %}
                 </div>
                 <p class="section__suite"><a href="{{ path('app_prestations') }}">Toutes les prestations et tarifs</a></p>
+            </div>
+        </section>
+    {% endif %}
+
+    {% if programme_vie() %}
+        {{ include('site/_reduction_vie.html.twig', {format: 'section', origine: 'accueil'}) }}
+    {% else %}
+        <section class="section section--douce" aria-labelledby="titre-fidelite">
+            <div class="conteneur texte-centre">
+                <h2 id="titre-fidelite" class="section__titre">Votre fidélité récompensée</h2>
+                <p class="section__intro">
+                    Chaque rendez-vous vous rapporte des points sur votre carte de fidélité.
+                    Vos points se transforment en réduction sur vos prochaines prestations.
+                </p>
             </div>
         </section>
     {% endif %}
@@ -95,15 +116,6 @@
         </div>
     </section>
 
-    <section class="section section--douce" aria-labelledby="titre-fidelite">
-        <div class="conteneur texte-centre">
-            <h2 id="titre-fidelite" class="section__titre">Votre fidélité récompensée</h2>
-            <p class="section__intro">
-                Chaque rendez-vous vous rapporte des points sur votre carte de fidélité.
-                Vos points se transforment en réduction sur vos prochaines prestations.
-            </p>
-        </div>
-    </section>
 
     <section class="section" aria-labelledby="titre-venir">
         <div class="conteneur infos-grille">

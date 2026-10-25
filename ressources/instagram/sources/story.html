@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Story Instagram · Réduction à vie</title>
+<link rel="stylesheet" href="commun.css">
+<style>
+    /*
+     * Format story (1080 × 1920). Zones laissées libres pour l'interface d'Instagram :
+     * ~220 px en haut (profil, barre de progression) et ~300 px en bas (réponse, sticker lien).
+     */
+    body { width: 1080px; height: 1920px; }
+    .affiche { width: 1080px; height: 1920px; }
+
+    /* Photo fondue dans le noir sur tous ses bords (masque en dégradé, pas de cadre visible). */
+    .photo {
+        position: absolute;
+        top: 270px;
+        left: 50%;
+        width: 740px;
+        height: 640px;
+        transform: translateX(-44%);
+        object-fit: cover;
+        object-position: 45% 38%;
+        -webkit-mask-image: radial-gradient(ellipse 60% 58% at 52% 50%, #000 55%, transparent 100%);
+        mask-image: radial-gradient(ellipse 60% 58% at 52% 50%, #000 55%, transparent 100%);
+    }
+
+    .contenu {
+        position: absolute;
+        inset: 0;
+        padding: 210px 70px 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    .logo { width: 300px; }
+    .capitales { margin-top: 660px; font-size: 26px; padding-left: 0.42em; }
+    .ligne-titre { display: flex; align-items: baseline; justify-content: center; gap: 26px; margin-top: 18px; }
+    .jusqua { font-size: 72px; }
+    .pourcentage { font-size: 190px; }
+    .a-vie { font-size: 104px; font-style: italic; }
+    .filet { width: 420px; height: 2px; margin: 28px auto 30px; background: linear-gradient(90deg, rgb(201 164 106 / 0%), var(--or), rgb(201 164 106 / 0%)); }
+    .accroche { font-size: 31px; font-weight: 300; line-height: 1.4; max-width: 860px; color: var(--ivoire-doux); }
+    .accroche strong { font-weight: 500; color: var(--ivoire); }
+
+    .escalier { display: flex; align-items: flex-end; justify-content: center; gap: 16px; margin-top: 30px; }
+    .marche { width: 230px; padding: 18px 10px 16px; }
+    .marche--1 { height: 156px; }
+    .marche--2 { height: 180px; }
+    .marche--3 { height: 204px; }
+    .marche__pct { font-size: 56px; }
+    .marche__annee { font-size: 23px; margin-top: 6px; }
+    .marche__detail { font-size: 18px; margin-top: 2px; }
+
+    .bouton { margin-top: 32px; padding: 22px 44px; font-size: 29px; }
+    .mention { margin-top: 18px; font-size: 19px; }
+</style>
+</head>
+<body>
+<div class="affiche">
+    <img class="photo" src="photo-nude.png" alt="">
+    <div class="contenu">
+        <img class="logo" src="logo-nom.png" alt="Tsyynails">
+        <p class="capitales">Programme fidélité</p>
+        <div class="ligne-titre">
+            <span class="serif jusqua">Jusqu’à</span>
+            <span class="pourcentage">−20 %</span>
+            <span class="serif a-vie">à vie</span>
+        </div>
+        <div class="filet"></div>
+        <p class="accroche">Dès <strong>340 points en 12 mois</strong> (environ 10 rendez-vous) :<br><strong>−10 % sur toutes vos prestations</strong>, pour toujours.</p>
+
+        <div class="escalier">
+            <div class="marche marche--1"><p class="marche__pct">−10 %</p><p class="marche__annee">1re année</p><p class="marche__detail">dès 340 points</p></div>
+            <div class="marche marche--2"><p class="marche__pct">−15 %</p><p class="marche__annee">2e année</p><p class="marche__detail">8 rdv dans l’année</p></div>
+            <div class="marche marche--3 marche--haute"><p class="marche__pct">−20 %</p><p class="marche__annee">3e année et +</p><p class="marche__detail">8 rdv dans l’année</p></div>
+        </div>
+
+        <span class="bouton">Compte gratuit sur tsyyart.fr</span>
+        <p class="mention">Prothésiste ongulaire · Arras · Conditions sur tsyyart.fr</p>
+    </div>
+</div>
+</body>
+</html>

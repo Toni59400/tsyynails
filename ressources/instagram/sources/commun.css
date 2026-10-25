@@ -1,0 +1,106 @@
+/* Visuels Instagram Tsyynails : univers du compte (fonds noirs, ongles nude, bijoux dorés) + charte du logo. */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Jost:wght@300;400;500&display=swap');
+
+:root {
+    --noir: #030303; /* noir des photos du compte : pas de cadre visible autour des photos */
+    --ivoire: #fbf7f4;
+    --ivoire-doux: #e9e1dc;
+    --or: #c9a46a;
+    --or-clair: #e8cfa2;
+    --ongle: #9b7b6a;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+    background: var(--noir);
+    color: var(--ivoire);
+    font-family: 'Jost', sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+.affiche {
+    position: relative;
+    overflow: hidden;
+    background: var(--noir);
+}
+
+/* Logo manuscrit recoloré en ivoire (le fichier d'origine est brun). */
+.logo {
+    display: block;
+    height: auto;
+    filter: brightness(0) invert(0.97) sepia(0.12);
+}
+
+.capitales {
+    font-weight: 400;
+    letter-spacing: 0.42em;
+    text-transform: uppercase;
+    color: var(--or);
+}
+
+.serif {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400;
+    line-height: 0.9;
+}
+
+.pourcentage {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-weight: 500;
+    background: linear-gradient(170deg, var(--or-clair) 10%, var(--or) 55%, #a8834c 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    line-height: 0.85;
+}
+
+.filet {
+    height: 2px;
+    background: linear-gradient(90deg, var(--or), rgb(201 164 106 / 0%));
+}
+
+.marche {
+    border: 1.5px solid rgb(201 164 106 / 60%);
+    border-radius: 18px 18px 6px 6px;
+    background: linear-gradient(180deg, rgb(201 164 106 / 22%), rgb(201 164 106 / 4%));
+    text-align: center;
+}
+
+.marche--haute {
+    border-color: var(--or);
+    background: linear-gradient(180deg, rgb(201 164 106 / 42%), rgb(201 164 106 / 8%));
+}
+
+.marche__pct {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-weight: 500;
+    color: var(--or-clair);
+    line-height: 1;
+}
+
+.marche__annee {
+    font-weight: 500;
+    letter-spacing: 0.06em;
+}
+
+.marche__detail {
+    color: var(--ivoire-doux);
+    font-weight: 300;
+}
+
+.bouton {
+    display: inline-block;
+    border-radius: 999px;
+    background: var(--or);
+    color: var(--noir);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+}
+
+.mention {
+    color: #bdb2ab;
+    font-weight: 300;
+}

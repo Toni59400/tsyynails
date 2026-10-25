@@ -81,6 +81,12 @@ function evenementDuLien(lien) {
 
 document.addEventListener('click', (evenement) => {
     const lien = evenement.target instanceof Element ? evenement.target.closest('a[href]') : null;
+    // Appels à l'action marqués dans les gabarits (ex. : encart « réduction à vie »), avec leur emplacement.
+    if (lien?.dataset.mesureClic) {
+        suivre(lien.dataset.mesureClic, { origine: lien.dataset.mesureOrigine ?? '' });
+
+        return;
+    }
     const nom = lien ? evenementDuLien(lien) : null;
     if (nom) {
         suivre(nom, { lien_texte: lien.textContent.trim().slice(0, 60) });

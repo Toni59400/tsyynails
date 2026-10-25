@@ -48,8 +48,10 @@
                     <h2 class="formulaire__titre">Vos coordonnées</h2>
 
                     {% if not app.user %}
+                        {% set programme = programme_vie() %}
                         <p class="alerte alerte--info">
-                            Ce rendez-vous vous rapportera <strong>{{ points_gagnes }} points de fidélité</strong> avec un compte.
+                            Ce rendez-vous vous rapportera <strong>{{ points_gagnes }} points de fidélité</strong> avec un compte
+                            {%- if programme %}, un premier pas vers votre <strong>réduction à vie de −{{ programme.depart }} %</strong> (dès {{ programme.seuil }} points, jusqu'à −{{ programme.plafond }} % ensuite){% endif %}.
                             <a href="{{ path('app_login', {cible: cible_connexion}) }}">Déjà un compte ? Connectez-vous</a>
                         </p>
                     {% endif %}

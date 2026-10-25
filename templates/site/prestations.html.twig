@@ -11,6 +11,8 @@
             Un acompte de {{ acompte_pourcentage }} % est demandé à la réservation, déduit du prix le jour du rendez-vous.
         </p>
 
+        {{ include('site/_reduction_vie.html.twig', {format: 'bandeau', origine: 'prestations'}) }}
+
         {% if prestations is empty %}
             <p>Les prestations seront bientôt présentées ici.</p>
         {% else %}

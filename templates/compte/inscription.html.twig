@@ -10,7 +10,15 @@
         <div class="tunnel-colonnes">
             <section aria-labelledby="titre-avantages">
                 <h2 id="titre-avantages">Vos avantages</h2>
+                {% set programme = programme_vie() %}
                 <ul class="avantages">
+                    {% if programme %}
+                        <li class="avantages__vedette">
+                            <strong>Jusqu'à −{{ programme.plafond }} % à vie</strong> :
+                            −{{ programme.depart }} % sur toutes vos prestations dès {{ programme.seuil }} points en 12 mois{% if programme.rendez_vous > 0 %} (environ {{ programme.rendez_vous }} rendez-vous){% endif %},
+                            puis +{{ programme.pas }} % chaque année de fidélité.
+                        </li>
+                    {% endif %}
                     <li>Des points à chaque rendez-vous, et des points de bienvenue.</li>
                     <li>Des récompenses à échanger quand vous voulez :
                         <ul>

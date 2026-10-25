@@ -58,7 +58,7 @@ final class CoordonneesType extends AbstractType
             if ($options['avec_compte']) {
                 $builder
                     ->add('creerCompte', CheckboxType::class, [
-                        'label' => 'Créer mon compte pour cumuler des points de fidélité',
+                        'label' => 'Créer mon compte gratuit : points de fidélité et réduction à vie',
                         'required' => false,
                         'attr' => ['data-action' => 'afficher-si-coche#basculer', 'data-afficher-si-coche-target' => 'case'],
                     ])

@@ -1,0 +1,69 @@
+{#
+    Encart « Réduction à vie » (réglages Réduction à vie de l'admin). Variables :
+    - format : 'section' (accueil, inscription) ou 'bandeau' (prestations, réservation) ;
+    - origine : emplacement, transmis à la mesure d'audience pour comparer les encarts.
+    Rien n'est affiché si la réduction à vie est désactivée.
+#}
+{% set programme = programme_vie() %}
+{% set format = format|default('section') %}
+{% set origine = origine|default(format) %}
+{% if programme %}
+    {% set connectee = app.user and not is_granted('ROLE_ADMIN') %}
+    {% set titre_annee = ['1re année', '2e année', '3e année'] %}
+
+    {% if format == 'bandeau' %}
+        <aside class="vie-bandeau" aria-label="Réduction fidélité à vie">
+            <p class="vie-bandeau__texte">
+                <span class="vie-bandeau__accroche">Jusqu'à −{{ programme.plafond }} % à vie</span>
+                −{{ programme.depart }} % sur toutes vos prestations dès {{ programme.seuil }} points en 12 mois{% if programme.rendez_vous > 0 %} (environ {{ programme.rendez_vous }} rendez-vous){% endif %}, puis +{{ programme.pas }} % chaque année.
+            </p>
+            {% if connectee %}
+                <a class="bouton bouton--compact" href="{{ path('app_compte_fidelite') }}" data-mesure-clic="clic_reduction_vie" data-mesure-origine="{{ origine }}">Voir ma progression</a>
+            {% elseif not app.user %}
+                <a class="bouton bouton--compact" href="{{ path('app_inscription') }}" data-mesure-clic="clic_reduction_vie" data-mesure-origine="{{ origine }}">Créer mon compte gratuit</a>
+            {% endif %}
+        </aside>
+    {% else %}
+        <section class="vie" id="reduction-a-vie" aria-labelledby="titre-vie-{{ origine }}">
+            <div class="conteneur vie__grille">
+                <div class="vie__texte">
+                    <p class="surtitre vie__surtitre">Programme fidélité</p>
+                    <h2 id="titre-vie-{{ origine }}" class="vie__titre">Jusqu'à <em>−{{ programme.plafond }} %</em> à vie</h2>
+                    <p class="vie__intro">
+                        Chaque rendez-vous vous rapporte des points. Atteignez <strong>{{ programme.seuil }} points en 12 mois</strong>{% if programme.rendez_vous > 0 %}, soit environ {{ programme.rendez_vous }} rendez-vous{% endif %} :
+                        vous gagnez <strong>−{{ programme.depart }} % sur toutes vos prestations, pour toujours</strong>.
+                        Et plus vous restez fidèle, plus elle augmente.
+                    </p>
+                    <div class="vie__actions">
+                        {% if connectee %}
+                            <a class="bouton" href="{{ path('app_compte_fidelite') }}" data-mesure-clic="clic_reduction_vie" data-mesure-origine="{{ origine }}">Voir ma progression</a>
+                        {% elseif not app.user %}
+                            <a class="bouton" href="{{ path('app_inscription') }}" data-mesure-clic="clic_reduction_vie" data-mesure-origine="{{ origine }}">Créer mon compte gratuit</a>
+                        {% endif %}
+                        <a class="bouton bouton--secondaire" href="{{ path('app_reservation') }}">Réserver</a>
+                    </div>
+                </div>
+
+                <ol class="vie__paliers">
+                    {% for pourcentage in programme.paliers %}
+                        <li class="vie__palier vie__palier--{{ loop.index }}">
+                            <span class="vie__pourcentage">−{{ pourcentage }} %</span>
+                            <span class="vie__annee">{{ titre_annee[loop.index0] ?? (loop.index ~ 'e année') }}{% if loop.last and loop.length > 1 %} et +{% endif %}</span>
+                            <span class="vie__condition">
+                                {%- if loop.first -%}
+                                    dès {{ programme.seuil }} points en 12 mois
+                                {%- else -%}
+                                    {{ programme.visites }} rendez-vous dans l'année
+                                {%- endif -%}
+                            </span>
+                        </li>
+                    {% endfor %}
+                </ol>
+            </div>
+            <p class="conteneur vie__mentions">
+                Avec un compte gratuit, des points à chaque euro payé. Pour garder votre réduction, {{ programme.visites }} rendez-vous par an suffisent.
+                <a href="{{ path('app_conditions') }}#reduction-a-vie">Voir le règlement</a>
+            </p>
+        </section>
+    {% endif %}
+{% endif %}
