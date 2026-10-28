@@ -252,6 +252,24 @@ final class PaiementEtGestionRendezVousTest extends WebTestCase
         self::assertNull($ancienne->getEmail());
     }
 
+    public function testUneFicheSeSupprimeAussiDepuisLaListeDesClientes(): void
+    {
+        $nouvelle = (new Client('Nina', 'Depuis-Liste', '+33639986666'))->setEmail('nina.liste@example.com');
+        $this->em()->persist($nouvelle);
+        $this->em()->flush();
+        $id = $nouvelle->getId();
+        $this->connecterAdmin();
+
+        $crawler = $this->client->request('GET', '/admin/client?query=Depuis-Liste');
+        $lien = $crawler->filter('a.action-delete')->first();
+        self::assertCount(1, $lien, 'Action « Supprimer » proposée dans la liste.');
+        $jeton = (string) $crawler->filter('#modal-delete [name="token"], form#delete-form [name="token"], [name="token"]')->first()->attr('value');
+        $this->client->request('POST', (string) ($lien->attr('formaction') ?? $lien->attr('href')), ['token' => $jeton]);
+
+        self::assertResponseRedirects();
+        self::assertNull(static::getContainer()->get(ClientRepository::class)->find($id));
+    }
+
     public function testUneFicheAvecUnRendezVousAVenirNePeutPasEtreSupprimee(): void
     {
         $reservation = $this->reservationCarteConfirmee();

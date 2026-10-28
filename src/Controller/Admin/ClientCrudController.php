@@ -83,10 +83,33 @@ final class ClientCrudController extends AbstractCrudController
 
     public function configureActions(Actions $actions): Actions
     {
-        // Suppression définitive interdite : les données passeront par l'anonymisation RGPD.
+        // Suppression depuis la liste (et le bouton de la fiche) : voir deleteEntity(). Pas de suppression en lot.
         return $actions
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
-            ->disable(Action::DELETE, Action::BATCH_DELETE);
+            ->remove(Crud::PAGE_DETAIL, Action::DELETE)
+            ->disable(Action::BATCH_DELETE);
+    }
+
+    /**
+     * Suppression depuis la liste : mêmes règles que le bouton de la fiche (SuppressionCliente) — définitive
+     * sans historique, anonymisation sinon, refusée si un rendez-vous est à venir.
+     */
+    public function deleteEntity(EntityManagerInterface $entityManager, $entityInstance): void
+    {
+        $nom = $entityInstance->getNomComplet();
+        /** @var User $admin */
+        $admin = $this->getUser();
+        try {
+            $definitive = $this->suppression->supprimer($entityInstance, $admin->getUserIdentifier());
+        } catch (\LogicException $erreur) {
+            $this->addFlash('danger', $nom.' : '.$erreur->getMessage());
+
+            return;
+        }
+
+        $this->addFlash('success', $definitive
+            ? \sprintf('Fiche de %s supprimée définitivement.', $nom)
+            : \sprintf('Fiche de %s anonymisée : ses rendez-vous passés restent dans l\'historique (comptabilité), sans nom ni coordonnées.', $nom));
     }
 
     public function configureFields(string $pageName): iterable
