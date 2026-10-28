@@ -6,9 +6,12 @@ namespace App\Controller\Admin;
 
 use App\Entity\Parametre;
 use App\Entity\User;
+use App\Form\ModificationRendezVous;
+use App\Form\ModificationRendezVousType;
 use App\Form\RendezVousSalon;
 use App\Form\RendezVousSalonType;
 use App\Repository\ParametreRepository;
+use App\Repository\ReservationRepository;
 use App\Service\Reservation\CreneauIndisponibleException;
 use App\Service\Reservation\ReservationWorkflow;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
@@ -21,7 +24,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
  * Rendez-vous pris par la prothésiste (téléphone, au salon, RDV duo) : confirmé d'emblée, sans acompte en ligne.
- * Route : admin_rendez_vous_nouveau.
+ * Routes : admin_rendez_vous_nouveau, admin_rendez_vous_modifier.
  */
 #[IsGranted(User::ROLE_ADMIN)]
 #[AdminRoute('/rendez-vous', name: 'rendez_vous')]
@@ -30,6 +33,7 @@ final class RendezVousSalonController extends AbstractController
     public function __construct(
         private readonly ReservationWorkflow $workflow,
         private readonly ParametreRepository $parametres,
+        private readonly ReservationRepository $reservations,
         private readonly AdminUrlGenerator $adminUrlGenerator,
     ) {
     }
@@ -72,6 +76,51 @@ final class RendezVousSalonController extends AbstractController
 
         return $this->render('admin/rendez_vous_nouveau.html.twig', [
             'formulaire' => $formulaire,
+        ], new Response(status: $formulaire->isSubmitted() ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK));
+    }
+
+    /**
+     * Modification d'un rendez-vous à venir (en attente ou confirmé). Route : admin_rendez_vous_modifier.
+     * Avec un acompte par carte, la prestation est figée ; horaire, supplément et remise restent modifiables.
+     */
+    #[AdminRoute('/{id}/modifier', name: 'modifier', options: ['methods' => ['GET', 'POST'], 'requirements' => ['id' => '\d+']])]
+    public function modifier(int $id, Request $request): Response
+    {
+        $reservation = $this->reservations->find($id) ?? throw $this->createNotFoundException();
+        $detail = $this->adminUrlGenerator->setController(ReservationCrudController::class)->setAction('detail')->setEntityId($reservation->getId())->generateUrl();
+
+        $modification = ModificationRendezVous::depuis($reservation);
+        $formulaire = $this->createForm(ModificationRendezVousType::class, $modification, ['prestations_figees' => $reservation->aUnAcompteCarte()]);
+        $formulaire->handleRequest($request);
+
+        if ($formulaire->isSubmitted() && $formulaire->isValid() && null !== $modification->prestation) {
+            /** @var User $admin */
+            $admin = $this->getUser();
+            try {
+                $prevenue = $this->workflow->modifier(
+                    $reservation,
+                    $modification->prestation,
+                    $modification->debut(),
+                    $modification->supplement,
+                    $modification->duo ? $modification->prestationDuo : null,
+                    (int) $modification->remise,
+                    $admin->getUserIdentifier(),
+                    $modification->prevenir,
+                );
+                $this->addFlash('success', 'Rendez-vous modifié'.($prevenue ? ' : la cliente a reçu le récapitulatif à jour.' : '.'));
+
+                return $this->redirect($detail);
+            } catch (CreneauIndisponibleException) {
+                $formulaire->get('heure')->addError(new FormError('Ce créneau chevauche un autre rendez-vous ou une fermeture.'));
+            } catch (\LogicException|\InvalidArgumentException $erreur) {
+                $formulaire->addError(new FormError($erreur->getMessage()));
+            }
+        }
+
+        return $this->render('admin/rendez_vous_modifier.html.twig', [
+            'formulaire' => $formulaire,
+            'reservation' => $reservation,
+            'detail' => $detail,
         ], new Response(status: $formulaire->isSubmitted() ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK));
     }
 }

@@ -156,7 +156,14 @@ final class ReservationController extends AbstractController
         // Prix affiché : remise duo ou réduction à vie (cliente connectée), majoration du soir.
         $devis = $this->tarification->devis($prestation, $supplement, $duo, $debut, $cliente);
 
+        // Modes de paiement proposés (réglages) : aucun = réservation en ligne fermée.
+        $modes = $this->tarification->modesPaiementEnLigne();
+        if ([] === $modes) {
+            return $this->render('reservation/fermee.html.twig');
+        }
+
         $coordonnees = new CoordonneesCliente();
+        $coordonnees->modePaiement = $modes[0];
         $recompenses = [];
         if (null !== $cliente && $user instanceof User) {
             $coordonnees->prenom = $cliente->getPrenom();
@@ -172,6 +179,8 @@ final class ReservationController extends AbstractController
             'connectee' => null !== $cliente,
             'avec_compte' => !$user instanceof User,
             'recompenses' => $recompenses,
+            'modes_paiement' => $modes,
+            'acompte_texte' => number_format($this->tarification->acompte($devis) / 100, 0, ',', ' ').' €',
         ]);
         $formulaire->handleRequest($request);
 
@@ -186,7 +195,7 @@ final class ReservationController extends AbstractController
             $recompense = null !== $cliente ? $formulaire->get('recompense')->getData() : null;
 
             try {
-                $reservation = $this->workflow->demander($prestation, $debut, $coordonnees, $cliente, $recompense instanceof RecompenseFidelite ? $recompense : null, $supplement, $duo);
+                $reservation = $this->workflow->demander($prestation, $debut, $coordonnees, $cliente, $recompense instanceof RecompenseFidelite ? $recompense : null, $supplement, $duo, $coordonnees->modePaiement);
             } catch (CreneauIndisponibleException) {
                 return $this->creneauPris($prestation, $supplement, $duo);
             } catch (\LogicException $erreur) {
@@ -210,6 +219,11 @@ final class ReservationController extends AbstractController
                 }
             }
 
+            if (Reservation::MODE_ESPECES === $reservation->getModeAcompte()) {
+                // Pas d'acompte : la demande est déjà envoyée (même adresse de retour que Stripe, pour la mesure d'audience).
+                return $this->redirectToRoute('app_reservation_suivi', ['jeton' => $reservation->getJetonSuivi(), 'redirect_status' => 'succeeded']);
+            }
+
             return $this->redirectToRoute('app_reservation_paiement', ['jeton' => $reservation->getJetonSuivi()]);
         }
 
@@ -222,7 +236,9 @@ final class ReservationController extends AbstractController
             'a_payer' => $devis->aPayerCentimes(),
             'debut' => $debut,
             'fin' => $debut->modify(\sprintf('+%d minutes', $devis->dureeMinutes)),
-            'acompte' => $this->tarification->acompte($devis),
+            // Espèces seulement : aucun acompte à afficher.
+            'acompte' => \in_array(Reservation::MODE_CARTE, $modes, true) ? $this->tarification->acompte($devis) : 0,
+            'modes_paiement' => $modes,
             'formulaire' => $formulaire,
             'cliente' => $cliente,
             'solde' => null === $cliente ? null : $this->fidelite->solde($cliente),
@@ -262,15 +278,57 @@ final class ReservationController extends AbstractController
             && PaiementGateway::STATUT_AUTORISEE === $this->paiement->statut($reservation->getStripePaymentIntentId())) {
             $this->workflow->empreinteAutorisee($reservation);
         }
+        // Retour du paiement du reste par carte (le webhook le confirme aussi).
+        $retourReglement = $request->query->has('reglement');
+        if ($retourReglement && !$this->paiement->estSimulation()) {
+            $this->workflow->verifierSoldeParCarte($reservation);
+        }
 
         return $this->render('reservation/suivi.html.twig', [
             'reservation' => $reservation,
             // Retour de Stripe après la saisie de la carte : la demande est envoyée (mesure d'audience, si acceptée).
-            'mesure' => 'succeeded' === $request->query->getString('redirect_status')
+            'mesure' => !$retourReglement && 'succeeded' === $request->query->getString('redirect_status')
                 && \in_array($reservation->getStatut(), [StatutReservation::EN_ATTENTE, StatutReservation::CONFIRMEE], true)
                 ? self::evenementReservation($reservation) : null,
             'limite_annulation' => $this->workflow->limiteAnnulationGratuite($reservation),
         ]);
+    }
+
+    /**
+     * Paiement par carte du reste à payer, depuis le lien préparé par la prothésiste au rendez-vous
+     * (téléphone de la cliente ou QR code affiché dans l'admin).
+     */
+    #[Route('/reglement/{jeton<[A-Za-z0-9_-]{22}>}', name: 'app_reservation_reglement', methods: ['GET'])]
+    public function reglement(string $jeton): Response
+    {
+        $reservation = $this->reservationParJeton($jeton);
+        $identifiant = $reservation->getSoldePaymentIntentId();
+        if (null === $identifiant || $reservation->soldeEstRegle() || Reservation::MODE_CARTE !== $reservation->getSoldeMode()) {
+            return $this->redirectToRoute('app_reservation_suivi', ['jeton' => $jeton]);
+        }
+
+        return $this->render('reservation/reglement.html.twig', [
+            'reservation' => $reservation,
+            'simulation' => $this->paiement->estSimulation(),
+            'cle_publique' => $this->paiement->clePublique(),
+            'secret_client' => $this->paiement->secretClient($identifiant),
+        ]);
+    }
+
+    /** Développement sans clés Stripe uniquement : simule le paiement par carte du reste. */
+    #[Route('/reglement/{jeton<[A-Za-z0-9_-]{22}>}/simuler', name: 'app_reservation_reglement_simuler', methods: ['POST'])]
+    public function simulerReglement(string $jeton, Request $request): Response
+    {
+        if (!$this->paiement->estSimulation()) {
+            throw $this->createNotFoundException();
+        }
+        if (!$this->isCsrfTokenValid('reglement_'.$jeton, $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException('Jeton CSRF invalide.');
+        }
+
+        $this->workflow->soldePayeParCarte($this->reservationParJeton($jeton));
+
+        return $this->redirectToRoute('app_reservation_suivi', ['jeton' => $jeton, 'reglement' => 1]);
     }
 
     /** Développement sans clés Stripe uniquement : simule la saisie d'une carte valide. */

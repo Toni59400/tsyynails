@@ -21,7 +21,7 @@ use Symfony\Component\Routing\Attribute\Route;
 /**
  * Notifications de Stripe. Signature vérifiée, chaque événement traité une seule fois.
  * À déclarer dans le tableau de bord Stripe : https://<domaine>/stripe/webhook,
- * événement payment_intent.amount_capturable_updated.
+ * événements payment_intent.amount_capturable_updated (acompte) et payment_intent.succeeded (reste payé par carte).
  */
 final class StripeWebhookController
 {
@@ -58,6 +58,13 @@ final class StripeWebhookController
             $reservation = $this->reservations->findOneBy(['stripePaymentIntentId' => $evenement->data->object->id]);
             if (null !== $reservation) {
                 $this->workflow->empreinteAutorisee($reservation);
+            }
+        }
+        // Reste à payer réglé par carte (lien de paiement du rendez-vous).
+        if ('payment_intent.succeeded' === $evenement->type && $evenement->data->object instanceof PaymentIntent) {
+            $reservation = $this->reservations->findOneBy(['soldePaymentIntentId' => $evenement->data->object->id]);
+            if (null !== $reservation) {
+                $this->workflow->soldePayeParCarte($reservation);
             }
         }
 

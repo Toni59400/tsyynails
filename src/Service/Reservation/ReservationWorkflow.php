@@ -67,10 +67,15 @@ final class ReservationWorkflow
         ?RecompenseFidelite $recompense = null,
         ?Supplement $supplement = null,
         ?Prestation $prestationDuo = null,
+        string $modePaiement = Reservation::MODE_CARTE,
     ): Reservation {
         if (null !== $recompense && null === $clienteConnectee) {
             throw new \LogicException('Les points ne s\'utilisent qu\'avec un compte.');
         }
+        if (!\in_array($modePaiement, $this->tarification->modesPaiementEnLigne(), true)) {
+            throw new \LogicException('Ce mode de paiement n\'est plus proposé : choisissez-en un autre.');
+        }
+        $especes = Reservation::MODE_ESPECES === $modePaiement;
         $telephone = null === $clienteConnectee
             ? (CoordonneesCliente::normaliserTelephone($coordonnees->telephone) ?? throw new \InvalidArgumentException('Téléphone invalide.'))
             : null;
@@ -110,7 +115,8 @@ final class ReservationWorkflow
                 $cliente,
                 $prestation,
                 $debut,
-                $this->tarification->acompte($devis, $reduction),
+                // Espèces : aucun acompte en ligne, tout est réglé au rendez-vous.
+                $especes ? 0 : $this->tarification->acompte($devis, $reduction),
                 $reduction,
                 $recompense?->getSeuilPoints() ?? 0,
                 $supplement,
@@ -120,7 +126,12 @@ final class ReservationWorkflow
                 $devis->remiseMotif,
             );
             $reservation->setEmailContact($coordonnees->email);
+            $reservation->setModeAcompte($modePaiement);
             $reservation->accepterConditions($this->clock->now());
+            if ($especes) {
+                // Pas d'empreinte à attendre : la demande part directement en validation.
+                $reservation->changerStatut(StatutReservation::EN_ATTENTE, $this->clock->now());
+            }
             $this->entityManager->persist($reservation);
             if (null !== $recompense) {
                 $this->entityManager->persist(new MouvementPoints($cliente, -$recompense->getSeuilPoints(), MotifMouvementPoints::UTILISATION, $reservation, null, $recompense->getNom()));
@@ -128,6 +139,13 @@ final class ReservationWorkflow
             $this->entityManager->flush();
         } finally {
             $connexion->fetchOne('SELECT RELEASE_LOCK(?)', [self::VERROU]);
+        }
+
+        if ($especes) {
+            $this->logger->info('Demande de réservation reçue (paiement en espèces).', ['reservation' => $reservation->getId()]);
+            $this->notifications->demandeRecue($reservation);
+
+            return $reservation;
         }
 
         try {
@@ -209,6 +227,194 @@ final class ReservationWorkflow
         return $reservation;
     }
 
+    // ---------- Reste à payer au rendez-vous ----------
+
+    /** Reste encaissé en espèces au salon (un éventuel lien de paiement par carte est annulé). */
+    public function reglerSoldeEnEspeces(Reservation $reservation, string $auteur): void
+    {
+        $this->exigerResteAPayer($reservation);
+        $this->abandonnerLienCarte($reservation);
+        $reservation->marquerSoldeRegle(Reservation::MODE_ESPECES, $reservation->getResteAPayerCentimes(), $this->clock->now());
+        $this->entityManager->flush();
+        $this->logger->notice('Reste réglé en espèces.', ['reservation' => $reservation->getId(), 'montant' => $reservation->getSoldeCentimes(), 'par' => $auteur]);
+    }
+
+    /**
+     * Lien de paiement par carte du reste : paiement immédiat, réglé par la cliente sur /reservation/reglement/{jeton}
+     * (son téléphone, ou celui du salon). Réutilise le lien déjà créé s'il est toujours en attente.
+     */
+    public function preparerSoldeParCarte(Reservation $reservation, string $auteur): void
+    {
+        $this->exigerResteAPayer($reservation);
+        if (Reservation::MODE_CARTE === $reservation->getSoldeMode() && null !== $reservation->getSoldePaymentIntentId()) {
+            return;
+        }
+
+        $paiement = $this->paiement->creerPaiement(
+            $reservation->getResteAPayerCentimes(),
+            \sprintf('Règlement %s du %s', $reservation->getPrestation()->getNom(), $reservation->getDebut()->format('d/m/Y H:i')),
+            ['reservation' => (string) $reservation->getId(), 'type' => 'solde'],
+        );
+        $reservation->preparerSoldeParCarte($paiement->identifiant);
+        $this->entityManager->flush();
+        $this->logger->notice('Lien de paiement par carte créé.', ['reservation' => $reservation->getId(), 'par' => $auteur]);
+    }
+
+    /** La cliente règle finalement autrement : le lien de paiement par carte est annulé. */
+    public function abandonnerSoldeParCarte(Reservation $reservation, string $auteur): void
+    {
+        $this->abandonnerLienCarte($reservation);
+        $this->entityManager->flush();
+        $this->logger->notice('Lien de paiement par carte abandonné.', ['reservation' => $reservation->getId(), 'par' => $auteur]);
+    }
+
+    /** Stripe confirme le paiement du reste par carte (retour de la page de paiement ou webhook). Idempotent. */
+    public function soldePayeParCarte(Reservation $reservation): void
+    {
+        if ($reservation->soldeEstRegle() || null === $reservation->getSoldePaymentIntentId()) {
+            return;
+        }
+        $reservation->marquerSoldeRegle(Reservation::MODE_CARTE, $reservation->getResteAPayerCentimes(), $this->clock->now());
+        $this->entityManager->flush();
+        $this->logger->notice('Reste réglé par carte.', ['reservation' => $reservation->getId(), 'montant' => $reservation->getSoldeCentimes()]);
+    }
+
+    /** Vérifie auprès de Stripe si le lien de paiement par carte a été réglé (page de suivi, fiche admin). */
+    public function verifierSoldeParCarte(Reservation $reservation): void
+    {
+        $identifiant = $reservation->getSoldePaymentIntentId();
+        if (null === $identifiant || $reservation->soldeEstRegle()) {
+            return;
+        }
+        try {
+            if (PaiementGateway::STATUT_PAYE === $this->paiement->statut($identifiant)) {
+                $this->soldePayeParCarte($reservation);
+            }
+        } catch (\Throwable $erreur) {
+            $this->logger->warning('Statut du paiement du reste indisponible.', ['reservation' => $reservation->getId(), 'erreur' => $erreur->getMessage()]);
+        }
+    }
+
+    // ---------- Modification et suppression par la prothésiste ----------
+
+    /**
+     * Déplace ou modifie un rendez-vous à venir (en attente ou confirmé). Les prestations sont figées dès qu'un
+     * acompte par carte existe (empreinte ou débit) ; horaire, supplément et remise restent modifiables.
+     * Le prix est recalculé (majoration du soir selon le nouvel horaire), l'acompte et les points utilisés sont conservés.
+     *
+     * @return bool vrai si la cliente a été prévenue par email
+     *
+     * @throws CreneauIndisponibleException
+     * @throws \LogicException
+     */
+    public function modifier(
+        Reservation $reservation,
+        Prestation $prestation,
+        \DateTimeImmutable $debut,
+        ?Supplement $supplement,
+        ?Prestation $prestationDuo,
+        int $remisePourcentage,
+        string $auteur,
+        bool $prevenirCliente = true,
+    ): bool {
+        if (!\in_array($reservation->getStatut(), [StatutReservation::EN_ATTENTE, StatutReservation::CONFIRMEE], true)) {
+            throw new \LogicException(\sprintf('Modification impossible : la réservation est « %s ».', mb_strtolower($reservation->getStatut()->libelle())));
+        }
+        $prestationsChangees = $prestation !== $reservation->getPrestation() || $prestationDuo?->getNom() !== $reservation->getPrestationDuoNom();
+        if ($prestationsChangees && $reservation->aUnAcompteCarte()) {
+            throw new \LogicException('L\'acompte a été réglé par carte pour cette prestation : seuls l\'horaire, le supplément et la remise peuvent changer.');
+        }
+
+        $connexion = $this->entityManager->getConnection();
+        if (1 !== (int) $connexion->fetchOne('SELECT GET_LOCK(?, ?)', [self::VERROU, self::ATTENTE_VERROU_SECONDES])) {
+            throw new CreneauIndisponibleException();
+        }
+        try {
+            $duree = $prestation->getDureeMinutes() + ($prestationDuo?->getDureeMinutes() ?? 0) + ($supplement?->getDureeMinutes() ?? 0);
+            if (!$this->calculateur->estLibre($debut, $debut->modify(\sprintf('+%d minutes', $duree)), $reservation)) {
+                throw new CreneauIndisponibleException();
+            }
+
+            $ancienDebut = $reservation->getDebut();
+            // Même pourcentage : on garde l'origine de la remise (duo, réduction à vie) ; sinon elle devient « saisie ».
+            $motif = $remisePourcentage === $reservation->getRemisePourcentage() ? ($reservation->getRemiseMotif() ?? 'manuelle') : 'manuelle';
+            $reservation->appliquerTarif($prestation, $debut, $supplement, $prestationDuo, $this->tarification->majorationCentimes($debut), $remisePourcentage, $motif);
+            if ($debut != $ancienDebut) {
+                $reservation->reinitialiserRappel();
+            }
+            $this->entityManager->flush();
+        } finally {
+            $connexion->fetchOne('SELECT RELEASE_LOCK(?)', [self::VERROU]);
+        }
+
+        $this->logger->notice('Réservation modifiée.', ['reservation' => $reservation->getId(), 'par' => $auteur]);
+        if ($prevenirCliente && null !== $reservation->getEmailNotification()) {
+            $this->notifications->modifiee($reservation);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Supprime une réservation saisie par erreur. Interdit dès qu'un paiement par carte a eu lieu (acompte débité,
+     * même remboursé, ou reste réglé par carte) et pour un rendez-vous honoré (chiffre d'affaires, points).
+     * Une empreinte en attente est libérée et les points utilisés sont rendus.
+     */
+    public function supprimer(Reservation $reservation, string $auteur): void
+    {
+        if ($reservation->aUnPaiementParCarte()) {
+            throw new \LogicException('Suppression impossible : un paiement par carte a eu lieu. Annulez plutôt le rendez-vous.');
+        }
+        if (StatutReservation::HONOREE === $reservation->getStatut()) {
+            throw new \LogicException('Suppression impossible : ce rendez-vous honoré compte dans le chiffre d\'affaires et les points.');
+        }
+
+        $this->libererEmpreinte($reservation);
+        $this->abandonnerLienCarte($reservation);
+        // Points déjà rendus si la demande a été refusée, annulée ou a expiré.
+        if (!\in_array($reservation->getStatut(), [StatutReservation::REFUSEE, StatutReservation::ANNULEE, StatutReservation::EXPIREE], true)) {
+            $this->restituerPoints($reservation, $auteur);
+        }
+        // L'historique des points de la cliente est gardé, simplement détaché du rendez-vous supprimé.
+        $this->entityManager->createQuery('UPDATE App\Entity\MouvementPoints m SET m.reservation = NULL WHERE m.reservation = :r')
+            ->setParameter('r', $reservation)
+            ->execute();
+
+        $id = $reservation->getId();
+        $this->entityManager->remove($reservation);
+        $this->entityManager->flush();
+        $this->logger->notice('Réservation supprimée.', ['reservation' => $id, 'par' => $auteur]);
+    }
+
+    private function exigerResteAPayer(Reservation $reservation): void
+    {
+        if (!\in_array($reservation->getStatut(), [StatutReservation::CONFIRMEE, StatutReservation::HONOREE], true)) {
+            throw new \LogicException('Le reste se règle sur un rendez-vous confirmé ou honoré.');
+        }
+        if ($reservation->soldeEstRegle()) {
+            throw new \LogicException('Le reste est déjà réglé.');
+        }
+        if ($reservation->getResteAPayerCentimes() <= 0) {
+            throw new \LogicException('Il ne reste rien à payer.');
+        }
+    }
+
+    private function abandonnerLienCarte(Reservation $reservation): void
+    {
+        $identifiant = $reservation->getSoldePaymentIntentId();
+        if (null === $identifiant || $reservation->soldeEstRegle()) {
+            return;
+        }
+        try {
+            $this->paiement->annuler($identifiant);
+        } catch (\Throwable $erreur) {
+            $this->logger->error('Annulation du lien de paiement impossible.', ['reservation' => $reservation->getId(), 'erreur' => $erreur->getMessage()]);
+        }
+        $reservation->abandonnerSoldeParCarte();
+    }
+
     /**
      * La carte est bloquée : la demande part en validation. Idempotent (retour de Stripe et webhook).
      */
@@ -230,8 +436,9 @@ final class ReservationWorkflow
         $this->exigerStatut($reservation, StatutReservation::EN_ATTENTE);
 
         // Débit d'abord : si Stripe refuse, la réservation reste en attente.
-        if (null !== $reservation->getStripePaymentIntentId()) {
+        if (null !== $reservation->getStripePaymentIntentId() && $reservation->getAcompteCentimes() > 0) {
             $this->paiement->capturer($reservation->getStripePaymentIntentId());
+            $reservation->marquerAcompteDebite($this->clock->now());
         }
         $this->changer($reservation, StatutReservation::CONFIRMEE, $auteur);
 

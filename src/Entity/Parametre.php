@@ -39,6 +39,10 @@ class Parametre
     public const PARRAINAGE_POINTS_FILLEULE = 'parrainage.points_filleule';
     /** Nombre maximal de filleules récompensées par marraine sur 12 mois. */
     public const PARRAINAGE_MAX_PAR_AN = 'parrainage.max_par_an';
+    /** Réservation en ligne avec acompte par carte (Stripe). */
+    public const PAIEMENT_CARTE_ACTIF = 'paiement.carte_actif';
+    /** Réservation en ligne sans acompte, tout réglé en espèces au rendez-vous. */
+    public const PAIEMENT_ESPECES_ACTIF = 'paiement.especes_actif';
     /** Rendez-vous commençant à partir de cette heure : majoration du soir. */
     public const MAJORATION_SOIR_HEURE = 'reservation.majoration_soir_heure';
     /** Montant de la majoration du soir, en euros (0 = aucune). */
@@ -64,6 +68,8 @@ class Parametre
      * @var array<string, array{0: string, 1: string, 2: int, 3: int, 4: int}>
      */
     public const DEFINITIONS = [
+        self::PAIEMENT_CARTE_ACTIF => ['Réservation en ligne : acompte par carte', 'La cliente bloque l\'acompte par carte (Stripe), débité à la validation.', 1, 0, 1],
+        self::PAIEMENT_ESPECES_ACTIF => ['Réservation en ligne : paiement en espèces au rendez-vous', 'Sans acompte : la demande arrive directement en validation, tout est réglé au salon.', 0, 0, 1],
         self::ACOMPTE_POURCENTAGE => ['Acompte (% du prix)', 'Bloqué à la demande, débité à la validation.', 30, 0, 100],
         self::DELAI_MIN_RESERVATION_HEURES => ['Délai minimum de réservation (heures)', 'Aucun créneau proposé avant ce délai.', 24, 0, 168],
         self::ANNULATION_GRATUITE_HEURES => ['Annulation gratuite jusqu\'à (heures avant)', 'Plus tard, l\'acompte est conservé. En cas d\'absence, il est toujours conservé.', 48, 0, 336],

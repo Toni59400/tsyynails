@@ -29,6 +29,19 @@ final class StripePaiementGateway implements PaiementGateway
         return new Empreinte($intention->id, (string) $intention->client_secret);
     }
 
+    public function creerPaiement(int $montantCentimes, string $description, array $metadonnees): Empreinte
+    {
+        $intention = $this->stripe->paymentIntents->create([
+            'amount' => $montantCentimes,
+            'currency' => 'eur',
+            'payment_method_types' => ['card'],
+            'description' => $description,
+            'metadata' => $metadonnees,
+        ]);
+
+        return new Empreinte($intention->id, (string) $intention->client_secret);
+    }
+
     public function statut(string $identifiant): string
     {
         return $this->stripe->paymentIntents->retrieve($identifiant)->status;

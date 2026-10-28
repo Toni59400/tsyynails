@@ -1,0 +1,19 @@
+{% extends 'layout/public.html.twig' %}
+
+{% block title %}Réservation · {{ salon.nom }}{% endblock %}
+
+{% block meta %}
+    {{ parent() }}
+    <meta name="robots" content="noindex">
+{% endblock %}
+
+{% block contenu %}
+    <div class="conteneur page page--texte">
+        <h1>Réservation par téléphone</h1>
+        <p>La réservation en ligne est momentanément fermée. Pour prendre rendez-vous, appelez-moi ou écrivez-moi :</p>
+        <p class="contact-actions">
+            <a class="bouton" href="tel:{{ salon.telephone }}">Appeler le {{ salon.telephone|telephone }}</a>
+            <a class="bouton bouton--secondaire" href="mailto:{{ salon.email }}">Écrire un email</a>
+        </p>
+    </div>
+{% endblock %}

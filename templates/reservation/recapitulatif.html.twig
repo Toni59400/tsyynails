@@ -82,6 +82,21 @@
                     {% endif %}
                 {% endif %}
 
+                {% if formulaire.modePaiement is defined %}
+                    <fieldset class="champ choix-paiement{{ formulaire.modePaiement.vars.valid ? '' : ' champ--erreur' }}">
+                        <legend class="choix-paiement__titre">Comment souhaitez-vous régler ?</legend>
+                        {% for choix in formulaire.modePaiement %}
+                            <div class="choix-paiement__option">
+                                {{ form_widget(choix) }}
+                                {{ form_label(choix) }}
+                            </div>
+                        {% endfor %}
+                        {{ form_errors(formulaire.modePaiement) }}
+                    </fieldset>
+                {% elseif modes_paiement == ['especes'] %}
+                    <p class="alerte alerte--info">Aucun acompte en ligne : vous réglez la totalité <strong>en espèces le jour du rendez-vous</strong>. Votre demande est confirmée par email dès que je la valide.</p>
+                {% endif %}
+
                 <div class="champ champ--case{{ formulaire.accepteConditions.vars.valid ? '' : ' champ--erreur' }}">
                     {{ form_widget(formulaire.accepteConditions) }}
                     {{ form_label(formulaire.accepteConditions) }}
@@ -94,7 +109,11 @@
                     <a href="{{ path('app_confidentialite') }}">Politique de confidentialité</a>.
                 </p>
 
-                <button type="submit" class="bouton">Continuer vers l'acompte</button>
+                <button type="submit" class="bouton">
+                    {%- if modes_paiement == ['especes'] -%}Envoyer ma demande
+                    {%- elseif modes_paiement|length > 1 -%}Continuer
+                    {%- else -%}Continuer vers l'acompte{%- endif -%}
+                </button>
             {{ form_end(formulaire) }}
         </div>
     </div>

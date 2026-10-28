@@ -1036,3 +1036,36 @@ a.tdb-tuile:hover {
     color: var(--adm-non-honoree);
     font-weight: 600;
 }
+/* Règlement au rendez-vous (fiche réservation) */
+.reglement__montant {
+    font-size: 1.15rem;
+}
+
+.reglement__fait {
+    color: var(--bs-success, #198754);
+    font-weight: 600;
+}
+
+.reglement__lien {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border: 1px dashed var(--bs-border-color, #dee2e6);
+    border-radius: 0.75rem;
+}
+
+.reglement__lien img {
+    background: #fff;
+    border-radius: 0.5rem;
+}
+
+.reglement__lien > div {
+    flex: 1 1 16rem;
+}
+
+.gestion-cliente {
+    margin-bottom: 1rem;
+}

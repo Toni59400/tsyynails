@@ -7,6 +7,7 @@ namespace App\Controller\Admin;
 use App\Entity\Reservation;
 use App\Entity\User;
 use App\Enum\StatutReservation;
+use App\Service\QrCodeGenerateur;
 use App\Service\Reservation\ReservationWorkflow;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
@@ -27,6 +28,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Filter\DateTimeFilter;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
  * Les réservations sont créées par le tunnel de réservation. La fiche détaillée propose
@@ -44,11 +46,16 @@ final class ReservationCrudController extends AbstractCrudController
         'annuler-salon' => ['annulerParLeSalon', 'Réservation annulée à votre initiative : acompte remboursé, la cliente est prévenue par email.'],
         'honorer' => ['honorer', 'Rendez-vous honoré : les points de fidélité sont crédités.'],
         'non-honorer' => ['nonHonorer', 'Absence enregistrée.'],
+        'regler-especes' => ['reglerSoldeEnEspeces', 'Règlement en espèces enregistré.'],
+        'regler-carte' => ['preparerSoldeParCarte', 'Lien de paiement par carte prêt : faites scanner le QR code ou envoyez le lien à la cliente.'],
+        'abandonner-carte' => ['abandonnerSoldeParCarte', 'Lien de paiement par carte annulé.'],
+        'supprimer' => ['supprimer', 'Réservation supprimée.'],
     ];
 
     public function __construct(
         private readonly ReservationWorkflow $workflow,
         private readonly ClockInterface $clock,
+        private readonly QrCodeGenerateur $qrCode,
     ) {
     }
 
@@ -116,7 +123,7 @@ final class ReservationCrudController extends AbstractCrudController
      *
      * @param AdminContext<Reservation> $context
      */
-    #[AdminRoute('/{entityId}/{action}', name: 'workflow', options: ['methods' => ['POST'], 'requirements' => ['action' => 'valider|refuser|annuler|annuler-salon|honorer|non-honorer']])]
+    #[AdminRoute('/{entityId}/{action}', name: 'workflow', options: ['methods' => ['POST'], 'requirements' => ['action' => 'valider|refuser|annuler|annuler-salon|honorer|non-honorer|regler-especes|regler-carte|abandonner-carte|supprimer']])]
     public function executerAction(AdminContext $context, Request $request, string $action): RedirectResponse
     {
         $reservation = $context->getEntity()->getInstance();
@@ -133,7 +140,12 @@ final class ReservationCrudController extends AbstractCrudController
 
         try {
             $this->workflow->{$methode}($reservation, $admin->getUserIdentifier());
-            $this->addFlash('success', $message);
+            $this->addFlash('success', 'valider' === $action && 0 === $reservation->getAcompteCentimes()
+                ? 'Rendez-vous confirmé : la cliente est prévenue par email (règlement au salon).'
+                : $message);
+            if ('supprimer' === $action) {
+                return $this->redirectToRoute('admin_reservation_index');
+            }
         } catch (\LogicException $erreur) {
             $this->addFlash('danger', $erreur->getMessage());
         } catch (\Throwable $erreur) {
@@ -150,6 +162,17 @@ final class ReservationCrudController extends AbstractCrudController
             $responseParameters->set('actions_workflow', $this->actionsPossibles($reservation));
             $responseParameters->set('annulation_gratuite', $this->workflow->annulationGratuite($reservation));
             $responseParameters->set('limite_annulation', $this->workflow->limiteAnnulationGratuite($reservation));
+            // Lien de paiement du reste en cours : statut revérifié chez Stripe à chaque affichage, QR code à faire scanner.
+            $this->workflow->verifierSoldeParCarte($reservation);
+            $lien = Reservation::MODE_CARTE === $reservation->getSoldeMode() && !$reservation->soldeEstRegle()
+                ? $this->generateUrl('app_reservation_reglement', ['jeton' => $reservation->getJetonSuivi()], UrlGeneratorInterface::ABSOLUTE_URL)
+                : null;
+            $responseParameters->set('lien_reglement', $lien);
+            $responseParameters->set('qr_reglement', null === $lien ? null : $this->qrCode->dataUri($lien));
+            $responseParameters->set('reglement_possible', \in_array($reservation->getStatut(), [StatutReservation::CONFIRMEE, StatutReservation::HONOREE], true)
+                && !$reservation->soldeEstRegle() && $reservation->getResteAPayerCentimes() > 0);
+            $responseParameters->set('modifiable', \in_array($reservation->getStatut(), [StatutReservation::EN_ATTENTE, StatutReservation::CONFIRMEE], true));
+            $responseParameters->set('supprimable', !$reservation->aUnPaiementParCarte() && StatutReservation::HONOREE !== $reservation->getStatut());
         }
 
         return $responseParameters;

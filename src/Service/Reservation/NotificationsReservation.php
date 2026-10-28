@@ -54,6 +54,12 @@ final class NotificationsReservation
         $this->envoyerALaCliente($reservation, 'Votre rendez-vous est confirmé', 'emails/reservation/confirmee.html.twig');
     }
 
+    /** Horaire, supplément ou prix changés par la prothésiste. */
+    public function modifiee(Reservation $reservation): void
+    {
+        $this->envoyerALaCliente($reservation, 'Votre rendez-vous a été modifié', 'emails/reservation/modifiee.html.twig');
+    }
+
     public function refusee(Reservation $reservation): void
     {
         $this->envoyerALaCliente($reservation, 'Votre demande de rendez-vous', 'emails/reservation/refusee.html.twig');

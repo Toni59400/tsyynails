@@ -18,6 +18,16 @@ interface PaiementGateway
      */
     public function creerEmpreinte(int $montantCentimes, string $description, array $metadonnees): Empreinte;
 
+    /** Paiement immédiat réussi (reste à payer réglé par carte). */
+    public const STATUT_PAYE = 'succeeded';
+
+    /**
+     * Paiement immédiat (capture automatique) : reste à payer réglé par carte via un lien envoyé à la cliente.
+     *
+     * @param array<string, string> $metadonnees identifiants techniques uniquement, jamais de donnée personnelle
+     */
+    public function creerPaiement(int $montantCentimes, string $description, array $metadonnees): Empreinte;
+
     /** Statut Stripe du PaymentIntent (requires_payment_method, requires_capture, canceled…). */
     public function statut(string $identifiant): string;
 

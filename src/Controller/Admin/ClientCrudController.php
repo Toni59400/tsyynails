@@ -14,6 +14,7 @@ use App\Repository\ClientRepository;
 use App\Repository\MouvementPointsRepository;
 use App\Repository\RecompenseFideliteRepository;
 use App\Repository\ReservationRepository;
+use App\Service\Compte\SuppressionCliente;
 use App\Service\Fidelite\ProgrammeFidelite;
 use Doctrine\ORM\EntityManagerInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
@@ -55,6 +56,7 @@ final class ClientCrudController extends AbstractCrudController
         private readonly RecompenseFideliteRepository $recompenses,
         private readonly EntityManagerInterface $entityManager,
         private readonly LoggerInterface $logger,
+        private readonly SuppressionCliente $suppression,
     ) {
     }
 
@@ -139,6 +141,40 @@ final class ClientCrudController extends AbstractCrudController
         ]);
 
         return $responseParameters;
+    }
+
+    /**
+     * Suppression depuis la fiche : définitive sans historique, anonymisation sinon. Route : admin_client_supprimer.
+     *
+     * @param AdminContext<Client> $context
+     */
+    #[AdminRoute('/{entityId}/supprimer', name: 'supprimer', options: ['methods' => ['POST']])]
+    public function supprimer(AdminContext $context, Request $request): RedirectResponse
+    {
+        $client = $context->getEntity()->getInstance();
+        if (!$client instanceof Client) {
+            throw $this->createNotFoundException();
+        }
+        if (!$this->isCsrfTokenValid('supprimer_client_'.$client->getId(), $request->request->getString('_token'))) {
+            throw $this->createAccessDeniedException('Jeton CSRF invalide.');
+        }
+
+        $nom = $client->getNomComplet();
+        /** @var User $admin */
+        $admin = $this->getUser();
+        try {
+            $definitive = $this->suppression->supprimer($client, $admin->getUserIdentifier());
+        } catch (\LogicException $erreur) {
+            $this->addFlash('danger', $erreur->getMessage());
+
+            return $this->redirectToRoute('admin_client_detail', ['entityId' => $client->getId()]);
+        }
+
+        $this->addFlash('success', $definitive
+            ? \sprintf('Fiche de %s supprimée définitivement.', $nom)
+            : \sprintf('Fiche de %s anonymisée : ses rendez-vous passés restent dans l\'historique (comptabilité), sans nom ni coordonnées.', $nom));
+
+        return $this->redirectToRoute('admin_client_index');
     }
 
     /**

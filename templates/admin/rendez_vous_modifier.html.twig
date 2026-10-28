@@ -1,0 +1,39 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+{% form_theme formulaire 'bootstrap_5_layout.html.twig' %}
+
+{% block content_title %}Modifier le rendez-vous de {{ reservation.client.nomComplet }}{% endblock %}
+
+{% block page_actions %}
+    <a class="btn btn-secondary" href="{{ detail }}">Retour à la réservation</a>
+{% endblock %}
+
+{% block main %}
+    {{ form_start(formulaire, {attr: {class: 'tdb-carte rdv-salon', novalidate: 'novalidate', 'data-controller': 'afficher-si-coche'}}) }}
+        <p class="tdb-aide">
+            {{ reservation.statut.libelle }} · actuellement le {{ reservation.debut|date_fr("EEEE d MMMM 'à' H'h'mm") }}.
+            Le prix est recalculé ; l'acompte{% if reservation.pointsUtilises > 0 %} et les points utilisés{% endif %} restent inchangés.
+        </p>
+        {{ form_errors(formulaire) }}
+
+        <fieldset class="mb-3">
+            <legend class="h6">Horaire</legend>
+            <div class="row">
+                <div class="col-sm-6">{{ form_row(formulaire.date) }}</div>
+                <div class="col-sm-6">{{ form_row(formulaire.heure) }}</div>
+            </div>
+        </fieldset>
+
+        <fieldset class="mb-3">
+            <legend class="h6">Prestation</legend>
+            {{ form_row(formulaire.prestation) }}
+            {{ form_row(formulaire.supplement) }}
+            {{ form_row(formulaire.duo) }}
+            {{ form_row(formulaire.prestationDuo) }}
+            {{ form_row(formulaire.remise) }}
+        </fieldset>
+
+        {{ form_row(formulaire.prevenir) }}
+
+        <button type="submit" class="btn btn-primary btn-lg">Enregistrer les modifications</button>
+    {{ form_end(formulaire) }}
+{% endblock %}

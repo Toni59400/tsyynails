@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Form;
 
 use App\Entity\RecompenseFidelite;
+use App\Entity\Reservation;
 use App\Service\Reservation\CoordonneesCliente;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
@@ -71,6 +72,21 @@ final class CoordonneesType extends AbstractType
             }
         }
 
+        // Choix du paiement seulement si la carte et les espèces sont proposées toutes les deux (réglages).
+        /** @var list<string> $modes */
+        $modes = $options['modes_paiement'];
+        if (\count($modes) > 1) {
+            $libelles = [
+                Reservation::MODE_CARTE => \sprintf('Acompte de %s par carte maintenant (bloqué, débité à la validation)', $options['acompte_texte']),
+                Reservation::MODE_ESPECES => 'Tout en espèces le jour du rendez-vous, sans acompte',
+            ];
+            $builder->add('modePaiement', ChoiceType::class, [
+                'label' => 'Paiement',
+                'expanded' => true,
+                'choices' => array_flip(array_intersect_key($libelles, array_flip($modes))),
+            ]);
+        }
+
         $builder->add('accepteConditions', CheckboxType::class, [
             'label' => 'J\'accepte les conditions de réservation (acompte, annulation).',
             'required' => true,
@@ -84,7 +100,11 @@ final class CoordonneesType extends AbstractType
             'connectee' => false,
             'avec_compte' => true,
             'recompenses' => [],
+            'modes_paiement' => [Reservation::MODE_CARTE],
+            'acompte_texte' => '',
         ]);
+        $resolver->setAllowedTypes('modes_paiement', 'array');
+        $resolver->setAllowedTypes('acompte_texte', 'string');
         $resolver->setAllowedTypes('connectee', 'bool');
         $resolver->setAllowedTypes('avec_compte', 'bool');
         $resolver->setAllowedTypes('recompenses', 'array');

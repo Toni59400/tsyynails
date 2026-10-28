@@ -70,6 +70,32 @@ class Reservation
     #[ORM\Column]
     private int $majorationCentimes = 0;
 
+    public const MODE_CARTE = 'carte';
+    public const MODE_ESPECES = 'especes';
+    public const MODES_PAIEMENT = [self::MODE_CARTE, self::MODE_ESPECES];
+
+    /** Acompte : par carte (empreinte Stripe) ou rien en ligne, tout en espèces au rendez-vous ; null = pris par le salon. */
+    #[ORM\Column(length: 10, nullable: true)]
+    private ?string $modeAcompte = null;
+
+    /** Acompte réellement débité par carte (validation). Sert à savoir si la réservation peut être supprimée. */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $acompteDebiteAt = null;
+
+    /** Reste à payer au rendez-vous : mode, montant encaissé, date. */
+    #[ORM\Column(length: 10, nullable: true)]
+    private ?string $soldeMode = null;
+
+    #[ORM\Column]
+    private int $soldeCentimes = 0;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $soldePayeAt = null;
+
+    /** Paiement Stripe du reste (lien envoyé à la cliente), en capture immédiate. */
+    #[ORM\Column(length: 255, unique: true, nullable: true)]
+    private ?string $soldePaymentIntentId = null;
+
     /** Remise en % sur les prestations et suppléments (duo, réduction à vie, ou fixée par l'admin). */
     #[ORM\Column]
     private int $remisePourcentage = 0;
@@ -140,18 +166,42 @@ class Reservation
         int $remisePourcentage = 0,
         ?string $remiseMotif = null,
     ) {
+        $this->client = $client;
+        $this->acompteCentimes = $acompteCentimes;
+        $this->reductionCentimes = $reductionCentimes;
+        $this->pointsUtilises = $pointsUtilises;
+        $this->appliquerTarif($prestation, $debut, $supplement, $prestationDuo, $majorationCentimes, $remisePourcentage, $remiseMotif);
+        $this->createdAt = new \DateTimeImmutable();
+        $this->jetonSuivi = rtrim(strtr(base64_encode(random_bytes(16)), '+/', '-_'), '=');
+    }
+
+    /**
+     * Prestations, horaire et prix (création, ou modification par la prothésiste).
+     * Prix total = prestations + supplément + majoration ; la remise ne porte pas sur la majoration.
+     * L'acompte et la récompense de points déjà enregistrés sont conservés.
+     */
+    public function appliquerTarif(
+        Prestation $prestation,
+        \DateTimeImmutable $debut,
+        ?Supplement $supplement = null,
+        ?Prestation $prestationDuo = null,
+        int $majorationCentimes = 0,
+        int $remisePourcentage = 0,
+        ?string $remiseMotif = null,
+    ): void {
         if ($majorationCentimes < 0 || $remisePourcentage < 0 || $remisePourcentage > 100) {
             throw new \InvalidArgumentException('Majoration ou remise invalide.');
         }
-        // Prix total = prestations + supplément + majoration ; la remise ne porte pas sur la majoration.
         $base = $prestation->getPrixCentimes() + ($prestationDuo?->getPrixCentimes() ?? 0) + ($supplement?->getPrixCentimes() ?? 0);
         $remise = self::calculerRemise($base, $remisePourcentage);
         $prix = $base + $majorationCentimes;
-        if ($reductionCentimes < 0 || $reductionCentimes > $prix - $remise) {
+        if ($this->reductionCentimes < 0 || $this->reductionCentimes > $prix - $remise) {
             throw new \InvalidArgumentException('Réduction invalide.');
         }
+        if ($this->acompteCentimes > $prix - $remise - $this->reductionCentimes) {
+            throw new \InvalidArgumentException('Le nouveau prix serait inférieur à l\'acompte déjà versé.');
+        }
 
-        $this->client = $client;
         $this->prestation = $prestation;
         $this->debut = $debut;
         $this->fin = $debut->modify(\sprintf('+%d minutes', $prestation->getDureeMinutes() + ($prestationDuo?->getDureeMinutes() ?? 0) + ($supplement?->getDureeMinutes() ?? 0)));
@@ -166,11 +216,107 @@ class Reservation
         $this->remisePourcentage = $remisePourcentage;
         $this->remiseCentimes = $remise;
         $this->remiseMotif = $remise > 0 ? $remiseMotif : null;
-        $this->acompteCentimes = $acompteCentimes;
-        $this->reductionCentimes = $reductionCentimes;
-        $this->pointsUtilises = $pointsUtilises;
-        $this->createdAt = new \DateTimeImmutable();
-        $this->jetonSuivi = rtrim(strtr(base64_encode(random_bytes(16)), '+/', '-_'), '=');
+    }
+
+    /** L'horaire a changé : le rappel de la veille devra repartir. */
+    public function reinitialiserRappel(): void
+    {
+        $this->rappelEnvoyeAt = null;
+    }
+
+    public function getModeAcompte(): ?string
+    {
+        return $this->modeAcompte;
+    }
+
+    public function setModeAcompte(?string $mode): static
+    {
+        if (null !== $mode && !\in_array($mode, self::MODES_PAIEMENT, true)) {
+            throw new \InvalidArgumentException('Mode de paiement inconnu.');
+        }
+        $this->modeAcompte = $mode;
+
+        return $this;
+    }
+
+    public function getAcompteDebiteAt(): ?\DateTimeImmutable
+    {
+        return $this->acompteDebiteAt;
+    }
+
+    public function marquerAcompteDebite(\DateTimeImmutable $at): void
+    {
+        $this->acompteDebiteAt ??= $at;
+    }
+
+    /** Un paiement par carte a eu lieu (acompte débité, même remboursé ensuite, ou reste réglé par carte). */
+    public function aUnPaiementParCarte(): bool
+    {
+        return null !== $this->acompteDebiteAt || (self::MODE_CARTE === $this->soldeMode && null !== $this->soldePayeAt);
+    }
+
+    /** Empreinte ou acompte par carte : la prestation est alors figée (l'acompte a été calculé pour elle). */
+    public function aUnAcompteCarte(): bool
+    {
+        return null !== $this->stripePaymentIntentId && $this->acompteCentimes > 0;
+    }
+
+    public function getSoldeMode(): ?string
+    {
+        return $this->soldeMode;
+    }
+
+    public function getSoldeCentimes(): int
+    {
+        return $this->soldeCentimes;
+    }
+
+    public function getSoldePayeAt(): ?\DateTimeImmutable
+    {
+        return $this->soldePayeAt;
+    }
+
+    public function getSoldePaymentIntentId(): ?string
+    {
+        return $this->soldePaymentIntentId;
+    }
+
+    public function soldeEstRegle(): bool
+    {
+        return null !== $this->soldePayeAt;
+    }
+
+    /** Lien de paiement par carte du reste créé (en attente du paiement de la cliente). */
+    public function preparerSoldeParCarte(string $paymentIntentId): void
+    {
+        if ($this->soldeEstRegle()) {
+            throw new \LogicException('Le reste est déjà réglé.');
+        }
+        $this->soldeMode = self::MODE_CARTE;
+        $this->soldePaymentIntentId = $paymentIntentId;
+    }
+
+    /** Lien de paiement par carte abandonné (la cliente paie autrement). */
+    public function abandonnerSoldeParCarte(): void
+    {
+        if (!$this->soldeEstRegle()) {
+            $this->soldeMode = null;
+            $this->soldePaymentIntentId = null;
+        }
+    }
+
+    /** Reste à payer encaissé (espèces au salon, ou carte confirmée par Stripe). Idempotent. */
+    public function marquerSoldeRegle(string $mode, int $montantCentimes, \DateTimeImmutable $at): void
+    {
+        if ($this->soldeEstRegle()) {
+            return;
+        }
+        if (!\in_array($mode, self::MODES_PAIEMENT, true)) {
+            throw new \InvalidArgumentException('Mode de paiement inconnu.');
+        }
+        $this->soldeMode = $mode;
+        $this->soldeCentimes = $montantCentimes;
+        $this->soldePayeAt = $at;
     }
 
     /** Remise arrondie au centime le plus proche. */

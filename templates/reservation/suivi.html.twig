@@ -27,7 +27,9 @@
                     <p><a class="bouton" href="{{ path('app_reservation_paiement', {jeton: reservation.jetonSuivi}) }}">Reprendre le paiement</a></p>
                 {% elseif statut == 'en_attente' %}
                     <p class="alerte alerte--succes" role="status">
-                        Merci {{ reservation.client.prenom }} ! Votre demande est bien reçue et l'acompte est bloqué sur votre carte, sans être débité.
+                        Merci {{ reservation.client.prenom }} ! Votre demande est bien reçue
+                        {%- if reservation.acompteCentimes > 0 %} et l'acompte est bloqué sur votre carte, sans être débité.
+                        {%- else %} : aucun acompte, vous réglerez en espèces le jour du rendez-vous.{% endif %}
                     </p>
                     <p>Je vous réponds par email au plus vite, en général sous 24 heures.</p>
                     {% if not app.user %}
@@ -38,17 +40,33 @@
                     {% endif %}
                 {% elseif statut == 'confirmee' %}
                     <p class="alerte alerte--succes" role="status">À très vite, {{ reservation.client.prenom }} !</p>
-                    <p>Reste à régler au salon : <strong>{{ reservation.resteAPayerCentimes|euros }}</strong>.</p>
+                    {% if reservation.soldeEstRegle %}
+                        <p class="alerte alerte--succes">Règlement reçu ({{ reservation.soldeMode == 'carte' ? 'carte' : 'espèces' }}), merci !</p>
+                    {% else %}
+                        <p>{{ reservation.acompteCentimes > 0 ? 'Reste à régler au salon' : 'À régler au salon' }} : <strong>{{ reservation.resteAPayerCentimes|euros }}</strong>.</p>
+                    {% endif %}
                     <p class="page__note">
-                        Annulation gratuite jusqu'au {{ limite_annulation|date_fr("EEEE d MMMM 'à' H'h'mm") }} (acompte remboursé) ;
-                        ensuite, ou en cas d'absence, l'acompte est conservé. Pour annuler : <a href="tel:{{ salon.telephone }}">{{ salon.telephone|telephone }}</a>.
+                        {% if reservation.acompteCentimes > 0 %}
+                            Annulation gratuite jusqu'au {{ limite_annulation|date_fr("EEEE d MMMM 'à' H'h'mm") }} (acompte remboursé) ;
+                            ensuite, ou en cas d'absence, l'acompte est conservé.
+                        {% else %}
+                            Un empêchement ? Merci de prévenir au moins 48 h avant.
+                        {% endif %}
+                        Pour annuler : <a href="tel:{{ salon.telephone }}">{{ salon.telephone|telephone }}</a>.
                         <a href="{{ path('app_conditions') }}#annulation">Conditions</a>
                     </p>
                 {% elseif statut in ['refusee', 'expiree'] %}
-                    <p>Aucun montant n'a été débité : l'empreinte sur votre carte est libérée.</p>
+                    <p>Aucun montant n'a été débité{% if reservation.acompteCentimes > 0 %} : l'empreinte sur votre carte est libérée{% endif %}.</p>
                     <p><a class="bouton" href="{{ path('app_reservation') }}">Choisir un autre créneau</a></p>
                 {% elseif statut == 'annulee' %}
                     <p>Pour toute question, <a href="{{ path('app_infos') }}#contact">contactez-moi</a>.</p>
+                {% endif %}
+
+                {# Lien de paiement du reste par carte, préparé par la prothésiste au rendez-vous. #}
+                {% if statut in ['confirmee', 'honoree'] and reservation.soldeMode == 'carte' and not reservation.soldeEstRegle %}
+                    <p><a class="bouton" href="{{ path('app_reservation_reglement', {jeton: reservation.jetonSuivi}) }}">Régler {{ reservation.resteAPayerCentimes|euros }} par carte</a></p>
+                {% elseif statut == 'honoree' and reservation.soldeEstRegle %}
+                    <p class="alerte alerte--succes">Règlement reçu, merci !</p>
                 {% endif %}
             </div>
 

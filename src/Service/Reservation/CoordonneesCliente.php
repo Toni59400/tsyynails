@@ -32,6 +32,10 @@ final class CoordonneesCliente
     #[Assert\IsTrue(message: 'Vous devez accepter les conditions de réservation.')]
     public bool $accepteConditions = false;
 
+    /** Acompte par carte, ou tout en espèces au rendez-vous (selon les modes proposés dans les réglages). */
+    #[Assert\Choice(choices: \App\Entity\Reservation::MODES_PAIEMENT, message: 'Choisissez un mode de paiement.')]
+    public string $modePaiement = \App\Entity\Reservation::MODE_CARTE;
+
     /** Case « Créer mon compte pour cumuler des points » (facultatif). */
     public bool $creerCompte = false;
 

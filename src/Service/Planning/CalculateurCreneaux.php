@@ -7,6 +7,7 @@ namespace App\Service\Planning;
 use App\Entity\HoraireOuverture;
 use App\Entity\Parametre;
 use App\Entity\Prestation;
+use App\Entity\Reservation;
 use App\Repository\HoraireOuvertureRepository;
 use App\Repository\IndisponibiliteRepository;
 use App\Repository\ParametreRepository;
@@ -59,10 +60,12 @@ final class CalculateurCreneaux
      * Aucun rendez-vous ni congé sur [debut, fin[ : sert aux rendez-vous pris par la prothésiste,
      * qui peuvent sortir des horaires d'ouverture (rendez-vous du soir…).
      */
-    public function estLibre(\DateTimeImmutable $debut, \DateTimeImmutable $fin): bool
+    public function estLibre(\DateTimeImmutable $debut, \DateTimeImmutable $fin, ?Reservation $sauf = null): bool
     {
-        return [] === $this->reservations->findBloquantesEntre($debut, $fin)
-            && [] === $this->indisponibilites->findChevauchant($debut, $fin);
+        // Le rendez-vous qu'on déplace ne se bloque pas lui-même.
+        $autres = array_filter($this->reservations->findBloquantesEntre($debut, $fin), static fn (Reservation $r): bool => $r !== $sauf);
+
+        return [] === $autres && [] === $this->indisponibilites->findChevauchant($debut, $fin);
     }
 
     public function estDisponible(Prestation $prestation, \DateTimeImmutable $debut, int $minutesEnPlus = 0): bool

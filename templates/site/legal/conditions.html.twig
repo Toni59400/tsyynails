@@ -23,6 +23,13 @@
             <li>Si je ne peux pas vous recevoir, l'empreinte est libérée sans aucun frais.</li>
             <li>Sans réponse de ma part sous 7 jours, la demande est annulée et l'empreinte libérée.</li>
         </ul>
+        {% if especes_actif %}
+            <p>
+                Lorsque le paiement en espèces est proposé, vous pouvez aussi réserver <strong>sans acompte</strong> et régler
+                la totalité en espèces le jour du rendez-vous ; la demande est confirmée par email après validation.
+            </p>
+        {% endif %}
+        <p>Le reste à payer se règle au salon, en espèces ou par carte (lien de paiement sécurisé Stripe).</p>
 
         <h2 id="annulation">Annulation et absence</h2>
         <ul>

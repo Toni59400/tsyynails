@@ -147,6 +147,7 @@ final class SiteController extends AbstractController
             'majoration_euros' => $this->parametres->valeur(Parametre::MAJORATION_SOIR_EUROS),
             'majoration_heure' => $this->parametres->valeur(Parametre::MAJORATION_SOIR_HEURE),
             'duo_actif' => $this->tarification->duoActif(),
+            'especes_actif' => \in_array(\App\Entity\Reservation::MODE_ESPECES, $this->tarification->modesPaiementEnLigne(), true),
             'duo_reduction' => $this->parametres->valeur(Parametre::DUO_REDUCTION_POURCENTAGE),
             'vie_seuil' => $this->parametres->valeur(Parametre::PRIVILEGE_SEUIL_POINTS),
             'vie_depart' => $this->parametres->valeur(Parametre::PRIVILEGE_REDUCTION_DEPART),

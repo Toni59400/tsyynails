@@ -11,7 +11,9 @@
 
 {# Libellé, style du bouton, confirmation demandée avant l'envoi. #}
 {% set boutons = {
-    'valider': ['Valider et débiter l\'acompte', 'btn-success', 'Confirmer ce rendez-vous ? L\'acompte sera débité.'],
+    'valider': reservation.acompteCentimes > 0
+        ? ['Valider et débiter l\'acompte', 'btn-success', 'Confirmer ce rendez-vous ? L\'acompte sera débité.']
+        : ['Valider le rendez-vous', 'btn-success', 'Confirmer ce rendez-vous ? La cliente sera prévenue par email.'],
     'refuser': ['Refuser', 'btn-danger', 'Refuser cette demande ? L\'empreinte sera libérée.'],
     'annuler': [confirmee ? 'Annuler (demande de la cliente)' : 'Annuler la réservation', 'btn-outline-danger', 'Annuler cette réservation ? ' ~ effet_annulation ~ ' La cliente sera prévenue par email.'],
     'annuler-salon': ['Annuler (empêchement du salon)', 'btn-outline-secondary', 'Annuler à votre initiative ? L\'acompte sera remboursé à la cliente, prévenue par email.'],
@@ -55,8 +57,82 @@
             </section>
         {% endif %}
 
+        {% if reglement_possible or reservation.soldeEstRegle %}
+            <section class="tdb-carte reglement" aria-labelledby="titre-reglement">
+                <h2 id="titre-reglement" class="tdb-carte__titre">Règlement au rendez-vous</h2>
+                {% if reservation.soldeEstRegle %}
+                    <p class="reglement__fait">
+                        <i class="fa fa-circle-check" aria-hidden="true"></i>
+                        {{ reservation.soldeCentimes|euros }} réglés {{ reservation.soldeMode == 'carte' ? 'par carte' : 'en espèces' }}
+                        le {{ reservation.soldePayeAt|date('d/m/Y à H:i') }}.
+                    </p>
+                {% else %}
+                    <p class="reglement__montant">
+                        {{ reservation.acompteCentimes > 0 ? 'Reste à payer (total − acompte)' : 'À payer' }} :
+                        <strong>{{ reservation.resteAPayerCentimes|euros }}</strong>
+                    </p>
+                    {% if lien_reglement %}
+                        <div class="reglement__lien">
+                            <img src="{{ qr_reglement }}" width="200" height="200" alt="QR code du paiement par carte">
+                            <div>
+                                <p><strong>En attente du paiement par carte.</strong> Faites scanner ce QR code à la cliente, ou envoyez-lui le lien :</p>
+                                <p><input class="form-control" type="text" readonly value="{{ lien_reglement }}" aria-label="Lien de paiement" data-copier></p>
+                                <p class="tdb-aide">La page se met à jour quand Stripe confirme le paiement : actualisez-la après le paiement.</p>
+                                <div class="actions-reservation__boutons">
+                                    <a class="btn btn-secondary" href="{{ path('admin_reservation_detail', {entityId: reservation.id}) }}">Actualiser</a>
+                                    <form method="post" action="{{ path('admin_reservation_workflow', {entityId: reservation.id, action: 'abandonner-carte'}) }}" data-confirmation="Annuler ce lien de paiement par carte ?">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('reservation_abandonner-carte_' ~ reservation.id) }}">
+                                        <button type="submit" class="btn btn-outline-secondary">Annuler le lien</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                    <div class="actions-reservation__boutons">
+                        <form method="post" action="{{ path('admin_reservation_workflow', {entityId: reservation.id, action: 'regler-especes'}) }}"
+                              data-confirmation="Enregistrer {{ reservation.resteAPayerCentimes|euros }} reçus en espèces ?">
+                            <input type="hidden" name="_token" value="{{ csrf_token('reservation_regler-especes_' ~ reservation.id) }}">
+                            <button type="submit" class="btn btn-success btn-lg"><i class="fa fa-money-bill-wave" aria-hidden="true"></i> Espèces reçues</button>
+                        </form>
+                        {% if not lien_reglement %}
+                            <form method="post" action="{{ path('admin_reservation_workflow', {entityId: reservation.id, action: 'regler-carte'}) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('reservation_regler-carte_' ~ reservation.id) }}">
+                                <button type="submit" class="btn btn-primary btn-lg"><i class="fa fa-credit-card" aria-hidden="true"></i> Paiement par carte</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </section>
+        {% endif %}
+
         <section class="tdb-carte">
             {{ parent() }}
+        </section>
+
+        <section class="tdb-carte gestion-reservation" aria-label="Modifier ou supprimer">
+            <div class="actions-reservation__boutons">
+                {% if modifiable %}
+                    <a class="btn btn-secondary" href="{{ path('admin_rendez_vous_modifier', {id: reservation.id}) }}"><i class="fa fa-pen" aria-hidden="true"></i> Modifier</a>
+                {% endif %}
+                {% if supprimable %}
+                    <form method="post" action="{{ path('admin_reservation_workflow', {entityId: reservation.id, action: 'supprimer'}) }}"
+                          data-confirmation="Supprimer définitivement cette réservation ? Elle disparaît de l'agenda et de l'historique, sans email à la cliente. Pour prévenir la cliente, utilisez plutôt « Annuler ».">
+                        <input type="hidden" name="_token" value="{{ csrf_token('reservation_supprimer_' ~ reservation.id) }}">
+                        <button type="submit" class="btn btn-outline-danger"><i class="fa fa-trash" aria-hidden="true"></i> Supprimer</button>
+                    </form>
+                {% endif %}
+            </div>
+            {% if not supprimable %}
+                <p class="tdb-aide">
+                    {%- if reservation.statut.value == 'honoree' -%}
+                        Un rendez-vous honoré ne peut pas être supprimé : il compte dans le chiffre d'affaires et les points.
+                    {%- else -%}
+                        Suppression impossible : un paiement par carte a eu lieu. Utilisez « Annuler ».
+                    {%- endif -%}
+                </p>
+            {% elseif modifiable and reservation.aUnAcompteCarte %}
+                <p class="tdb-aide">Acompte par carte : la prestation ne peut plus changer, mais l'horaire, le supplément et la remise oui.</p>
+            {% endif %}
         </section>
 
         <p><a href="{{ path('admin_client_detail', {entityId: reservation.client.id}) }}">Voir la fiche de {{ reservation.client.nomComplet }}</a></p>

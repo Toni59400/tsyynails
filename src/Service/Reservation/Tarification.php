@@ -80,6 +80,19 @@ final class Tarification
         return $this->parametres->valeur(Parametre::MAJORATION_SOIR_EUROS) > 0 ? $this->parametres->valeur(Parametre::MAJORATION_SOIR_HEURE) : null;
     }
 
+    /**
+     * Modes de paiement proposés dans la réservation en ligne (réglages de l'admin), carte en premier.
+     *
+     * @return list<string> Reservation::MODE_CARTE et/ou Reservation::MODE_ESPECES ; vide = réservation en ligne fermée
+     */
+    public function modesPaiementEnLigne(): array
+    {
+        return array_values(array_filter([
+            1 === $this->parametres->valeur(Parametre::PAIEMENT_CARTE_ACTIF) ? \App\Entity\Reservation::MODE_CARTE : null,
+            1 === $this->parametres->valeur(Parametre::PAIEMENT_ESPECES_ACTIF) ? \App\Entity\Reservation::MODE_ESPECES : null,
+        ]));
+    }
+
     public function duoActif(): bool
     {
         return 1 === $this->parametres->valeur(Parametre::DUO_ACTIF);

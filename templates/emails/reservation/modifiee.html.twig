@@ -1,0 +1,12 @@
+{% extends 'emails/_base.html.twig' %}
+{% block contenu %}
+    <p>Bonjour {{ reservation.client.prenom }},</p>
+    <p>Votre rendez-vous a été modifié. Voici le récapitulatif à jour :</p>
+    {{ include('emails/reservation/_recap.html.twig') }}
+    <p>{{ reservation.acompteCentimes > 0 ? 'Reste à régler au salon' : 'À régler au salon' }} : <strong>{{ reservation.resteAPayerCentimes|euros }}</strong>.</p>
+    <p style="font-size:14px;color:#6f625e;">
+        Ce changement ne vous convient pas ? Répondez à cet email ou appelez-moi au {{ salon.telephone|telephone }}.
+    </p>
+    {{ include('emails/reservation/_lien_suivi.html.twig') }}
+    <p>À très vite !</p>
+{% endblock %}
