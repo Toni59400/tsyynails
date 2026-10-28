@@ -22,18 +22,18 @@ final class InscriptionType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('prenom', TextType::class, ['label' => 'Prénom', 'attr' => ['autocomplete' => 'given-name']])
-            ->add('nom', TextType::class, ['label' => 'Nom', 'attr' => ['autocomplete' => 'family-name']])
-            ->add('telephone', TelType::class, [
+            ->add('prenom', TextType::class, ['empty_data' => '', 'label' => 'Prénom', 'attr' => ['autocomplete' => 'given-name']])
+            ->add('nom', TextType::class, ['empty_data' => '', 'label' => 'Nom', 'attr' => ['autocomplete' => 'family-name']])
+            ->add('telephone', TelType::class, ['empty_data' => '',
                 'label' => 'Téléphone',
                 'attr' => ['autocomplete' => 'tel', 'inputmode' => 'tel', 'placeholder' => '06 12 34 56 78'],
             ])
-            ->add('email', EmailType::class, [
+            ->add('email', EmailType::class, ['empty_data' => '',
                 'label' => 'Email',
                 'help' => 'Utilisez l\'adresse donnée lors de vos rendez-vous pour retrouver vos points.',
                 'attr' => ['autocomplete' => 'email'],
             ])
-            ->add('motDePasse', PasswordType::class, [
+            ->add('motDePasse', PasswordType::class, ['empty_data' => '',
                 'label' => 'Mot de passe',
                 'help' => '12 caractères minimum. Une phrase facile à retenir fonctionne très bien.',
                 'attr' => ['autocomplete' => 'new-password', 'minlength' => 12],

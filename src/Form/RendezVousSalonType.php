@@ -32,10 +32,10 @@ final class RendezVousSalonType extends AbstractType
         $actives = static fn (EntityRepository $r): QueryBuilder => $r->createQueryBuilder('p')->andWhere('p.active = true')->orderBy('p.ordre', 'ASC');
 
         $builder
-            ->add('telephone', TelType::class, ['label' => 'Téléphone', 'help' => 'Une cliente déjà connue est retrouvée avec son numéro (sa fiche n\'est pas modifiée).'])
-            ->add('prenom', TextType::class, ['label' => 'Prénom'])
-            ->add('nom', TextType::class, ['label' => 'Nom'])
-            ->add('email', EmailType::class, ['label' => 'Email (facultatif)', 'required' => false, 'help' => 'Pour lui envoyer la confirmation et le rappel de la veille.'])
+            ->add('telephone', TelType::class, ['empty_data' => '', 'label' => 'Téléphone', 'help' => 'Une cliente déjà connue est retrouvée avec son numéro (sa fiche n\'est pas modifiée).'])
+            ->add('prenom', TextType::class, ['empty_data' => '', 'label' => 'Prénom'])
+            ->add('nom', TextType::class, ['empty_data' => '', 'label' => 'Nom'])
+            ->add('email', EmailType::class, ['label' => 'Email', 'help' => 'Pour lui envoyer la confirmation et le rappel de la veille.'])
             ->add('prestation', EntityType::class, ['class' => Prestation::class, 'query_builder' => $actives, 'placeholder' => 'Choisir', 'choice_label' => 'nom'])
             ->add('supplement', EntityType::class, [
                 'label' => 'Supplément',

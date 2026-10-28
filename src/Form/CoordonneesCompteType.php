@@ -19,9 +19,9 @@ final class CoordonneesCompteType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('prenom', TextType::class, ['label' => 'Prénom', 'attr' => ['autocomplete' => 'given-name']])
-            ->add('nom', TextType::class, ['label' => 'Nom', 'attr' => ['autocomplete' => 'family-name']])
-            ->add('telephone', TelType::class, ['label' => 'Téléphone', 'attr' => ['autocomplete' => 'tel', 'inputmode' => 'tel']]);
+            ->add('prenom', TextType::class, ['empty_data' => '', 'label' => 'Prénom', 'attr' => ['autocomplete' => 'given-name']])
+            ->add('nom', TextType::class, ['empty_data' => '', 'label' => 'Nom', 'attr' => ['autocomplete' => 'family-name']])
+            ->add('telephone', TelType::class, ['empty_data' => '', 'label' => 'Téléphone', 'attr' => ['autocomplete' => 'tel', 'inputmode' => 'tel']]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void

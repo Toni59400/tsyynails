@@ -27,7 +27,8 @@ final class RendezVousSalon
     #[Assert\Callback([CoordonneesCliente::class, 'validerTelephone'])]
     public string $telephone = '';
 
-    /** Facultatif : la confirmation n'est envoyée que s'il est renseigné. */
+    /** Obligatoire : confirmation, rappel de la veille et suivi du rendez-vous sont envoyés par email. */
+    #[Assert\NotBlank(message: 'Indiquez l\'email de la cliente.')]
     #[Assert\Email(message: 'Adresse email invalide.')]
     #[Assert\Length(max: 180)]
     public ?string $email = null;

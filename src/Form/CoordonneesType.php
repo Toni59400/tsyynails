@@ -41,16 +41,28 @@ final class CoordonneesType extends AbstractType
                 'choice_label' => static fn (RecompenseFidelite $r): string => \sprintf('%s — %d points', $r->getNom(), $r->getSeuilPoints()),
                 'placeholder' => 'Garder mes points pour plus tard',
             ]);
+            // Fiche incomplète (prénom, nom ou téléphone manquant ou invalide) : la cliente la complète ici,
+            // sinon la validation échouerait sur des champs qu'elle ne voit pas.
+            if ($options['completer_fiche']) {
+                $builder
+                    ->add('prenom', TextType::class, ['empty_data' => '', 'label' => 'Prénom', 'attr' => ['autocomplete' => 'given-name']])
+                    ->add('nom', TextType::class, ['empty_data' => '', 'label' => 'Nom', 'attr' => ['autocomplete' => 'family-name']])
+                    ->add('telephone', TelType::class, ['empty_data' => '',
+                        'label' => 'Téléphone',
+                        'help' => 'Pour vous prévenir en cas d\'imprévu.',
+                        'attr' => ['autocomplete' => 'tel', 'inputmode' => 'tel', 'placeholder' => '06 12 34 56 78'],
+                    ]);
+            }
         } else {
             $builder
-                ->add('prenom', TextType::class, ['label' => 'Prénom', 'attr' => ['autocomplete' => 'given-name']])
-                ->add('nom', TextType::class, ['label' => 'Nom', 'attr' => ['autocomplete' => 'family-name']])
-                ->add('telephone', TelType::class, [
+                ->add('prenom', TextType::class, ['empty_data' => '', 'label' => 'Prénom', 'attr' => ['autocomplete' => 'given-name']])
+                ->add('nom', TextType::class, ['empty_data' => '', 'label' => 'Nom', 'attr' => ['autocomplete' => 'family-name']])
+                ->add('telephone', TelType::class, ['empty_data' => '',
                     'label' => 'Téléphone',
                     'help' => 'Pour vous prévenir en cas d\'imprévu.',
                     'attr' => ['autocomplete' => 'tel', 'inputmode' => 'tel', 'placeholder' => '06 12 34 56 78'],
                 ])
-                ->add('email', EmailType::class, [
+                ->add('email', EmailType::class, ['empty_data' => '',
                     'label' => 'Email',
                     'help' => 'Vous y recevrez la confirmation et le rappel.',
                     'attr' => ['autocomplete' => 'email'],
@@ -102,7 +114,9 @@ final class CoordonneesType extends AbstractType
             'recompenses' => [],
             'modes_paiement' => [Reservation::MODE_CARTE],
             'acompte_texte' => '',
+            'completer_fiche' => false,
         ]);
+        $resolver->setAllowedTypes('completer_fiche', 'bool');
         $resolver->setAllowedTypes('modes_paiement', 'array');
         $resolver->setAllowedTypes('acompte_texte', 'string');
         $resolver->setAllowedTypes('connectee', 'bool');

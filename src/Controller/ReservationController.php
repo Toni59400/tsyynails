@@ -12,6 +12,7 @@ use App\Entity\Supplement;
 use App\Entity\User;
 use App\Enum\StatutReservation;
 use App\Form\CoordonneesType;
+use App\Repository\ClientRepository;
 use App\Repository\PrestationRepository;
 use App\Repository\ReservationRepository;
 use App\Repository\SupplementRepository;
@@ -24,6 +25,7 @@ use App\Service\Reservation\CreneauIndisponibleException;
 use App\Service\Reservation\DetailPrix;
 use App\Service\Reservation\ReservationWorkflow;
 use App\Service\Reservation\Tarification;
+use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
@@ -53,6 +55,8 @@ final class ReservationController extends AbstractController
         private readonly PaiementGateway $paiement,
         private readonly ProgrammeFidelite $fidelite,
         private readonly ComptesClientes $comptes,
+        private readonly ClientRepository $clientes,
+        private readonly EntityManagerInterface $entityManager,
         private readonly ClockInterface $clock,
         private readonly LoggerInterface $logger,
     ) {
@@ -174,9 +178,13 @@ final class ReservationController extends AbstractController
         } elseif ($user instanceof User) {
             $coordonnees->email = $user->getEmail();
         }
+        // Cliente connectée dont la fiche est incomplète : elle complète prénom, nom et téléphone dans le formulaire.
+        $completerFiche = null !== $cliente && ('' === trim($cliente->getPrenom()) || '' === trim($cliente->getNom())
+            || null === CoordonneesCliente::normaliserTelephone((string) $cliente->getTelephone()));
 
         $formulaire = $this->createForm(CoordonneesType::class, $coordonnees, [
             'connectee' => null !== $cliente,
+            'completer_fiche' => $completerFiche,
             'avec_compte' => !$user instanceof User,
             'recompenses' => $recompenses,
             'modes_paiement' => $modes,
@@ -190,6 +198,15 @@ final class ReservationController extends AbstractController
                 $this->addFlash('erreur', 'Trop de demandes depuis votre connexion. Réessayez dans une heure ou appelez-moi.');
 
                 return $retour;
+            }
+
+            if (null !== $cliente && $completerFiche) {
+                $erreurFiche = $this->completerFiche($cliente, $coordonnees);
+                if (null !== $erreurFiche) {
+                    $this->addFlash('erreur', $erreurFiche);
+
+                    return $retour;
+                }
             }
 
             $recompense = null !== $cliente ? $formulaire->get('recompense')->getData() : null;
@@ -360,6 +377,28 @@ final class ReservationController extends AbstractController
     {
         return $this->reservations->findOneBy(['jetonSuivi' => $jeton])
             ?? throw $this->createNotFoundException('Réservation introuvable.');
+    }
+
+    /**
+     * Complète la fiche de la cliente connectée (sa propre fiche, authentifiée) avec les coordonnées saisies.
+     *
+     * @return string|null message d'erreur, ou null si la fiche est à jour
+     */
+    private function completerFiche(Client $cliente, CoordonneesCliente $coordonnees): ?string
+    {
+        $telephone = CoordonneesCliente::normaliserTelephone($coordonnees->telephone);
+        if (null === $telephone) {
+            return 'Numéro de téléphone invalide.';
+        }
+        $autre = $this->clientes->findOneBy(['telephone' => $telephone]);
+        if (null !== $autre && $autre !== $cliente) {
+            return 'Ce numéro de téléphone est déjà associé à une autre fiche : appelez-moi pour que je les regroupe.';
+        }
+
+        $cliente->setPrenom($coordonnees->prenom)->setNom($coordonnees->nom)->setTelephone($telephone);
+        $this->entityManager->flush();
+
+        return null;
     }
 
     private function creneauPris(Prestation $prestation, ?Supplement $supplement = null, ?Prestation $duo = null): Response
