@@ -7,6 +7,7 @@ namespace App\Controller\Admin;
 use App\Entity\Parametre;
 use App\Entity\User;
 use App\Repository\ParametreRepository;
+use App\Service\Paiement\DiagnosticStripe;
 use App\Service\Seo\IndexNow;
 use App\Service\Seo\PagesPubliques;
 use Doctrine\ORM\EntityManagerInterface;
@@ -86,6 +87,22 @@ final class ReglagesController extends AbstractController
             'reglages' => $reglages,
             'indexnow_actif' => $this->indexNow->estActive(),
         ], new Response(status: [] === $erreurs ? 200 : 422));
+    }
+
+    /**
+     * Diagnostic Stripe (mode, compte activé, webhook) : à consulter au passage en production.
+     * Lecture seule ; interroge Stripe depuis le site (les appels sortants sont bloqués en SSH sur OVH).
+     */
+    #[AdminRoute('/stripe', name: 'stripe', options: ['methods' => ['GET']])]
+    public function stripe(DiagnosticStripe $diagnostic): Response
+    {
+        return $this->render('admin/stripe.html.twig', [
+            'mode' => $diagnostic->mode(),
+            'problemes_locaux' => $diagnostic->problemesLocaux(),
+            'stripe' => 'simulation' === $diagnostic->mode() ? null : $diagnostic->verifierAupresDeStripe(),
+            'url_webhook' => $diagnostic->urlWebhook(),
+            'evenements' => DiagnosticStripe::EVENEMENTS_REQUIS,
+        ]);
     }
 
     /** Signale tout le site à Bing (IndexNow) : utile à la mise en service ou après de gros changements. */

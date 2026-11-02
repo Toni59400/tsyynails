@@ -1,0 +1,52 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block content_title %}Paiement par carte (Stripe){% endblock %}
+
+{% block page_actions %}
+    <a class="btn btn-secondary" href="{{ path('admin_reglages_stripe') }}"><i class="fa fa-rotate" aria-hidden="true"></i> Revérifier</a>
+    <a class="btn btn-secondary" href="{{ path('admin_reglages_index') }}">Réglages</a>
+{% endblock %}
+
+{% block main %}
+    {% set problemes = problemes_locaux|merge(stripe ? stripe.problemes : []) %}
+    <div class="tdb-carte">
+        <p class="h5">
+            Mode :
+            {% if mode == 'live' %}<span class="badge bg-success">Production</span> — les vraies cartes sont débitées.
+            {% elseif mode == 'test' %}<span class="badge bg-warning text-dark">Test</span> — seules les cartes de test Stripe fonctionnent.
+            {% else %}<span class="badge bg-secondary">Simulation</span> — aucune clé Stripe.{% endif %}
+        </p>
+
+        {% if problemes is empty %}
+            <p class="alert alert-success mb-0"><i class="fa fa-circle-check" aria-hidden="true"></i> Tout est en ordre : le paiement par carte est prêt.</p>
+        {% else %}
+            <div class="alert alert-danger mb-0">
+                <p class="mb-1"><strong>À corriger :</strong></p>
+                <ul class="mb-0">{% for probleme in problemes %}<li>{{ probleme }}</li>{% endfor %}</ul>
+            </div>
+        {% endif %}
+    </div>
+
+    {% if stripe and stripe.compte %}
+        <div class="tdb-carte mt-3">
+            <h2 class="h6">Compte Stripe{% if stripe.compte.nom %} : {{ stripe.compte.nom }}{% endif %}</h2>
+            <ul class="mb-0">
+                <li>Encaissements : {{ stripe.compte.paiements ? '✅ activés' : '❌ pas encore' }}</li>
+                <li>Virements vers votre banque : {{ stripe.compte.virements ? '✅ activés' : '❌ pas encore' }}</li>
+                <li>Dossier d'activation : {{ stripe.compte.dossier_complet ? '✅ complet' : '❌ à compléter' }}</li>
+            </ul>
+        </div>
+    {% endif %}
+
+    <div class="tdb-carte mt-3">
+        <h2 class="h6">Webhook à déclarer dans Stripe (Développeurs → Webhooks)</h2>
+        <p class="mb-1">Adresse : <code>{{ url_webhook }}</code></p>
+        <p class="mb-1">Événements : {% for e in evenements %}<code>{{ e }}</code>{{ not loop.last ? ', ' }}{% endfor %}</p>
+        {% if stripe and stripe.webhook %}
+            <p class="mb-0">
+                {{ stripe.webhook.trouve ? '✅ Webhook trouvé' : '❌ Webhook absent' }}
+                {%- if stripe.webhook.trouve %}, {{ stripe.webhook.actif ? 'actif' : 'désactivé' }}{% endif %}.
+            </p>
+        {% endif %}
+    </div>
+{% endblock %}

@@ -30,6 +30,12 @@
         <button type="submit" class="btn btn-primary">Enregistrer</button>
     </form>
 
+    <div class="tdb-carte reglages mt-4">
+        <h2 class="h5">Paiement par carte (Stripe)</h2>
+        <p class="tdb-aide">Mode actuel, compte activé et webhook : à vérifier après chaque changement de clés.</p>
+        <a class="btn btn-secondary" href="{{ path('admin_reglages_stripe') }}"><i class="fa fa-credit-card" aria-hidden="true"></i> Vérifier Stripe</a>
+    </div>
+
     {% if indexnow_actif %}
         <form method="post" action="{{ path('admin_reglages_indexnow') }}" class="tdb-carte reglages mt-4">
             <h2 class="h5">Référencement</h2>

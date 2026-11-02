@@ -4,6 +4,13 @@
 
 {% block main %}
 <div class="tdb">
+    {% if alerte_stripe %}
+        <div class="alert alert-warning" role="alert">
+            <strong>Paiement par carte en mode {{ alerte_stripe == 'test' ? 'TEST' : 'simulation' }}</strong> : les vraies cartes des clientes sont refusées.
+            Désactivez l'acompte par carte dans les <a href="{{ path('admin_reglages_index') }}">réglages</a>, ou passez Stripe en production
+            (<a href="{{ path('admin_reglages_stripe') }}">vérifier Stripe</a>).
+        </div>
+    {% endif %}
     {# Aujourd'hui et à venir #}
     <div class="tdb-tuiles">
         <a class="tdb-tuile" href="{{ path('admin_agenda_index', {vue: 'jour'}) }}">

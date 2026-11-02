@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Controller\Admin;
 
+use App\Entity\Reservation;
 use App\Entity\User;
+use App\Service\Paiement\DiagnosticStripe;
+use App\Service\Reservation\Tarification;
 use App\Service\Statistiques\TableauDeBord;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminDashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Assets;
@@ -24,6 +27,8 @@ final class DashboardController extends AbstractDashboardController
         private readonly TableauDeBord $tableauDeBord,
         private readonly RequestStack $requestStack,
         private readonly ClockInterface $clock,
+        private readonly DiagnosticStripe $stripe,
+        private readonly Tarification $tarification,
     ) {
     }
 
@@ -38,6 +43,9 @@ final class DashboardController extends AbstractDashboardController
 
         return $this->render('admin/tableau_de_bord.html.twig', [
             'tdb' => $this->tableauDeBord->construire($periode, $date),
+            // Acompte par carte proposé alors que Stripe n'est pas en production : les vraies cartes seraient refusées.
+            'alerte_stripe' => \in_array(Reservation::MODE_CARTE, $this->tarification->modesPaiementEnLigne(), true) && 'live' !== $this->stripe->mode()
+                ? $this->stripe->mode() : null,
             'periodes' => TableauDeBord::PERIODES,
         ]);
     }

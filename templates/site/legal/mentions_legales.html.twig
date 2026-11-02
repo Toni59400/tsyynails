@@ -9,9 +9,9 @@
 
         <h2>Éditrice du site</h2>
         <p>
-            {{ salon.nom }}, {{ salon.activite|lower }}<br>
+            {{ salon.responsable_publication }}, {{ salon.statut_juridique|lower }}, exerçant sous le nom commercial {{ salon.nom }} ({{ salon.activite|lower }})<br>
             {{ salon.adresse }}, {{ salon.code_postal }} {{ salon.ville }}<br>
-            SIRET : {{ salon.siret }}<br>
+            SIREN : {{ salon.siren }} · SIRET : {{ salon.siret }}<br>
             Téléphone : <a href="tel:{{ salon.telephone }}">{{ salon.telephone|telephone }}</a><br>
             Email : <a href="mailto:{{ salon.email }}">{{ salon.email }}</a>
         </p>

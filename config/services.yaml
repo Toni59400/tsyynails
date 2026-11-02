@@ -20,7 +20,10 @@ parameters:
         instagram: 'https://www.instagram.com/tsyynails'
         acces: 'Stationnement gratuit dans la rue. Salon au rez-de-chaussée, accessible en fauteuil roulant.'
         responsable_publication: 'Gipsy Pira'
-        siret: 'À compléter'
+        # Entreprise individuelle (nature juridique 1000), NAF 96.02B, immatriculée le 1er octobre 2026.
+        statut_juridique: 'Entrepreneur individuel (EI)'
+        siren: '132 172 198'
+        siret: '132 172 198 00013'
         # Référencement local. Coordonnées : Base Adresse Nationale (api-adresse.data.gouv.fr).
         latitude: '50.269614'
         longitude: '2.788523'
