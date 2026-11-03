@@ -32,7 +32,7 @@
 
 {% set points_euro = points_pour(100) %}
 - {{ points_euro }} point{{ points_euro > 1 ? 's' }} par euro payé (avec un compte client), crédité{{ points_euro > 1 ? 's' }} après chaque rendez-vous.
-{% for palier in paliers %}- {{ palier.seuilPoints }} points : {{ palier.nom }}{% if palier.supplement %} (option « {{ palier.supplement.nom }} » offerte en réservant en ligne){% endif %}
+{% for palier in paliers %}- {{ palier.seuilPoints }} points : {{ palier.nom }}{{ palier.supplement ? ' (option « ' ~ palier.supplement.nom ~ ' » offerte en réservant en ligne)' }}
 {% endfor %}- Les récompenses ne sont pas cumulables avec les autres offres promotionnelles.
 {% set programme = programme_vie() %}
 {% if programme %}- Statut VIP : après {{ programme.seuil }} points cumulés au total (même déjà utilisés), −{{ programme.depart }} % à vie sur toutes les prestations, puis +{{ programme.pas }} % par année avec {{ programme.visites }} rendez-vous, jusqu'à −{{ programme.plafond }} %. Le statut ne se perd jamais.
