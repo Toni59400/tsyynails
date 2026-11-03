@@ -8,7 +8,7 @@ namespace App\Service\Reservation;
  * Détail du prix d'un rendez-vous, calculé côté serveur (Tarification::devis).
  *
  * prix total = prestations + supplément + majoration du soir ;
- * la remise (duo, réduction à vie ou fixée par l'admin) porte sur les prestations et le supplément seulement.
+ * la remise (duo, réduction VIP ou fixée par l'admin) porte sur les prestations et le supplément seulement.
  */
 final class Devis
 {

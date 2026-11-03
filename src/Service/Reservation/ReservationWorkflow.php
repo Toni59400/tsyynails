@@ -93,8 +93,9 @@ final class ReservationWorkflow
             if (null !== $prestationDuo && (!$this->tarification->duoActif() || !$prestationDuo->isActive())) {
                 throw new \LogicException('Le RDV duo n\'est plus proposé pour cette prestation : choisissez à nouveau.');
             }
-            // Réduction à vie : seulement pour une cliente connectée (le prix affiché avant l'envoi en tient compte).
-            $devis = $this->tarification->devis($prestation, $supplement, $prestationDuo, $debut, $clienteConnectee);
+            // Réduction VIP : seulement pour une cliente connectée (le prix affiché avant l'envoi en tient compte).
+            // Une récompense de points n'est pas cumulable : elle remplace la réduction VIP et le duo sur ce rendez-vous.
+            $devis = $this->tarification->devis($prestation, $supplement, $prestationDuo, $debut, $clienteConnectee, null !== $recompense ? 0 : null);
             $minutesEnPlus = $devis->dureeMinutes - $prestation->getDureeMinutes();
             if (!$prestation->isActive() || !$this->calculateur->estDisponible($prestation, $debut, $minutesEnPlus)) {
                 throw new CreneauIndisponibleException();
@@ -105,10 +106,10 @@ final class ReservationWorkflow
             // Revérifiée sous verrou : le solde a pu changer depuis l'affichage.
             $reduction = 0;
             if (null !== $recompense) {
-                if (!\in_array($recompense, $this->fidelite->utilisablesEnLigne($cliente, $devis->aPayerCentimes()), true)) {
+                if (!\in_array($recompense, $this->fidelite->utilisablesEnLigne($cliente, $devis->aPayerCentimes(), $supplement), true)) {
                     throw new \LogicException('Cette récompense n\'est pas utilisable sur ce rendez-vous.');
                 }
-                $reduction = $recompense->getValeurCentimes();
+                $reduction = $recompense->valeurDeduite();
             }
 
             $reservation = new Reservation(
@@ -173,7 +174,7 @@ final class ReservationWorkflow
      * Rendez-vous pris par la prothésiste (téléphone, au salon, RDV duo) : confirmé d'emblée, sans acompte en ligne.
      * Les horaires d'ouverture ne sont pas imposés (rendez-vous du soir), mais le créneau doit être libre.
      *
-     * @param int|null $remiseForcee pourcentage choisi par la prothésiste ; null = automatique (duo ou réduction à vie)
+     * @param int|null $remiseForcee pourcentage choisi par la prothésiste ; null = automatique (duo ou réduction VIP)
      *
      * @throws CreneauIndisponibleException
      */
@@ -336,7 +337,7 @@ final class ReservationWorkflow
             }
 
             $ancienDebut = $reservation->getDebut();
-            // Même pourcentage : on garde l'origine de la remise (duo, réduction à vie) ; sinon elle devient « saisie ».
+            // Même pourcentage : on garde l'origine de la remise (duo, réduction VIP) ; sinon elle devient « saisie ».
             $motif = $remisePourcentage === $reservation->getRemisePourcentage() ? ($reservation->getRemiseMotif() ?? 'manuelle') : 'manuelle';
             $reservation->appliquerTarif($prestation, $debut, $supplement, $prestationDuo, $this->tarification->majorationCentimes($debut), $remisePourcentage, $motif);
             if ($debut != $ancienDebut) {
@@ -512,7 +513,7 @@ final class ReservationWorkflow
         $this->fidelite->crediterVisite($reservation, $auteur);
         $this->entityManager->flush();
         $this->parrainage->recompenser($reservation);
-        // Seuil de la réduction à vie atteint grâce à ce rendez-vous ?
+        // Seuil du statut VIP atteint grâce à ce rendez-vous ?
         $this->reductionAVie->verifierSeuil($reservation->getClient());
     }
 

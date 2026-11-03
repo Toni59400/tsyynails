@@ -96,7 +96,7 @@ class Reservation
     #[ORM\Column(length: 255, unique: true, nullable: true)]
     private ?string $soldePaymentIntentId = null;
 
-    /** Remise en % sur les prestations et suppléments (duo, réduction à vie, ou fixée par l'admin). */
+    /** Remise en % sur les prestations et suppléments (duo, réduction VIP, ou fixée par l'admin). */
     #[ORM\Column]
     private int $remisePourcentage = 0;
 

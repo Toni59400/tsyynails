@@ -103,20 +103,17 @@ class MouvementPointsRepository extends ServiceEntityRepository
     }
 
     /**
-     * Points gagnés grâce aux rendez-vous honorés depuis cette date, par cliente (réduction à vie).
-     * Les points dépensés en récompenses ne font pas reculer ce total.
+     * Points gagnés au total depuis toujours, par cliente (statut VIP) : rendez-vous, bienvenue, parrainage
+     * et corrections de l'admin. Les points utilisés ou expirés ne font pas baisser ce cumul.
      *
      * @return array<int, int>
      */
-    public function pointsVisitesParClientDepuis(\DateTimeImmutable $depuis, ?Client $client = null): array
+    public function pointsCumulesParClient(?Client $client = null): array
     {
         $requete = $this->createQueryBuilder('m')
             ->select('IDENTITY(m.client) AS client', 'SUM(m.delta) AS points')
-            ->andWhere('m.motif = :visite')
-            ->andWhere('m.delta > 0')
-            ->andWhere('m.createdAt >= :depuis')
-            ->setParameter('visite', MotifMouvementPoints::VISITE)
-            ->setParameter('depuis', $depuis)
+            ->andWhere('m.motif IN (:gains)')
+            ->setParameter('gains', [MotifMouvementPoints::VISITE, MotifMouvementPoints::INSCRIPTION, MotifMouvementPoints::PARRAINAGE, MotifMouvementPoints::CORRECTION])
             ->groupBy('m.client');
         if (null !== $client) {
             $requete->andWhere('m.client = :client')->setParameter('client', $client);

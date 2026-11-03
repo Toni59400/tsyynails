@@ -68,9 +68,10 @@ final class NotificationsCompte
     }
 
     /**
-     * Réduction à vie : accordée, renouvelée (+5 %), perdue, ou rappel avant l'anniversaire.
+     * Statut VIP : accordé, passage au niveau supérieur (+5 %), ou rappel avant l'anniversaire
+     * ($pourcentage = niveau visé pour le rappel).
      *
-     * @param 'accordee'|'renouvelee'|'perdue'|'rappel' $evenement
+     * @param 'accordee'|'renouvelee'|'rappel' $evenement
      */
     public function reductionAVie(Client $client, string $evenement, int $pourcentage, int $rendezVousManquants = 0, ?\DateTimeImmutable $echeance = null): void
     {
@@ -79,10 +80,9 @@ final class NotificationsCompte
         }
 
         $sujets = [
-            'accordee' => \sprintf('Vous avez gagné %d %% de réduction à vie', $pourcentage),
-            'renouvelee' => \sprintf('Votre réduction à vie passe à %d %%', $pourcentage),
-            'perdue' => 'Votre réduction à vie',
-            'rappel' => 'Gardez votre réduction à vie',
+            'accordee' => \sprintf('Vous êtes VIP : −%d %% à vie', $pourcentage),
+            'renouvelee' => \sprintf('Statut VIP : votre réduction passe à %d %%', $pourcentage),
+            'rappel' => \sprintf('Plus que quelques rendez-vous pour passer à −%d %%', $pourcentage),
         ];
         $this->envoyer($client->getEmail(), $sujets[$evenement], 'emails/compte/reduction_a_vie.html.twig', [
             'client' => $client,

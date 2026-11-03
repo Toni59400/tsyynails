@@ -51,10 +51,13 @@ final class ChargerDonneesDemoCommand extends Command
      *
      * @var list<array{0: int, 1: string, 2: TypeRecompense, 3: int}>
      */
+    /** Échelle TsyyArt : seuil, nom, type, valeur, supplément offert (nom). */
     public const PALIERS = [
-        [100, '5 € de réduction', TypeRecompense::REDUCTION, 500],
-        [150, 'Nail art offert', TypeRecompense::EN_SALON, 1000],
-        [300, '18 € de réduction', TypeRecompense::REDUCTION, 1800],
+        [100, 'Nail Art niveau 1 offert', TypeRecompense::SUPPLEMENT_OFFERT, 0, 'Nail art niveau 1'],
+        [150, '5 € de réduction', TypeRecompense::REDUCTION, 500, null],
+        [200, 'French ou effet chrome offert', TypeRecompense::SUPPLEMENT_OFFERT, 0, 'French ou effet chrome'],
+        [300, '10 € de réduction', TypeRecompense::REDUCTION, 1000, null],
+        [400, 'Nail Art niveau 2 offert', TypeRecompense::SUPPLEMENT_OFFERT, 0, 'Nail art niveau 2'],
     ];
 
     private const PRESTATIONS = [
@@ -167,19 +170,24 @@ final class ChargerDonneesDemoCommand extends Command
         $maintenant = $this->clock->now();
 
         $this->creerParametres();
-        foreach (self::PALIERS as [$seuil, $nom, $type, $valeur]) {
-            $this->entityManager->persist(new RecompenseFidelite($nom, $seuil, $type, $valeur));
-        }
         $horaires = $this->creerHoraires();
         $indisponibilites = $this->creerIndisponibilites($maintenant);
         $prestations = $this->creerPrestations();
         // Nail art : proposé sur toutes les prestations (niveau 1) ; le niveau 2, plus long, seulement sur les poses.
-        $this->entityManager->persist((new Supplement('Nail art niveau 1', 500, 15))->setDescription('Décor simple sur 2 ongles : paillettes, points, ligne.')->setOrdre(1));
-        $niveau2 = (new Supplement('Nail art niveau 2', 1000, 30))->setDescription('Décor travaillé sur 4 ongles : dessins, strass, effets.')->setOrdre(2);
+        $supplements = [
+            'Nail art niveau 1' => (new Supplement('Nail art niveau 1', 500, 15))->setDescription('Décor simple sur 2 ongles : paillettes, points, ligne.')->setOrdre(1),
+            'Nail art niveau 2' => (new Supplement('Nail art niveau 2', 1000, 30))->setDescription('Décor travaillé sur 4 ongles : dessins, strass, effets.')->setOrdre(2),
+            'French ou effet chrome' => (new Supplement('French ou effet chrome', 800, 15))->setDescription('Finition French ou effet chrome.')->setOrdre(3),
+        ];
         foreach (array_slice($prestations, 0, 2) as $pose) {
-            $niveau2->addPrestation($pose);
+            $supplements['Nail art niveau 2']->addPrestation($pose);
         }
-        $this->entityManager->persist($niveau2);
+        foreach ($supplements as $supplement) {
+            $this->entityManager->persist($supplement);
+        }
+        foreach (self::PALIERS as [$seuil, $nom, $type, $valeur, $supplement]) {
+            $this->entityManager->persist((new RecompenseFidelite($nom, $seuil, $type, $valeur))->setSupplement(null === $supplement ? null : $supplements[$supplement]));
+        }
         $inspirations = $this->creerInspirations();
         $nombrePhotos = $this->creerPhotos($prestations, $inspirations);
         $clientes = $this->creerClientes($maintenant);

@@ -27,7 +27,15 @@
                 <span class="palier__seuil">{{ palier.recompense.seuilPoints }} pts</span>
                 <span class="palier__nom">
                     {{ palier.recompense.nom }}
-                    <small>{{ palier.recompense.estUtilisableEnLigne ? 'à utiliser en réservant en ligne' : 'à demander au salon' }}</small>
+                    <small>
+                        {%- if palier.recompense.supplement -%}
+                            à utiliser en réservant en ligne avec l'option « {{ palier.recompense.supplement.nom }} »
+                        {%- elseif palier.recompense.estUtilisableEnLigne -%}
+                            à utiliser en réservant en ligne
+                        {%- else -%}
+                            à demander au salon
+                        {%- endif -%}
+                    </small>
                 </span>
                 <span class="palier__etat">{{ palier.atteint ? 'Disponible' : 'Encore ' ~ palier.manque ~ ' pts' }}</span>
             </li>
@@ -38,19 +46,22 @@
     {% if vie.active %}
         <div class="reduction-vie{{ vie.pourcentage > 0 ? ' reduction-vie--obtenue' }}">
             {% if vie.pourcentage > 0 %}
-                <p class="reduction-vie__titre"><strong>Réduction à vie : −{{ vie.pourcentage }} %</strong> sur toutes vos prestations</p>
+                <p class="reduction-vie__titre"><strong>Statut VIP : −{{ vie.pourcentage }} % à vie</strong> sur toutes vos prestations</p>
                 <p>
-                    Appliquée d'office quand vous réservez avec votre compte.
-                    Cette année : <strong>{{ vie.visites }} rendez-vous sur {{ vie.visites_requises }}</strong> pour la garder
-                    {%- if vie.pourcentage < vie.plafond %} et passer à {{ min(vie.pourcentage + vie.pas, vie.plafond) }} %{% endif %}
-                    (bilan le {{ vie.revision|date_fr('d MMMM yyyy') }}).
+                    Appliquée d'office quand vous réservez avec votre compte (sauf si vous utilisez une récompense sur le rendez-vous).
+                    {% if vie.pourcentage < vie.plafond %}
+                        Cette année : <strong>{{ vie.visites }} rendez-vous sur {{ vie.visites_requises }}</strong> pour passer à {{ min(vie.pourcentage + vie.pas, vie.plafond) }} %
+                        (bilan le {{ vie.revision|date_fr('d MMMM yyyy') }}).
+                    {% else %}
+                        Vous avez atteint le niveau maximum. Merci pour votre fidélité !
+                    {% endif %}
                 </p>
             {% else %}
-                <p class="reduction-vie__titre"><strong>Réduction à vie de {{ vie.depart }} %</strong> : gagnez {{ vie.seuil }} points en 12 mois</p>
-                <div class="progression" role="progressbar" aria-valuemin="0" aria-valuemax="{{ vie.seuil }}" aria-valuenow="{{ vie.points }}" aria-label="Progression vers la réduction à vie">
+                <p class="reduction-vie__titre"><strong>Statut VIP, −{{ vie.depart }} % à vie</strong> : cumulez {{ vie.seuil }} points au total</p>
+                <div class="progression" role="progressbar" aria-valuemin="0" aria-valuemax="{{ vie.seuil }}" aria-valuenow="{{ min(vie.points, vie.seuil) }}" aria-label="Progression vers le statut VIP">
                     <span class="progression__barre progression__barre--{{ (vie.progression / 10)|round(0, 'floor') * 10 }}"></span>
                 </div>
-                <p>{{ vie.points }} points gagnés en rendez-vous ces 12 derniers mois. Ensuite, {{ vie.visites_requises }} rendez-vous par an suffisent pour la garder, avec +{{ vie.pas }} % chaque année (jusqu'à {{ vie.plafond }} %).</p>
+                <p>{{ vie.points }} points gagnés depuis le début (les points utilisés comptent aussi). Le statut ne se perd jamais, et chaque année avec {{ vie.visites_requises }} rendez-vous ajoute +{{ vie.pas }} % (jusqu'à {{ vie.plafond }} %).</p>
             {% endif %}
         </div>
     {% endif %}

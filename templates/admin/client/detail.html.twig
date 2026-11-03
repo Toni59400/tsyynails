@@ -23,9 +23,9 @@
                     {% if fidelite.etat.fidele %}<br><strong>Cliente fidèle</strong>{% endif %}
                     {% set vie = reduction_a_vie(client) %}
                     {% if vie.pourcentage > 0 %}
-                        <br><strong>Réduction à vie : −{{ vie.pourcentage }} %</strong> ({{ vie.visites }}/{{ vie.visites_requises }} rdv cette année, bilan le {{ vie.revision|date('d/m/Y') }})
+                        <br><strong>VIP : −{{ vie.pourcentage }} %</strong> ({{ vie.visites }}/{{ vie.visites_requises }} rdv cette année, bilan le {{ vie.revision|date('d/m/Y') }})
                     {% elseif vie.active %}
-                        <br>Réduction à vie : {{ vie.points }}/{{ vie.seuil }} points sur 12 mois
+                        <br>Statut VIP : {{ vie.points }}/{{ vie.seuil }} points cumulés
                     {% endif %}
                 </span>
             </div>

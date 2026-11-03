@@ -26,7 +26,7 @@ use Symfony\Component\DomCrawler\Field\ChoiceFormField;
 use Symfony\Component\DomCrawler\Form;
 
 /**
- * Majoration du soir, RDV duo (en ligne et depuis l'admin) et réduction fidélité à vie.
+ * Majoration du soir, RDV duo (en ligne et depuis l'admin) et statut VIP.
  */
 final class MajorationDuoReductionAVieTest extends WebTestCase
 {
@@ -175,46 +175,53 @@ final class MajorationDuoReductionAVieTest extends WebTestCase
         self::assertSelectorTextContains('.rdv-salon', 'chevauche');
     }
 
-    // ---------- Réduction à vie ----------
+    // ---------- Statut VIP ----------
 
-    public function testLaReductionAVieSObtientEvolueEtSePerd(): void
+    public function testLeStatutVipSObtientAuCumulEtNeSePerdJamais(): void
     {
         $cliente = $this->cliente();
         $service = static::getContainer()->get(ReductionAVie::class);
-        self::assertFalse($service->verifierSeuil($cliente), 'Pas encore 340 points.');
+        self::assertFalse($service->verifierSeuil($cliente), 'Pas encore 480 points.');
 
-        $this->em()->persist(new MouvementPoints($cliente, 340, MotifMouvementPoints::VISITE, null, null, 'Test'));
+        // 480 points gagnés au total (rendez-vous + bienvenue), dont une partie déjà utilisée : le cumul compte.
+        $this->em()->persist(new MouvementPoints($cliente, 400, MotifMouvementPoints::VISITE, null, null, 'Test'));
+        $this->em()->persist(new MouvementPoints($cliente, 80, MotifMouvementPoints::INSCRIPTION, null, null, 'Test'));
+        $this->em()->persist(new MouvementPoints($cliente, -300, MotifMouvementPoints::UTILISATION, null, null, 'Test'));
         $this->em()->flush();
         self::assertTrue($service->verifierSeuil($cliente));
-        self::assertSame(10, $cliente->getPrivilegePourcentage());
+        self::assertSame(5, $cliente->getPrivilegePourcentage());
         self::assertEmailCount(1);
 
-        // La réduction s'applique au devis, mais le duo (10 %) ne s'y cumule pas : la plus avantageuse l'emporte.
+        // La réduction s'applique au devis, mais ne se cumule pas au duo (10 %) : la plus avantageuse l'emporte.
         $tarification = static::getContainer()->get(Tarification::class);
-        self::assertSame([10, 'privilege'], $tarification->remise($cliente, false));
+        self::assertSame([5, 'privilege'], $tarification->remise($cliente, false));
+        self::assertSame([10, 'duo'], $tarification->remise($cliente, true));
 
-        // Anniversaire : 8 rendez-vous honorés dans l'année → 15 %.
-        $this->avancerRevision($cliente);
-        for ($i = 1; $i <= 8; ++$i) {
-            $this->rendezVousHonore($cliente, \sprintf('-%d weeks', $i * 4));
-        }
+        // 1er anniversaire : 8 rendez-vous honorés dans l'année → 10 %.
+        $this->anneeAvec($cliente, 8);
+        $service->traiter();
+        self::assertSame(10, $cliente->getPrivilegePourcentage());
+
+        // Année sans assez de rendez-vous : la réduction reste à 10 %, le statut n'est pas perdu.
+        $this->anneeAvec($cliente, 3);
+        self::assertSame(['accordees' => 0, 'progressions' => 0, 'maintenues' => 1, 'averties' => 0], $service->traiter());
+        self::assertSame(10, $cliente->getPrivilegePourcentage());
+
+        // Année confirmée → 15 %, puis le plafond est gardé.
+        $this->anneeAvec($cliente, 8);
         $service->traiter();
         self::assertSame(15, $cliente->getPrivilegePourcentage());
-        self::assertSame([15, 'privilege'], $tarification->remise($cliente, true));
-
-        // Année suivante sans assez de rendez-vous : réduction perdue, et pas regagnée avec les anciens points.
-        $this->em()->createQuery('DELETE FROM App\Entity\Reservation r WHERE r.client = :c')->setParameter('c', $cliente)->execute();
-        $this->avancerRevision($cliente);
+        $this->anneeAvec($cliente, 8);
         $service->traiter();
-        self::assertSame(0, $cliente->getPrivilegePourcentage());
-        self::assertNotNull($cliente->getPrivilegePerduAt());
-        self::assertFalse($service->verifierSeuil($cliente), 'Les 340 points gagnés avant la perte ne comptent plus.');
+        self::assertSame(15, $cliente->getPrivilegePourcentage());
+        self::assertNotNull($cliente->getPrivilegeRevisionAt());
+        self::assertGreaterThan(new \DateTimeImmutable('+11 months'), $cliente->getPrivilegeRevisionAt(), 'Prochain bilan dans un an.');
     }
 
     public function testLeRappelPartTrenteJoursAvantSIlManqueDesRendezVous(): void
     {
         $cliente = $this->cliente();
-        $cliente->accorderPrivilege(10, new \DateTimeImmutable('-340 days'));
+        $cliente->accorderPrivilege(5, new \DateTimeImmutable('-340 days'));
         $this->em()->flush();
 
         $service = static::getContainer()->get(ReductionAVie::class);
@@ -222,11 +229,22 @@ final class MajorationDuoReductionAVieTest extends WebTestCase
         $service->traiter();
 
         self::assertNotNull($cliente->getPrivilegeAvertiAt());
-        self::assertSame(10, $cliente->getPrivilegePourcentage(), 'Pas encore l\'anniversaire : rien ne change.');
+        self::assertSame(5, $cliente->getPrivilegePourcentage(), 'Pas encore l\'anniversaire : rien ne change.');
         // D'autres clientes de démonstration dépassent déjà le seuil : seuls les emails d'Emma comptent ici.
         $rappels = array_filter(self::getMailerMessages(), static fn ($m): bool => $m instanceof \Symfony\Component\Mime\Email
-            && $m->getTo()[0]->getAddress() === $cliente->getEmail() && str_contains((string) $m->getSubject(), 'Gardez'));
+            && $m->getTo()[0]->getAddress() === $cliente->getEmail() && str_contains((string) $m->getSubject(), 'passer à −10 %'));
         self::assertCount(1, $rappels, 'Un seul rappel malgré deux passages.');
+    }
+
+    public function testPasDeRappelAuNiveauMaximum(): void
+    {
+        $cliente = $this->cliente();
+        $cliente->accorderPrivilege(15, new \DateTimeImmutable('-340 days'));
+        $this->em()->flush();
+
+        static::getContainer()->get(ReductionAVie::class)->traiter();
+
+        self::assertNull($cliente->getPrivilegeAvertiAt());
     }
 
     /**
@@ -264,10 +282,15 @@ final class MajorationDuoReductionAVieTest extends WebTestCase
         $conditions->tick();
     }
 
-    private function avancerRevision(Client $cliente): void
+    /** Fin d'une année VIP (bilan échu) avec ce nombre de rendez-vous honorés dans l'année. */
+    private function anneeAvec(Client $cliente, int $rendezVous): void
     {
+        $this->em()->createQuery('DELETE FROM App\Entity\Reservation r WHERE r.client = :c')->setParameter('c', $cliente)->execute();
         (new \ReflectionProperty($cliente, 'privilegeRevisionAt'))->setValue($cliente, new \DateTimeImmutable('-1 hour'));
         $this->em()->flush();
+        for ($i = 1; $i <= $rendezVous; ++$i) {
+            $this->rendezVousHonore($cliente, \sprintf('-%d weeks', $i * 4));
+        }
     }
 
     private function rendezVousHonore(Client $cliente, string $quand): void

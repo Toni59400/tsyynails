@@ -10,6 +10,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
+use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
@@ -40,7 +41,7 @@ final class RecompenseFideliteCrudController extends AbstractCrudController
             ->setEntityLabelInSingular('Récompense')
             ->setEntityLabelInPlural('Paliers de fidélité')
             ->setDefaultSort(['seuilPoints' => 'ASC'])
-            ->setHelp(Crud::PAGE_INDEX, 'Conseil : gardez un taux de 5 à 6 % (ex. 100 points = 5 €) et préférez les petits avantages au salon (nail art, strass), très appréciés et peu coûteux.');
+            ->setHelp(Crud::PAGE_INDEX, 'Conseil : gardez un taux de 3 à 6 % (ex. 150 points = 5 €). « Supplément offert » : l\'option choisie (nail art, French…) devient gratuite quand la cliente l\'ajoute en réservant en ligne. Les récompenses ne se cumulent pas avec la réduction VIP ni le RDV duo.');
     }
 
     public function configureActions(Actions $actions): Actions
@@ -55,10 +56,13 @@ final class RecompenseFideliteCrudController extends AbstractCrudController
         yield TextareaField::new('description')->hideOnIndex();
         yield ChoiceField::new('type')->setChoices([
             TypeRecompense::REDUCTION->libelle() => TypeRecompense::REDUCTION,
+            TypeRecompense::SUPPLEMENT_OFFERT->libelle() => TypeRecompense::SUPPLEMENT_OFFERT,
             TypeRecompense::EN_SALON->libelle() => TypeRecompense::EN_SALON,
-        ])->setHelp('Réduction : la cliente l\'utilise en réservant en ligne. Avantage au salon : vous le remettez depuis sa fiche.');
+        ])->setHelp('Réduction ou supplément offert : la cliente l\'utilise en réservant en ligne. Avantage au salon : vous le remettez depuis sa fiche.');
+        yield AssociationField::new('supplement', 'Supplément offert')->setRequired(false)
+            ->setHelp('Pour le type « Supplément offert » : l\'option rendue gratuite (son prix est déduit).');
         yield MoneyField::new('valeurCentimes', 'Valeur')->setCurrency('EUR')->setStoredAsCents()
-            ->setHelp('Montant déduit du prix (réduction) ou valeur affichée de l\'avantage.');
+            ->setHelp('Montant déduit du prix (réduction) ou valeur affichée de l\'avantage. Ignoré pour un supplément offert (prix du supplément).');
         yield BooleanField::new('active', 'Proposée');
     }
 }

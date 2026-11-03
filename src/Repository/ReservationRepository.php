@@ -206,7 +206,7 @@ class ReservationRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    /** Rendez-vous honorés commençant dans [$debut, $fin[ (année de fidélité de la réduction à vie). */
+    /** Rendez-vous honorés commençant dans [$debut, $fin[ (année VIP). */
     public function countHonoreesEntre(Client $client, \DateTimeImmutable $debut, \DateTimeImmutable $fin): int
     {
         return (int) $this->createQueryBuilder('r')

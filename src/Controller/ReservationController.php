@@ -157,7 +157,7 @@ final class ReservationController extends AbstractController
         if (false === $debut || $debut >= $limite || !$this->calculateur->estDisponible($prestation, $debut, $minutesEnPlus)) {
             return $this->creneauPris($prestation, $supplement, $duo);
         }
-        // Prix affiché : remise duo ou réduction à vie (cliente connectée), majoration du soir.
+        // Prix affiché : remise duo ou réduction VIP (cliente connectée), majoration du soir.
         $devis = $this->tarification->devis($prestation, $supplement, $duo, $debut, $cliente);
 
         // Modes de paiement proposés (réglages) : aucun = réservation en ligne fermée.
@@ -174,7 +174,9 @@ final class ReservationController extends AbstractController
             $coordonnees->nom = $cliente->getNom();
             $coordonnees->telephone = (string) $cliente->getTelephone();
             $coordonnees->email = $user->getEmail();
-            $recompenses = $this->fidelite->utilisablesEnLigne($cliente, $devis->aPayerCentimes());
+            // Une récompense remplace la réduction VIP et le duo : son plafond se calcule sur le prix sans remise.
+            $sansRemise = $this->tarification->devis($prestation, $supplement, $duo, $debut, $cliente, 0);
+            $recompenses = $this->fidelite->utilisablesEnLigne($cliente, $sansRemise->aPayerCentimes(), $supplement);
         } elseif ($user instanceof User) {
             $coordonnees->email = $user->getEmail();
         }

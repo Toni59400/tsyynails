@@ -105,7 +105,7 @@ final class ReservationCrudController extends AbstractCrudController
         yield MoneyField::new('prixCentimes', 'Prix total')->setCurrency('EUR')->setStoredAsCents()->onlyOnDetail();
         yield MoneyField::new('majorationCentimes', 'Dont majoration du soir')->setCurrency('EUR')->setStoredAsCents()->onlyOnDetail();
         yield IntegerField::new('remisePourcentage', 'Remise (%)')->onlyOnDetail()
-            ->formatValue(static fn (int $p, Reservation $r): string => 0 === $p ? '—' : \sprintf('%d %% (%s)', $p, ['duo' => 'RDV duo', 'privilege' => 'réduction à vie', 'manuelle' => 'saisie'][$r->getRemiseMotif() ?? 'manuelle'] ?? 'saisie'));
+            ->formatValue(static fn (int $p, Reservation $r): string => 0 === $p ? '—' : \sprintf('%d %% (%s)', $p, ['duo' => 'RDV duo', 'privilege' => 'VIP', 'manuelle' => 'saisie'][$r->getRemiseMotif() ?? 'manuelle'] ?? 'saisie'));
         yield MoneyField::new('remiseCentimes', 'Montant de la remise')->setCurrency('EUR')->setStoredAsCents()->onlyOnDetail();
         // Champ calculé (prix − remise − points) : pas de tri possible en base.
         yield MoneyField::new('montantDuCentimes', 'À payer')->setCurrency('EUR')->setStoredAsCents()->setSortable(false);

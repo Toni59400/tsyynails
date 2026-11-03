@@ -56,7 +56,7 @@
                 {% if duo_actif %}
                     <li>RDV duo : deux personnes, deux prestations enchaînées sur le même rendez-vous{% if duo_reduction > 0 %},
                         avec {{ duo_reduction }} % de réduction sur le prix total des prestations{% endif %}.
-                        Cette remise ne se cumule pas avec la réduction fidélité à vie : la plus avantageuse s'applique.</li>
+                        Cette remise ne se cumule pas avec la réduction VIP : la plus avantageuse s'applique.</li>
                 {% endif %}
             </ul>
         {% endif %}
@@ -74,12 +74,15 @@
             <li>Récompenses disponibles :
                 <ul>
                     {% for palier in paliers %}
-                        <li>{{ palier.seuilPoints }} points : {{ palier.nom }} ({{ palier.type.libelle|lower }})</li>
+                        <li>{{ palier.seuilPoints }} points : {{ palier.nom }}
+                            {%- if palier.supplement %} (en réservant en ligne avec l'option « {{ palier.supplement.nom }} », offerte){% else %} ({{ palier.type.libelle|lower }}){% endif %}</li>
                     {% endfor %}
                 </ul>
             </li>
             <li>
                 Une seule récompense par rendez-vous, dans la limite de {{ reduction_max }} % du prix de la prestation.
+                Les récompenses ne sont pas cumulables avec les autres offres promotionnelles : sur le rendez-vous où une récompense
+                est utilisée, la réduction VIP et la remise du RDV duo ne s'appliquent pas.
                 Les points utilisés pour une demande refusée, annulée ou expirée sont rendus.
             </li>
             <li>
@@ -99,12 +102,12 @@
             </li>
             {% if vie_seuil > 0 %}
                 <li id="reduction-a-vie">
-                    <strong>Réduction à vie</strong> : en gagnant {{ vie_seuil }} points grâce à vos rendez-vous sur 12 mois,
-                    vous obtenez {{ vie_depart }} % de réduction sur toutes vos prestations, appliquée d'office en réservant avec votre compte
-                    (hors majoration du soir ; cumulable avec une récompense de points).
+                    <strong>Statut VIP</strong> : débloqué après {{ vie_seuil }} points cumulés au total (rendez-vous, bienvenue, parrainage),
+                    même si des points ont déjà été utilisés. Il donne {{ vie_depart }} % de réduction à vie sur toutes vos prestations,
+                    appliquée d'office en réservant avec votre compte (hors majoration du soir ; non cumulable avec une récompense de points).
                     Chaque année, à la date anniversaire : avec au moins {{ vie_visites }} rendez-vous honorés dans l'année,
-                    elle augmente de {{ vie_pas }} % (dans la limite de {{ vie_max }} %) ; sinon elle prend fin, et peut être regagnée
-                    en cumulant à nouveau {{ vie_seuil }} points. Un email prévient 30 jours avant s'il manque des rendez-vous.
+                    elle augmente de {{ vie_pas }} %, dans la limite de {{ vie_max }} % ; sinon elle reste au même niveau.
+                    Le statut VIP n'est jamais perdu. Un email prévient 30 jours avant s'il manque des rendez-vous pour monter de niveau.
                 </li>
             {% endif %}
             <li>

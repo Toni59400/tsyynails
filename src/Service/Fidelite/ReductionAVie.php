@@ -16,14 +16,16 @@ use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
 
 /**
- * Réduction à vie des clientes les plus fidèles (réglages « Réduction à vie » de l'admin) :
+ * Statut VIP (réglages « Statut VIP » de l'admin) — réduction à vie sur les prestations :
  *
- * - obtenue en gagnant le seuil de points (340) grâce aux rendez-vous des 12 derniers mois : 10 % ;
- * - à chaque anniversaire, au moins 8 rendez-vous honorés dans l'année : +5 % (plafond 20 %) ;
- *   sinon la réduction est perdue (elle peut être regagnée en atteignant à nouveau le seuil) ;
- * - un email prévient 30 jours avant l'anniversaire s'il manque des rendez-vous.
+ * - débloqué quand la cliente a gagné le seuil de points AU TOTAL depuis toujours (480), même si elle
+ *   en a déjà utilisé : réduction de départ (5 %) ;
+ * - à chaque anniversaire, avec au moins N rendez-vous honorés dans l'année (8) : +5 %, jusqu'au plafond (15 %) ;
+ *   sinon la réduction reste au même niveau — le statut VIP n'est jamais retiré ;
+ * - un email prévient 30 jours avant l'anniversaire s'il manque des rendez-vous pour monter de niveau.
  *
- * S'applique d'office aux réservations de la cliente (Tarification::remise).
+ * S'applique d'office aux réservations de la cliente connectée (Tarification::remise), sauf quand elle utilise
+ * une récompense de points sur le rendez-vous (non cumulable).
  */
 final class ReductionAVie
 {
@@ -46,26 +48,21 @@ final class ReductionAVie
         return $this->parametres->valeur(Parametre::PRIVILEGE_SEUIL_POINTS) > 0;
     }
 
-    /** Points gagnés en rendez-vous sur les 12 derniers mois (depuis la perte de la réduction, le cas échéant). */
-    public function pointsSurUnAn(Client $client): int
+    /** Points gagnés au total depuis toujours (progression vers le statut VIP). */
+    public function pointsCumules(Client $client): int
     {
-        return $this->mouvements->pointsVisitesParClientDepuis($this->debutComptage($client), $client)[$client->getId()] ?? 0;
-    }
-
-    private function debutComptage(Client $client): \DateTimeImmutable
-    {
-        return max($this->clock->now()->modify('-12 months'), $client->getPrivilegePerduAt() ?? new \DateTimeImmutable('@0'));
+        return $this->mouvements->pointsCumulesParClient($client)[$client->getId()] ?? 0;
     }
 
     /**
-     * Pour l'espace fidélité et la fiche admin : réduction en cours, ou progression vers le seuil.
+     * Pour l'espace fidélité et la fiche admin : statut VIP en cours, ou progression vers le seuil.
      *
      * @return array{active: bool, pourcentage: int, seuil: int, points: int, progression: int, visites: int, visites_requises: int, revision: ?\DateTimeImmutable, depuis: ?\DateTimeImmutable, depart: int, pas: int, plafond: int}
      */
     public function etat(Client $client): array
     {
         $seuil = $this->parametres->valeur(Parametre::PRIVILEGE_SEUIL_POINTS);
-        $points = $this->estActive() ? $this->pointsSurUnAn($client) : 0;
+        $points = $this->estActive() ? $this->pointsCumules($client) : 0;
 
         return [
             'active' => $this->estActive(),
@@ -83,7 +80,7 @@ final class ReductionAVie
         ];
     }
 
-    /** Rendez-vous honorés depuis le début de l'année de fidélité en cours. */
+    /** Rendez-vous honorés depuis le début de l'année VIP en cours. */
     public function visitesAnneeEnCours(Client $client): int
     {
         $revision = $client->getPrivilegeRevisionAt();
@@ -92,15 +89,15 @@ final class ReductionAVie
     }
 
     /**
-     * Après un rendez-vous honoré : accorde la réduction si le seuil vient d'être atteint.
-     * Ne fait rien si la cliente l'a déjà. Retourne vrai si elle vient de l'obtenir.
+     * Accorde le statut VIP si le seuil de points cumulés est atteint (après un rendez-vous honoré, et chaque heure
+     * pour les autres gains : bienvenue, parrainage, correction). Retourne vrai si la cliente vient de l'obtenir.
      */
     public function verifierSeuil(Client $client): bool
     {
         if (!$this->estActive() || $client->getPrivilegePourcentage() > 0 || $client->estAnonymise()) {
             return false;
         }
-        if ($this->pointsSurUnAn($client) < $this->parametres->valeur(Parametre::PRIVILEGE_SEUIL_POINTS)) {
+        if ($this->pointsCumules($client) < $this->parametres->valeur(Parametre::PRIVILEGE_SEUIL_POINTS)) {
             return false;
         }
 
@@ -108,70 +105,89 @@ final class ReductionAVie
         $client->accorderPrivilege($pourcentage, $this->clock->now());
         $this->entityManager->flush();
         $this->notifications->reductionAVie($client, 'accordee', $pourcentage);
-        $this->logger->info('Réduction à vie accordée.', ['client' => $client->getId(), 'pourcentage' => $pourcentage]);
+        $this->logger->info('Statut VIP accordé.', ['client' => $client->getId(), 'pourcentage' => $pourcentage]);
 
         return true;
     }
 
     /**
-     * Tâche planifiée : nouvelles clientes au seuil, avertissements, et révisions annuelles échues.
+     * Tâche planifiée : nouvelles VIP au seuil, rappels avant l'anniversaire, et bilans annuels échus.
      *
-     * @return array{accordees: int, renouvelees: int, perdues: int, averties: int}
+     * @return array{accordees: int, progressions: int, maintenues: int, averties: int}
      */
     public function traiter(): array
     {
-        $stats = ['accordees' => 0, 'renouvelees' => 0, 'perdues' => 0, 'averties' => 0];
+        $stats = ['accordees' => 0, 'progressions' => 0, 'maintenues' => 0, 'averties' => 0];
         if (!$this->estActive()) {
             return $stats;
         }
         $maintenant = $this->clock->now();
         $seuil = $this->parametres->valeur(Parametre::PRIVILEGE_SEUIL_POINTS);
 
-        // Rattrapage (ex. : seuil abaissé dans les réglages) : le contrôle immédiat a lieu à chaque rendez-vous honoré.
-        foreach ($this->mouvements->pointsVisitesParClientDepuis($maintenant->modify('-12 months')) as $idClient => $points) {
+        // Seuil atteint par un gain hors rendez-vous (bienvenue, parrainage, correction) ou seuil abaissé dans les réglages.
+        foreach ($this->mouvements->pointsCumulesParClient() as $idClient => $points) {
             $client = $points >= $seuil ? $this->clientes->find($idClient) : null;
             if ($client instanceof Client && $this->verifierSeuil($client)) {
                 ++$stats['accordees'];
             }
         }
 
-        $requises = $this->parametres->valeur(Parametre::PRIVILEGE_VISITES_ANNUELLES);
         foreach ($this->clientes->findPrivilegesARevoirAvant($maintenant->modify(\sprintf('+%d days', self::AVERTISSEMENT_JOURS))) as $client) {
             $revision = $client->getPrivilegeRevisionAt();
             if (null === $revision) {
                 continue;
             }
-            $visites = $this->visitesAnneeEnCours($client);
-
-            if ($revision > $maintenant) {
-                // Moins de 30 jours avant l'anniversaire : prévenir une fois s'il manque des rendez-vous.
-                if ($visites < $requises && null === $client->getPrivilegeAvertiAt()) {
-                    $client->marquerPrivilegeAverti($maintenant);
-                    $this->entityManager->flush();
-                    $this->notifications->reductionAVie($client, 'rappel', $client->getPrivilegePourcentage(), $requises - $visites, $revision);
-                    ++$stats['averties'];
-                }
-                continue;
+            $resultat = $revision > $maintenant ? $this->avertir($client, $revision, $maintenant) : $this->faireLeBilan($client);
+            if (null !== $resultat) {
+                ++$stats[$resultat];
             }
-
-            if ($visites >= $requises) {
-                $pourcentage = min(
-                    $client->getPrivilegePourcentage() + $this->parametres->valeur(Parametre::PRIVILEGE_REDUCTION_PAS),
-                    $this->parametres->valeur(Parametre::PRIVILEGE_REDUCTION_MAX),
-                );
-                $client->renouvelerPrivilege($pourcentage);
-                $this->entityManager->flush();
-                $this->notifications->reductionAVie($client, 'renouvelee', $pourcentage);
-                ++$stats['renouvelees'];
-            } else {
-                $client->retirerPrivilege($maintenant);
-                $this->entityManager->flush();
-                $this->notifications->reductionAVie($client, 'perdue', 0);
-                ++$stats['perdues'];
-            }
-            $this->logger->info('Réduction à vie révisée.', ['client' => $client->getId(), 'visites' => $visites, 'pourcentage' => $client->getPrivilegePourcentage()]);
         }
 
         return $stats;
+    }
+
+    /** Moins de 30 jours avant l'anniversaire : prévenir une fois s'il manque des rendez-vous pour monter de niveau. */
+    private function avertir(Client $client, \DateTimeImmutable $revision, \DateTimeImmutable $maintenant): ?string
+    {
+        $pourcentage = $client->getPrivilegePourcentage();
+        $manquantes = $this->parametres->valeur(Parametre::PRIVILEGE_VISITES_ANNUELLES) - $this->visitesAnneeEnCours($client);
+        if (!$this->peutMonter($pourcentage) || $manquantes <= 0 || null !== $client->getPrivilegeAvertiAt()) {
+            return null;
+        }
+
+        $client->marquerPrivilegeAverti($maintenant);
+        $this->entityManager->flush();
+        $this->notifications->reductionAVie($client, 'rappel', $this->niveauSuivant($pourcentage), $manquantes, $revision);
+
+        return 'averties';
+    }
+
+    /** Bilan annuel : le statut est toujours gardé ; il monte d'un niveau si l'année est confirmée. */
+    private function faireLeBilan(Client $client): string
+    {
+        $pourcentage = $client->getPrivilegePourcentage();
+        $visites = $this->visitesAnneeEnCours($client);
+        $monte = $this->peutMonter($pourcentage) && $visites >= $this->parametres->valeur(Parametre::PRIVILEGE_VISITES_ANNUELLES);
+        if ($monte) {
+            $pourcentage = $this->niveauSuivant($pourcentage);
+        }
+        $client->renouvelerPrivilege($pourcentage);
+        $this->entityManager->flush();
+        if ($monte) {
+            $this->notifications->reductionAVie($client, 'renouvelee', $pourcentage);
+        }
+        $this->logger->info('Statut VIP : bilan annuel.', ['client' => $client->getId(), 'visites' => $visites, 'pourcentage' => $pourcentage]);
+
+        return $monte ? 'progressions' : 'maintenues';
+    }
+
+    private function peutMonter(int $pourcentage): bool
+    {
+        return $pourcentage < $this->parametres->valeur(Parametre::PRIVILEGE_REDUCTION_MAX);
+    }
+
+    private function niveauSuivant(int $pourcentage): int
+    {
+        return min($pourcentage + $this->parametres->valeur(Parametre::PRIVILEGE_REDUCTION_PAS), $this->parametres->valeur(Parametre::PRIVILEGE_REDUCTION_MAX));
     }
 }

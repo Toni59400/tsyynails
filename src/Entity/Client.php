@@ -92,7 +92,7 @@ class Client
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $refusDemandesAvisAt = null;
 
-    /** Réduction à vie en cours (10, 15, 20 %…), 0 = aucune. */
+    /** Statut VIP : réduction à vie en cours (5, 10, 15 %…), 0 = pas encore VIP. */
     #[ORM\Column]
     private int $privilegePourcentage = 0;
 
@@ -102,10 +102,6 @@ class Client
     /** Anniversaire où l'on vérifie le nombre de rendez-vous de l'année écoulée. */
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $privilegeRevisionAt = null;
-
-    /** Réduction perdue à cette date : seuls les points gagnés depuis comptent pour la regagner. */
-    #[ORM\Column(nullable: true)]
-    private ?\DateTimeImmutable $privilegePerduAt = null;
 
     /** Email « il vous manque des rendez-vous » déjà envoyé pour la révision en cours. */
     #[ORM\Column(nullable: true)]
@@ -267,7 +263,7 @@ class Client
         $this->supprimerNotesSante();
         $this->user = null;
         $this->codeParrainage = null;
-        $this->retirerPrivilege($at);
+        $this->retirerPrivilege();
         $this->anonymiseAt = $at;
 
         return $this;
@@ -311,7 +307,7 @@ class Client
         $this->privilegeAvertiAt = null;
     }
 
-    /** Année confirmée : nouveau pourcentage, prochaine révision dans un an. */
+    /** Bilan annuel : pourcentage (augmenté ou maintenu), prochain bilan dans un an. */
     public function renouvelerPrivilege(int $pourcentage): void
     {
         $this->privilegePourcentage = $pourcentage;
@@ -319,14 +315,9 @@ class Client
         $this->privilegeAvertiAt = null;
     }
 
-    public function getPrivilegePerduAt(): ?\DateTimeImmutable
+    /** Le statut VIP n'est jamais perdu : retiré seulement à l'anonymisation. */
+    private function retirerPrivilege(): void
     {
-        return $this->privilegePerduAt;
-    }
-
-    public function retirerPrivilege(\DateTimeImmutable $at): void
-    {
-        $this->privilegePerduAt = $this->privilegePourcentage > 0 ? $at : $this->privilegePerduAt;
         $this->privilegePourcentage = 0;
         $this->privilegeDepuis = null;
         $this->privilegeRevisionAt = null;

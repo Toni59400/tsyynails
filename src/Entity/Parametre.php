@@ -51,15 +51,15 @@ class Parametre
     public const DUO_ACTIF = 'duo.actif';
     /** Réduction du RDV duo, en % du prix des prestations. */
     public const DUO_REDUCTION_POURCENTAGE = 'duo.reduction_pourcentage';
-    /** Points gagnés en rendez-vous sur 12 mois pour obtenir la réduction à vie (0 = désactivée). */
+    /** Statut VIP : points gagnés au total (depuis toujours) pour le débloquer (0 = désactivé). */
     public const PRIVILEGE_SEUIL_POINTS = 'privilege.seuil_points';
-    /** Réduction à vie la première année, en %. */
+    /** Réduction VIP la première année, en %. */
     public const PRIVILEGE_REDUCTION_DEPART = 'privilege.reduction_depart';
     /** Réduction ajoutée chaque année de fidélité confirmée, en %. */
     public const PRIVILEGE_REDUCTION_PAS = 'privilege.reduction_pas';
-    /** Plafond de la réduction à vie, en %. */
+    /** Plafond de la réduction VIP, en %. */
     public const PRIVILEGE_REDUCTION_MAX = 'privilege.reduction_max';
-    /** Rendez-vous honorés par an pour garder (et augmenter) la réduction à vie. */
+    /** Rendez-vous honorés par an pour faire monter la réduction VIP. */
     public const PRIVILEGE_VISITES_ANNUELLES = 'privilege.visites_annuelles';
 
     /**
@@ -86,11 +86,11 @@ class Parametre
         self::MAJORATION_SOIR_EUROS => ['Majoration du soir (euros)', 'Ajoutée au prix, jamais réduite par les remises. 0 = pas de majoration.', 0, 0, 100],
         self::DUO_ACTIF => ['Proposer le RDV duo', 'Affiche l\'offre « RDV duo » (deux personnes à la suite) dans les prestations et la réservation en ligne.', 0, 0, 1],
         self::DUO_REDUCTION_POURCENTAGE => ['RDV duo : réduction (%)', 'Sur le prix total des prestations du duo (hors majoration du soir).', 10, 0, 50],
-        self::PRIVILEGE_SEUIL_POINTS => ['Réduction à vie : points à gagner en 12 mois', 'Points gagnés grâce aux rendez-vous honorés des 12 derniers mois (≈ 10 à 11 rendez-vous). 0 = désactivée.', 340, 0, 5000],
-        self::PRIVILEGE_REDUCTION_DEPART => ['Réduction à vie : première année (%)', 'Accordée dès que le seuil est atteint.', 10, 0, 50],
-        self::PRIVILEGE_REDUCTION_PAS => ['Réduction à vie : bonus par année confirmée (%)', 'Ajouté à chaque anniversaire si la cliente a fait assez de rendez-vous dans l\'année.', 5, 0, 20],
-        self::PRIVILEGE_REDUCTION_MAX => ['Réduction à vie : plafond (%)', 'La réduction ne dépasse jamais ce pourcentage.', 20, 0, 50],
-        self::PRIVILEGE_VISITES_ANNUELLES => ['Réduction à vie : rendez-vous par an pour la garder', 'En dessous, à l\'anniversaire, la cliente perd sa réduction (elle peut la regagner en atteignant à nouveau le seuil).', 8, 1, 52],
+        self::PRIVILEGE_SEUIL_POINTS => ['Statut VIP : points cumulés pour le débloquer', 'Total des points gagnés depuis toujours (rendez-vous, bienvenue, parrainage, corrections), même s\'ils ont été utilisés. 0 = désactivé.', 480, 0, 5000],
+        self::PRIVILEGE_REDUCTION_DEPART => ['Statut VIP : réduction de départ (%)', 'Accordée dès que le seuil est atteint, à vie.', 5, 0, 50],
+        self::PRIVILEGE_REDUCTION_PAS => ['Statut VIP : bonus par année confirmée (%)', 'Ajouté à chaque anniversaire si la cliente a fait assez de rendez-vous dans l\'année.', 5, 0, 20],
+        self::PRIVILEGE_REDUCTION_MAX => ['Statut VIP : plafond (%)', 'La réduction ne dépasse jamais ce pourcentage.', 15, 0, 50],
+        self::PRIVILEGE_VISITES_ANNUELLES => ['Statut VIP : rendez-vous par an pour monter', 'À l\'anniversaire, la réduction augmente si la cliente a fait au moins ce nombre de rendez-vous ; sinon elle reste au même niveau (le statut n\'est jamais perdu).', 8, 1, 52],
     ];
 
     /** Réglage oui / non (minimum 0, maximum 1) : affiché comme un interrupteur dans l'admin. */

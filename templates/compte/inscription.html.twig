@@ -14,9 +14,9 @@
                 <ul class="avantages">
                     {% if programme %}
                         <li class="avantages__vedette">
-                            <strong>Jusqu'à −{{ programme.plafond }} % à vie</strong> :
-                            −{{ programme.depart }} % sur toutes vos prestations dès {{ programme.seuil }} points en 12 mois{% if programme.rendez_vous > 0 %} (environ {{ programme.rendez_vous }} rendez-vous){% endif %},
-                            puis +{{ programme.pas }} % chaque année de fidélité.
+                            <strong>Statut VIP : jusqu'à −{{ programme.plafond }} % à vie</strong> :
+                            −{{ programme.depart }} % sur toutes vos prestations dès {{ programme.seuil }} points cumulés{% if programme.rendez_vous > 0 %} (environ {{ programme.rendez_vous }} rendez-vous){% endif %},
+                            puis +{{ programme.pas }} % par année fidèle. Il ne se perd jamais.
                         </li>
                     {% endif %}
                     <li>Des points à chaque rendez-vous, et des points de bienvenue.</li>

@@ -17,7 +17,7 @@ final class DetailPrix
 {
     public const LIBELLES_REMISE = [
         'duo' => 'Remise RDV duo',
-        'privilege' => 'Réduction fidélité à vie',
+        'privilege' => 'Réduction VIP',
         'manuelle' => 'Remise',
     ];
 

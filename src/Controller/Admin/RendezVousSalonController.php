@@ -61,7 +61,7 @@ final class RendezVousSalonController extends AbstractController
                     $admin->getUserIdentifier(),
                     $rendezVous->supplement,
                     $rendezVous->duo ? $rendezVous->prestationDuo : null,
-                    // Duo : réduction saisie ; sinon automatique (réduction à vie de la cliente, s'il y en a une).
+                    // Duo : réduction saisie ; sinon automatique (réduction VIP de la cliente, s'il y en a une).
                     $rendezVous->duo ? (int) $rendezVous->remiseDuo : null,
                 );
                 $this->addFlash('success', \sprintf('Rendez-vous de %s confirmé le %s.', $reservation->getClient()->getPrenom(), $reservation->getDebut()->format('d/m à H\hi')));

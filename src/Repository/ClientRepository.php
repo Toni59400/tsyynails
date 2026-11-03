@@ -48,7 +48,7 @@ class ClientRepository extends ServiceEntityRepository
     }
 
     /**
-     * Clientes ayant la réduction à vie dont l'anniversaire de révision tombe avant cette date.
+     * Clientes VIP dont l'anniversaire de révision tombe avant cette date.
      *
      * @return list<Client>
      */

@@ -12,10 +12,10 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * Réduction à vie : nouvelles clientes au seuil, rappels 30 jours avant l'anniversaire,
- * puis révision annuelle (+5 % ou perte). Idempotente, lancée chaque heure.
+ * Statut VIP : nouvelles VIP au seuil, rappels 30 jours avant l'anniversaire,
+ * puis bilan annuel (+5 % ou maintien). Idempotente, lancée chaque heure.
  */
-#[AsCommand(name: 'app:fidelite:reduction-a-vie', description: 'Accorde, rappelle et révise la réduction fidélité à vie')]
+#[AsCommand(name: 'app:fidelite:reduction-a-vie', description: 'Accorde, rappelle et fait progresser le statut VIP')]
 final class ReductionAVieCommand extends Command
 {
     public function __construct(private readonly ReductionAVie $reductionAVie)
@@ -27,8 +27,8 @@ final class ReductionAVieCommand extends Command
     {
         $stats = $this->reductionAVie->traiter();
         (new SymfonyStyle($input, $output))->success(\sprintf(
-            'Réduction à vie : %d accordée(s), %d renouvelée(s), %d perdue(s), %d rappel(s).',
-            $stats['accordees'], $stats['renouvelees'], $stats['perdues'], $stats['averties'],
+            'Statut VIP : %d accordé(s), %d progression(s), %d maintien(s), %d rappel(s).',
+            $stats['accordees'], $stats['progressions'], $stats['maintenues'], $stats['averties'],
         ));
 
         return Command::SUCCESS;

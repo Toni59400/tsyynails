@@ -45,6 +45,11 @@ class RecompenseFidelite
     #[ORM\Column]
     private bool $active = true;
 
+    /** Supplément offert (type « supplément offert ») : gratuit quand la cliente le réserve avec cette récompense. */
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(onDelete: 'SET NULL')]
+    private ?Supplement $supplement = null;
+
     public function __construct(string $nom, int $seuilPoints, TypeRecompense $type, int $valeurCentimes)
     {
         $this->nom = $nom;
@@ -130,9 +135,36 @@ class RecompenseFidelite
         return $this;
     }
 
+    public function getSupplement(): ?Supplement
+    {
+        return $this->supplement;
+    }
+
+    public function setSupplement(?Supplement $supplement): static
+    {
+        $this->supplement = $supplement;
+
+        return $this;
+    }
+
     public function estUtilisableEnLigne(): bool
     {
-        return TypeRecompense::REDUCTION === $this->type;
+        return TypeRecompense::REDUCTION === $this->type
+            || (TypeRecompense::SUPPLEMENT_OFFERT === $this->type && null !== $this->supplement);
+    }
+
+    /** Montant déduit : la réduction, ou le prix du supplément offert. */
+    public function valeurDeduite(): int
+    {
+        return TypeRecompense::SUPPLEMENT_OFFERT === $this->type ? ($this->supplement?->getPrixCentimes() ?? 0) : $this->valeurCentimes;
+    }
+
+    #[Assert\Callback]
+    public function validerSupplement(\Symfony\Component\Validator\Context\ExecutionContextInterface $contexte): void
+    {
+        if (TypeRecompense::SUPPLEMENT_OFFERT === $this->type && null === $this->supplement) {
+            $contexte->buildViolation('Choisissez le supplément offert.')->atPath('supplement')->addViolation();
+        }
     }
 
     public function __toString(): string

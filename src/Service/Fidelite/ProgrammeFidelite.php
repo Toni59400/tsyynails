@@ -9,7 +9,9 @@ use App\Entity\MouvementPoints;
 use App\Entity\Parametre;
 use App\Entity\RecompenseFidelite;
 use App\Entity\Reservation;
+use App\Entity\Supplement;
 use App\Enum\MotifMouvementPoints;
+use App\Enum\TypeRecompense;
 use App\Repository\MouvementPointsRepository;
 use App\Repository\ParametreRepository;
 use App\Repository\RecompenseFideliteRepository;
@@ -58,12 +60,13 @@ final class ProgrammeFidelite
     }
 
     /**
-     * Récompenses qu'une cliente peut utiliser en ligne sur un rendez-vous de ce montant (après remise) :
-     * réduction, points suffisants, et pas plus que le plafond du montant.
+     * Récompenses qu'une cliente peut utiliser en ligne sur un rendez-vous de ce montant (sans remise : une récompense
+     * remplace la réduction VIP et le duo) : points suffisants ; réduction dans la limite du plafond ;
+     * supplément offert seulement si la cliente réserve ce supplément.
      *
      * @return list<RecompenseFidelite>
      */
-    public function utilisablesEnLigne(Client $client, int $montantCentimes): array
+    public function utilisablesEnLigne(Client $client, int $montantCentimes, ?Supplement $supplement = null): array
     {
         $solde = $this->solde($client);
 
@@ -71,7 +74,11 @@ final class ProgrammeFidelite
             $this->paliers(),
             fn (RecompenseFidelite $r): bool => $r->estUtilisableEnLigne()
                 && $r->getSeuilPoints() <= $solde
-                && $this->respecteLePlafond($r, $montantCentimes),
+                && match ($r->getType()) {
+                    // Supplément offert : seulement si la cliente réserve ce supplément.
+                    TypeRecompense::SUPPLEMENT_OFFERT => null !== $supplement && $r->getSupplement()?->getId() === $supplement->getId(),
+                    default => $this->respecteLePlafond($r, $montantCentimes),
+                },
         ));
     }
 

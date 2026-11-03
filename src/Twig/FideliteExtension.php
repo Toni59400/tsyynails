@@ -23,7 +23,7 @@ final class FideliteExtension
     }
 
     /**
-     * Règles de la réduction à vie pour les encarts du site (null si désactivée dans les réglages).
+     * Règles du statut VIP pour les encarts du site (null si désactivée dans les réglages).
      * « rendez_vous » : nombre approximatif de rendez-vous pour atteindre le seuil, d'après le prix moyen des prestations.
      *
      * @return array{seuil: int, depart: int, pas: int, plafond: int, visites: int, rendez_vous: int, paliers: list<int>}|null
@@ -39,7 +39,7 @@ final class FideliteExtension
         $pas = $this->parametres->valeur(Parametre::PRIVILEGE_REDUCTION_PAS);
         $plafond = max($depart, $this->parametres->valeur(Parametre::PRIVILEGE_REDUCTION_MAX));
 
-        // Paliers successifs : 10, 15, 20 % (s'arrête au plafond).
+        // Paliers successifs : 5, 10, 15 % (s'arrête au plafond).
         $paliers = [$depart];
         while ($pas > 0 && end($paliers) < $plafond && \count($paliers) < 5) {
             $paliers[] = min($plafond, end($paliers) + $pas);
@@ -67,7 +67,7 @@ final class FideliteExtension
     }
 
     /**
-     * Réduction à vie de la cliente : en cours, ou progression vers le seuil.
+     * Statut VIP de la cliente : en cours, ou progression vers le seuil.
      *
      * @return array<string, mixed>
      */

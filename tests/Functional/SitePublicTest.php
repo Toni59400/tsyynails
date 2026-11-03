@@ -50,13 +50,13 @@ final class SitePublicTest extends WebTestCase
     public function testLaReductionAVieEstMiseEnAvantSurLesPagesQuiConvertissent(): void
     {
         $this->client->request('GET', '/');
-        self::assertSelectorTextContains('.vie__titre', '−20 %');
+        self::assertSelectorTextContains('.vie__titre', '−15 %');
         self::assertSelectorCount(3, '.vie__palier');
         self::assertSelectorExists('.vie a[href="/inscription"][data-mesure-clic="clic_reduction_vie"][data-mesure-origine="accueil"]');
         self::assertSelectorExists('.accroche__vie[href="#reduction-a-vie"]');
 
         $this->client->request('GET', '/prestations');
-        self::assertSelectorTextContains('.vie-bandeau', '−10 %');
+        self::assertSelectorTextContains('.vie-bandeau', '−5 %');
 
         $this->client->request('GET', '/reservation');
         self::assertSelectorExists('.vie-bandeau a[data-mesure-origine="reservation"]');

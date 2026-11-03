@@ -56,7 +56,11 @@
                             <fieldset class="champ">
                                 <legend>{{ form_label(formulaire.recompense) }}</legend>
                                 {{ form_widget(formulaire.recompense) }}
-                                <p class="champ__aide">La réduction est déduite du prix et de l'acompte. Vos points vous sont rendus si la demande n'aboutit pas.</p>
+                                <p class="champ__aide">
+                                    La récompense est déduite du prix et de l'acompte. Elle n'est pas cumulable :
+                                    sur ce rendez-vous, elle remplace votre réduction VIP{% if duo %} et la remise du RDV duo{% endif %}.
+                                    Vos points vous sont rendus si la demande n'aboutit pas.
+                                </p>
                             </fieldset>
                         {% else %}
                             {% do formulaire.recompense.setRendered %}
@@ -70,7 +74,7 @@
                         {% set programme = programme_vie() %}
                         <p class="alerte alerte--info">
                             Ce rendez-vous vous rapportera <strong>{{ points_gagnes }} points de fidélité</strong> avec un compte
-                            {%- if programme %}, un premier pas vers votre <strong>réduction à vie de −{{ programme.depart }} %</strong> (dès {{ programme.seuil }} points, jusqu'à −{{ programme.plafond }} % ensuite){% endif %}.
+                            {%- if programme %}, un premier pas vers le <strong>statut VIP : −{{ programme.depart }} % à vie</strong> (dès {{ programme.seuil }} points cumulés, jusqu'à −{{ programme.plafond }} % ensuite){% endif %}.
                             <a href="{{ path('app_login', {cible: cible_connexion}) }}">Déjà un compte ? Connectez-vous</a>
                         </p>
                     {% endif %}

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Functional;
 
 use App\Entity\Client;
+use App\Entity\Parametre;
 use App\Entity\Prestation;
 use App\Entity\RecompenseFidelite;
 use App\Entity\Reservation;
@@ -204,7 +205,7 @@ final class CompteFideliteTest extends WebTestCase
         $crawler = $this->pageCoordonnees('Pose complète gel');
         self::assertSelectorTextContains('.fidelite-tunnel', 'Vous avez');
         $formulaire = $crawler->selectButton('Continuer vers l\'acompte')->form();
-        $palier = $this->palier(100);
+        $palier = $this->palier(150);
         $choix = $formulaire['coordonnees[recompense]'];
         self::assertInstanceOf(ChoiceFormField::class, $choix);
         $choix->select((string) $palier->getId());
@@ -214,27 +215,60 @@ final class CompteFideliteTest extends WebTestCase
         $reservation = $this->derniereReservation();
         self::assertSame($emma->getId(), $reservation->getClient()->getId());
         self::assertSame(500, $reservation->getReductionCentimes());
-        self::assertSame(100, $reservation->getPointsUtilises());
+        self::assertSame(150, $reservation->getPointsUtilises());
         self::assertSame(1500, $reservation->getAcompteCentimes(), '30 % de 50 € (55 € − 5 €).');
-        self::assertSame($soldeAvant - 100, $this->solde($emma));
+        self::assertSame($soldeAvant - 150, $this->solde($emma));
 
         $reservation->changerStatut(StatutReservation::EN_ATTENTE, new \DateTimeImmutable());
         static::getContainer()->get(\App\Service\Reservation\ReservationWorkflow::class)->refuser($reservation, 'test');
         self::assertSame($soldeAvant, $this->solde($emma), 'Points rendus au refus.');
     }
 
-    public function testUnPalierNePeutPasDepasserLaMoitieDuPrix(): void
+    public function testUnPalierNePeutPasDepasserLePlafondDuPrix(): void
     {
         $emma = $this->cliente('Emma');
         $this->crediter($emma, 400);
         $this->client->loginUser($this->creerCompteVerifie($emma));
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $em->persist(($em->find(Parametre::class, Parametre::REDUCTION_MAX_POURCENTAGE) ?? new Parametre(Parametre::REDUCTION_MAX_POURCENTAGE, '0'))->setValeur('30'));
+        $em->flush();
 
-        // Semi-permanent à 30 € : 18 € dépasse 50 % du prix, seul 5 € est proposé.
+        // Semi-permanent à 30 €, plafond 30 % : 10 € dépasse 9 €, seul 5 € est proposé. Sans supplément choisi,
+        // les suppléments offerts ne sont pas proposés.
         $crawler = $this->pageCoordonnees('Semi-permanent mains');
 
         $choix = $crawler->filter('input[name="coordonnees[recompense]"]')->each(static fn ($n): string => (string) $n->attr('value'));
-        self::assertContains((string) $this->palier(100)->getId(), $choix);
+        self::assertContains((string) $this->palier(150)->getId(), $choix);
         self::assertNotContains((string) $this->palier(300)->getId(), $choix);
+        self::assertNotContains((string) $this->palier(100)->getId(), $choix);
+        self::assertNotContains((string) $this->palier(400)->getId(), $choix);
+    }
+
+    public function testUnSupplementOffertRemplaceLaReductionVip(): void
+    {
+        $emma = $this->cliente('Emma');
+        $this->crediter($emma, 400);
+        $emma->accorderPrivilege(10, new \DateTimeImmutable());
+        static::getContainer()->get(EntityManagerInterface::class)->flush();
+        $this->client->loginUser($this->creerCompteVerifie($emma));
+        $nailArt = $this->palier(100)->getSupplement();
+        self::assertNotNull($nailArt);
+
+        $crawler = $this->pageCoordonnees('Semi-permanent mains', ['supplement' => $nailArt->getId()]);
+        $formulaire = $crawler->selectButton('Continuer vers l\'acompte')->form();
+        $choix = $formulaire['coordonnees[recompense]'];
+        self::assertInstanceOf(ChoiceFormField::class, $choix);
+        self::assertContains((string) $this->palier(100)->getId(), $choix->availableOptionValues());
+        self::assertNotContains((string) $this->palier(200)->getId(), $choix->availableOptionValues(), 'Autre supplément : non proposé.');
+        $choix->select((string) $this->palier(100)->getId());
+        $this->cocherConditions($formulaire);
+        $this->client->submit($formulaire);
+
+        $reservation = $this->derniereReservation();
+        self::assertSame($nailArt->getId(), $reservation->getSupplement()?->getId());
+        self::assertSame($nailArt->getPrixCentimes(), $reservation->getReductionCentimes(), 'Le prix du supplément est déduit.');
+        self::assertSame(0, $reservation->getRemisePourcentage(), 'Récompense utilisée : pas de réduction VIP en plus.');
+        self::assertSame(100, $reservation->getPointsUtilises());
     }
 
     public function testCreerSonCompteEnReservantRattacheLaNouvelleFiche(): void
@@ -404,9 +438,12 @@ final class CompteFideliteTest extends WebTestCase
         return $user;
     }
 
-    private function pageCoordonnees(string $nomPrestation): \Symfony\Component\DomCrawler\Crawler
+    /**
+     * @param array<string, int|null> $options supplément ou duo choisis
+     */
+    private function pageCoordonnees(string $nomPrestation, array $options = []): \Symfony\Component\DomCrawler\Crawler
     {
-        $crawler = $this->client->request('GET', '/reservation/'.$this->prestation($nomPrestation)->getId());
+        $crawler = $this->client->request('GET', '/reservation/'.$this->prestation($nomPrestation)->getId().([] === $options ? '' : '?'.http_build_query($options)));
 
         return $this->client->click($crawler->filter('a.creneau')->first()->link());
     }

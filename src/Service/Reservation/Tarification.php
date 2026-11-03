@@ -27,7 +27,7 @@ final class Tarification
     /**
      * Prix, majoration et remise d'un rendez-vous.
      *
-     * @param int|null $remiseForcee pourcentage fixé par l'admin (remplace duo et réduction à vie)
+     * @param int|null $remiseForcee pourcentage fixé par l'admin (remplace duo et réduction VIP)
      */
     public function devis(
         Prestation $prestation,
@@ -51,7 +51,7 @@ final class Tarification
     }
 
     /**
-     * Remise automatique : la plus avantageuse entre le duo et la réduction à vie de la cliente (pas de cumul des deux).
+     * Remise automatique : la plus avantageuse entre le duo et la réduction VIP de la cliente (pas de cumul des deux).
      *
      * @return array{0: int, 1: ?string} pourcentage et motif (duo, privilege)
      */

@@ -38,7 +38,7 @@ final class CoordonneesType extends AbstractType
                 'expanded' => true,
                 'choices' => $recompenses,
                 'choice_value' => static fn (?RecompenseFidelite $r): string => null === $r ? '' : (string) $r->getId(),
-                'choice_label' => static fn (RecompenseFidelite $r): string => \sprintf('%s — %d points', $r->getNom(), $r->getSeuilPoints()),
+                'choice_label' => static fn (RecompenseFidelite $r): string => \sprintf('%s — %d points (−%s)', $r->getNom(), $r->getSeuilPoints(), number_format($r->valeurDeduite() / 100, $r->valeurDeduite() % 100 ? 2 : 0, ',', ' ').' €'),
                 'placeholder' => 'Garder mes points pour plus tard',
             ]);
             // Fiche incomplète (prénom, nom ou téléphone manquant ou invalide) : la cliente la complète ici,
@@ -71,7 +71,7 @@ final class CoordonneesType extends AbstractType
             if ($options['avec_compte']) {
                 $builder
                     ->add('creerCompte', CheckboxType::class, [
-                        'label' => 'Créer mon compte gratuit : points de fidélité et réduction à vie',
+                        'label' => 'Créer mon compte gratuit : points de fidélité et statut VIP',
                         'required' => false,
                         'attr' => ['data-action' => 'afficher-si-coche#basculer', 'data-afficher-si-coche-target' => 'case'],
                     ])
