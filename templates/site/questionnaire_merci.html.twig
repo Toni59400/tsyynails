@@ -1,0 +1,31 @@
+{% extends 'layout/public.html.twig' %}
+
+{% block title %}Merci · {{ salon.nom }}{% endblock %}
+
+{% block meta %}
+    {{ parent() }}
+    <meta name="robots" content="noindex">
+{% endblock %}
+
+{% block contenu %}
+    <div class="conteneur page page--texte">
+        <h1>Merci beaucoup !</h1>
+        <p role="status">Vos réponses sont bien enregistrées.</p>
+        {% if points > 0 %}
+            <p>
+                Si vous êtes déjà venue au salon avec cette adresse email, vos <strong>{{ points }} points</strong> sont ajoutés à votre carte
+                et un email vous le confirme (une seule fois par cliente).
+            </p>
+        {% endif %}
+
+        {% if lien_avis_google %}
+            <div class="questionnaire__google">
+                <h2>Envie de partager votre expérience ?</h2>
+                <p>Si vous le souhaitez, un avis sur Google aide d'autres clientes à me découvrir. C'est totalement libre.</p>
+                <a class="bouton" href="{{ lien_avis_google }}" rel="noopener" target="_blank" data-mesure-clic="clic_avis_google" data-mesure-origine="questionnaire">Laisser un avis Google</a>
+            </div>
+        {% endif %}
+
+        <p><a class="bouton bouton--secondaire" href="{{ path('app_accueil') }}">Retour au site</a></p>
+    </div>
+{% endblock %}

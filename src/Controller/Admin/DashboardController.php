@@ -73,6 +73,7 @@ final class DashboardController extends AbstractDashboardController
         yield MenuItem::section('Activité');
         yield MenuItem::linkToRoute('Agenda', 'fa fa-calendar-days', 'admin_agenda_index');
         yield MenuItem::linkToRoute('Nouveau rendez-vous', 'fa fa-calendar-plus', 'admin_rendez_vous_nouveau');
+        yield MenuItem::linkToRoute('Synchroniser mon agenda', 'fa fa-arrows-rotate', 'admin_synchro_agenda_index');
         yield MenuItem::linkTo(ClientCrudController::class, 'Clientes', 'fa fa-users');
 
         yield MenuItem::section('Catalogue');
@@ -85,6 +86,8 @@ final class DashboardController extends AbstractDashboardController
 
         yield MenuItem::section('Fidélité');
         yield MenuItem::linkTo(RecompenseFideliteCrudController::class, 'Paliers de récompenses', 'fa fa-gift');
+        yield MenuItem::linkTo(RetourClienteCrudController::class, 'Questionnaire de satisfaction', 'fa fa-star');
+        yield MenuItem::linkToRoute('Affiche QR avis', 'fa fa-qrcode', 'admin_affiche_avis_index');
         yield MenuItem::linkToRoute('Réglages', 'fa fa-sliders', 'admin_reglages_index');
 
         yield MenuItem::section('Planning');

@@ -139,6 +139,7 @@ final class SiteController extends AbstractController
             'points_par_euro' => $this->parametres->valeur(Parametre::POINTS_PAR_EURO),
             'expiration_mois' => $this->parametres->valeur(Parametre::EXPIRATION_POINTS_MOIS),
             'bonus_inscription' => $this->parametres->valeur(Parametre::BONUS_INSCRIPTION_POINTS),
+            'questionnaire_points' => $this->parametres->valeur(Parametre::QUESTIONNAIRE_POINTS),
             'reduction_max' => $this->parametres->valeur(Parametre::REDUCTION_MAX_POURCENTAGE),
             'fidele_visites' => $this->parametres->valeur(Parametre::FIDELE_VISITES),
             'parrainage_marraine' => $this->parametres->valeur(Parametre::PARRAINAGE_POINTS_MARRAINE),

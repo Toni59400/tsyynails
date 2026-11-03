@@ -1738,3 +1738,21 @@ a.jour:hover {
     margin-top: 0.15rem;
     accent-color: var(--color-primary-ink);
 }
+
+/* Questionnaire de satisfaction (QR code du salon) */
+.questionnaire__intro {
+    font-size: 1.05rem;
+}
+
+.questionnaire__google {
+    margin: calc(var(--space) * 3) 0;
+    padding: calc(var(--space) * 2.5);
+    border-radius: var(--radius);
+    background: var(--color-noir);
+    color: var(--color-ivoire);
+}
+
+.questionnaire__google h2 {
+    margin-top: 0;
+    color: var(--color-or-clair);
+}

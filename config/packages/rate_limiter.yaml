@@ -11,6 +11,11 @@ framework:
             policy: sliding_window
             limit: 5
             interval: '1 hour'
+        # Questionnaire de satisfaction (QR code du salon) : un robot ne doit pas remplir les réponses.
+        questionnaire:
+            policy: sliding_window
+            limit: 5
+            interval: '1 hour'
 
 when@test:
     framework:
@@ -22,6 +27,11 @@ when@test:
                 # Compteur en mémoire : chaque test repart de zéro.
                 cache_pool: cache.limiteur_test
             compte_email:
+                policy: sliding_window
+                limit: 5
+                interval: '1 hour'
+                cache_pool: cache.limiteur_test
+            questionnaire:
                 policy: sliding_window
                 limit: 5
                 interval: '1 hour'

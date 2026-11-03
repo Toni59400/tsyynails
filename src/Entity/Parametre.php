@@ -27,6 +27,8 @@ class Parametre
     public const EXPIRATION_POINTS_MOIS = 'fidelite.expiration_mois';
     /** Points offerts à la création d'un compte (email vérifié). */
     public const BONUS_INSCRIPTION_POINTS = 'fidelite.bonus_inscription';
+    /** Points offerts pour le questionnaire de satisfaction (QR code du salon), une fois par cliente. */
+    public const QUESTIONNAIRE_POINTS = 'fidelite.points_questionnaire';
     /** Une récompense ne peut pas dépasser ce pourcentage du prix de la prestation. */
     public const REDUCTION_MAX_POURCENTAGE = 'fidelite.reduction_max_pourcentage';
     /** Nombre de visites sur 12 mois pour obtenir le statut « Cliente fidèle ». */
@@ -76,6 +78,7 @@ class Parametre
         self::POINTS_PAR_EURO => ['Points par euro payé', 'Crédités quand le rendez-vous est honoré, sur le prix payé après réduction.', 1, 0, 10],
         self::EXPIRATION_POINTS_MOIS => ['Expiration des points (mois sans visite)', 'Un email prévient la cliente 30 jours avant.', 12, 1, 60],
         self::BONUS_INSCRIPTION_POINTS => ['Bonus à la création du compte (points)', 'Offert une seule fois, après vérification de l\'email.', 20, 0, 500],
+        self::QUESTIONNAIRE_POINTS => ['Questionnaire de satisfaction (points)', 'Offerts une seule fois par cliente déjà venue au salon, quand elle répond au questionnaire de l\'affiche QR code. Jamais en échange d\'un avis Google (interdit par Google). 0 = sans points.', 10, 0, 100],
         self::REDUCTION_MAX_POURCENTAGE => ['Récompense maximale (% du prix)', 'Une récompense en ligne ne peut pas dépasser cette part du prix.', 50, 0, 100],
         self::FIDELE_VISITES => ['Statut « Cliente fidèle » (visites sur 12 mois)', 'Visites honorées nécessaires pour obtenir le statut.', 8, 1, 52],
         self::HORIZON_FIDELE_JOURS => ['Réservation à l\'avance pour les fidèles (jours)', 'Les autres clientes réservent jusqu\'à 28 jours à l\'avance.', 56, 28, 180],

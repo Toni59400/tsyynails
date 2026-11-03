@@ -8,6 +8,7 @@ use App\Entity\Client;
 use App\Enum\StatutReservation;
 use App\Repository\ClientRepository;
 use App\Repository\ReservationRepository;
+use App\Repository\RetourClienteRepository;
 use App\Repository\UserRepository;
 use App\Service\Compte\NotificationsCompte;
 use Doctrine\ORM\EntityManagerInterface;
@@ -24,7 +25,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  * - fiche cliente sans activité depuis 3 ans (rendez-vous, réservation, connexion) : anonymisée,
  *   compte supprimé ; les réservations restent pour la comptabilité, sans identité ;
  * - compte en ligne : email d'avertissement 30 jours avant ;
- * - compte jamais confirmé : supprimé après 30 jours.
+ * - compte jamais confirmé : supprimé après 30 jours ;
+ * - réponses au questionnaire de satisfaction : supprimées après 3 ans.
  * Idempotente ; jamais de suppression si un rendez-vous est encore à venir.
  */
 #[AsCommand(name: 'app:rgpd:purger', description: 'Anonymise les fiches et supprime les comptes inactifs (durées de conservation RGPD)')]
@@ -38,6 +40,7 @@ final class PurgerDonneesCommand extends Command
         private readonly ClientRepository $clientes,
         private readonly UserRepository $users,
         private readonly ReservationRepository $reservations,
+        private readonly RetourClienteRepository $retours,
         private readonly NotificationsCompte $notifications,
         private readonly EntityManagerInterface $entityManager,
         private readonly ClockInterface $clock,
@@ -52,7 +55,7 @@ final class PurgerDonneesCommand extends Command
         $limite = $maintenant->modify(self::INACTIVITE);
         $limiteAvertissement = $limite->modify(\sprintf('+%d days', self::PREAVIS_JOURS));
         $dernieresReservations = $this->reservations->dernieresDemandesParClient();
-        $compteurs = ['anonymisees' => 0, 'avertissements' => 0, 'comptes_non_confirmes' => 0, 'comptes_sans_fiche' => 0];
+        $compteurs = ['anonymisees' => 0, 'avertissements' => 0, 'comptes_non_confirmes' => 0, 'comptes_sans_fiche' => 0, 'questionnaires' => 0];
 
         // 1. Fiches (et leur compte) sans activité depuis 3 ans
         foreach ($this->clientes->findBy(['anonymiseAt' => null]) as $client) {
@@ -95,10 +98,13 @@ final class PurgerDonneesCommand extends Command
         }
         $this->entityManager->flush();
 
+        // 3. Réponses au questionnaire de satisfaction de plus de 3 ans
+        $compteurs['questionnaires'] = $this->retours->supprimerAvant($limite);
+
         // Aucune donnée personnelle dans les journaux : uniquement des nombres.
         $this->logger->notice('Purge RGPD terminée.', $compteurs);
         (new SymfonyStyle($input, $output))->success(\sprintf(
-            '%d fiche(s) anonymisée(s), %d avertissement(s), %d compte(s) non confirmé(s) et %d compte(s) sans fiche supprimé(s).',
+            '%d fiche(s) anonymisée(s), %d avertissement(s), %d compte(s) non confirmé(s), %d compte(s) sans fiche et %d réponse(s) au questionnaire supprimé(s).',
             ...array_values($compteurs),
         ));
 

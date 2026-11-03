@@ -20,6 +20,8 @@ enum MotifMouvementPoints: string
     case EXPIRATION = 'expiration';
     /** Parrainage : marraine et filleule, au premier rendez-vous honoré de la filleule. */
     case PARRAINAGE = 'parrainage';
+    /** Questionnaire de satisfaction (QR code du salon), une seule fois par cliente. */
+    case QUESTIONNAIRE = 'questionnaire';
 
     public function libelle(): string
     {
@@ -31,6 +33,7 @@ enum MotifMouvementPoints: string
             self::INSCRIPTION => 'Bienvenue',
             self::EXPIRATION => 'Expiration',
             self::PARRAINAGE => 'Parrainage',
+            self::QUESTIONNAIRE => 'Questionnaire',
         };
     }
 }

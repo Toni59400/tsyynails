@@ -86,7 +86,7 @@ class MouvementPointsRepository extends ServiceEntityRepository
             ->select('IDENTITY(m.client) AS client', 'MAX(m.createdAt) AS dernier')
             ->andWhere('m.delta > 0')
             ->andWhere('m.motif IN (:gains)')
-            ->setParameter('gains', [MotifMouvementPoints::VISITE, MotifMouvementPoints::INSCRIPTION, MotifMouvementPoints::CORRECTION, MotifMouvementPoints::PARRAINAGE])
+            ->setParameter('gains', [MotifMouvementPoints::VISITE, MotifMouvementPoints::INSCRIPTION, MotifMouvementPoints::CORRECTION, MotifMouvementPoints::PARRAINAGE, MotifMouvementPoints::QUESTIONNAIRE])
             ->groupBy('m.client');
         if (null !== $client) {
             $requete->andWhere('m.client = :client')->setParameter('client', $client);
@@ -103,8 +103,8 @@ class MouvementPointsRepository extends ServiceEntityRepository
     }
 
     /**
-     * Points gagnés au total depuis toujours, par cliente (statut VIP) : rendez-vous, bienvenue, parrainage
-     * et corrections de l'admin. Les points utilisés ou expirés ne font pas baisser ce cumul.
+     * Points gagnés au total depuis toujours, par cliente (statut VIP) : rendez-vous, bienvenue, parrainage,
+     * questionnaire et corrections de l'admin. Les points utilisés ou expirés ne font pas baisser ce cumul.
      *
      * @return array<int, int>
      */
@@ -113,7 +113,7 @@ class MouvementPointsRepository extends ServiceEntityRepository
         $requete = $this->createQueryBuilder('m')
             ->select('IDENTITY(m.client) AS client', 'SUM(m.delta) AS points')
             ->andWhere('m.motif IN (:gains)')
-            ->setParameter('gains', [MotifMouvementPoints::VISITE, MotifMouvementPoints::INSCRIPTION, MotifMouvementPoints::PARRAINAGE, MotifMouvementPoints::CORRECTION])
+            ->setParameter('gains', [MotifMouvementPoints::VISITE, MotifMouvementPoints::INSCRIPTION, MotifMouvementPoints::PARRAINAGE, MotifMouvementPoints::CORRECTION, MotifMouvementPoints::QUESTIONNAIRE])
             ->groupBy('m.client');
         if (null !== $client) {
             $requete->andWhere('m.client = :client')->setParameter('client', $client);

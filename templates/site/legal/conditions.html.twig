@@ -71,6 +71,13 @@
             {% if bonus_inscription > 0 %}
                 <li>{{ bonus_inscription }} points de bienvenue sont offerts une seule fois, à la confirmation de l'email.</li>
             {% endif %}
+            {% if questionnaire_points > 0 %}
+                <li>
+                    {{ questionnaire_points }} points sont offerts une seule fois par cliente déjà venue au salon, pour une réponse
+                    au questionnaire de satisfaction (QR code affiché au salon), avec l'email utilisé pour ses rendez-vous.
+                    Ces points remercient la réponse au questionnaire, quelle qu'elle soit ; ils ne sont jamais liés à un avis publié en ligne.
+                </li>
+            {% endif %}
             <li>Récompenses disponibles :
                 <ul>
                     {% for palier in paliers %}

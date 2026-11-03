@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Entity\Client;
+use App\Enum\StatutReservation;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -16,6 +17,27 @@ class ClientRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Client::class);
+    }
+
+    /**
+     * Cliente déjà venue au salon (au moins un rendez-vous honoré) dont la fiche ou le compte porte cet email.
+     */
+    public function findVenueParEmail(string $email): ?Client
+    {
+        /** @var list<Client> $clientes */
+        $clientes = $this->createQueryBuilder('c')
+            ->leftJoin('c.user', 'u')
+            ->andWhere('c.email = :email OR u.email = :email')
+            ->andWhere('c.anonymiseAt IS NULL')
+            ->andWhere('EXISTS (SELECT 1 FROM App\Entity\Reservation r WHERE r.client = c AND r.statut = :honoree)')
+            ->setParameter('email', mb_strtolower(trim($email)))
+            ->setParameter('honoree', StatutReservation::HONOREE)
+            ->orderBy('c.derniereVisiteAt', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getResult();
+
+        return $clientes[0] ?? null;
     }
 
     /**

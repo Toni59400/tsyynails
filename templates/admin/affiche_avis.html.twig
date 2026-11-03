@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <title>Affiche QR avis · {{ salon.nom }}</title>
+    <link rel="stylesheet" href="{{ asset('styles/affiche.css') }}">
+</head>
+<body class="affiche-page">
+    <div class="affiche-outils">
+        <p><strong>Affiche A4 à imprimer.</strong> Imprimez avec Ctrl + P (ou ⌘ + P), format A4, marges « aucune », graphiques d'arrière-plan activés.
+            Vous pouvez aussi choisir « Enregistrer en PDF ».</p>
+        <p><a href="{{ path('admin_retour_cliente_index') }}">← Retour aux réponses du questionnaire</a></p>
+    </div>
+
+    <main class="affiche">
+        <header class="affiche__entete">
+            <img class="affiche__logo" src="{{ asset('images/logo-email.png') }}" alt="{{ salon.nom }}">
+        </header>
+
+        <section class="affiche__coeur">
+            <p class="affiche__surtitre">Votre avis compte</p>
+            <h1 class="affiche__titre">Comment s'est passé<br>votre rendez-vous ?</h1>
+            <p class="affiche__texte">Trois questions, une minute.<br>Vos retours m'aident à faire toujours mieux.</p>
+
+            <div class="affiche__qr">
+                <img src="{{ qr_code }}" alt="QR code vers le questionnaire" width="260" height="260">
+            </div>
+
+            {% if points > 0 %}
+                <p class="affiche__cadeau"><span class="affiche__points">+{{ points }} points</span> fidélité offerts pour vous remercier</p>
+            {% endif %}
+        </section>
+
+        <ol class="affiche__etapes">
+            <li><span>1</span>Scannez le QR code</li>
+            <li><span>2</span>Répondez aux 3 questions</li>
+            <li><span>3</span>{% if points > 0 %}{{ points }} points sur votre carte{% else %}Merci !{% endif %}</li>
+        </ol>
+
+        <footer class="affiche__pied">
+            <p>{{ lien|replace({'https://': '', 'http://': ''}) }}</p>
+            {% if points > 0 %}<p class="affiche__mention">Une fois par cliente, avec l'email utilisé pour vos rendez-vous.</p>{% endif %}
+        </footer>
+    </main>
+</body>
+</html>

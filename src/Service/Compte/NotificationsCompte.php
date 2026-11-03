@@ -95,6 +95,20 @@ final class NotificationsCompte
         ]);
     }
 
+    /** Merci pour le questionnaire de satisfaction : points ajoutés à la carte. */
+    public function pointsQuestionnaire(Client $client, int $points): void
+    {
+        $email = $client->getUser()?->getEmail() ?? $client->getEmail();
+        if (null === $email) {
+            return;
+        }
+
+        $this->envoyer($email, \sprintf('Merci pour votre avis : %d points offerts', $points), 'emails/compte/points_questionnaire.html.twig', [
+            'client' => $client,
+            'points' => $points,
+        ]);
+    }
+
     /**
      * @param array<string, mixed> $contexte
      */

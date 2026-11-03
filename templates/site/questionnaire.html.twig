@@ -1,0 +1,55 @@
+{% extends 'layout/public.html.twig' %}
+
+{% block title %}Votre avis · {{ salon.nom }}{% endblock %}
+
+{% block meta %}
+    {{ parent() }}
+    <meta name="robots" content="noindex">
+{% endblock %}
+
+{% block contenu %}
+    <div class="conteneur page page--texte">
+        <h1>Votre avis compte</h1>
+        <p class="questionnaire__intro">
+            Trois questions, une minute : vos retours m'aident à faire toujours mieux.
+            {% if points > 0 %}
+                Pour vous remercier, <strong>{{ points }} points de fidélité</strong> sont ajoutés à votre carte (une fois par cliente).
+            {% endif %}
+        </p>
+
+        {{ form_start(formulaire, {attr: {class: 'formulaire questionnaire', novalidate: 'novalidate'}}) }}
+            {% if not formulaire.vars.valid %}
+                <div class="alerte alerte--erreur" role="alert">Vérifiez les réponses signalées ci-dessous.</div>
+            {% endif %}
+
+            {% for groupe in [formulaire.note, formulaire.recommande] %}
+                <fieldset class="champ choix-paiement{{ groupe.vars.valid ? '' : ' champ--erreur' }}">
+                    <legend class="choix-paiement__titre">{{ groupe.vars.label }}</legend>
+                    {% for choix in groupe %}
+                        <div class="choix-paiement__option">
+                            {{ form_widget(choix) }}
+                            {{ form_label(choix) }}
+                        </div>
+                    {% endfor %}
+                    {{ form_errors(groupe) }}
+                </fieldset>
+            {% endfor %}
+
+            {% for champ in [formulaire.commentaire, formulaire.email] %}
+                <div class="champ{{ champ.vars.valid ? '' : ' champ--erreur' }}">
+                    {{ form_label(champ) }}
+                    {{ form_widget(champ) }}
+                    {{ form_help(champ) }}
+                    {{ form_errors(champ) }}
+                </div>
+            {% endfor %}
+
+            <p class="formulaire__note">
+                Votre email n'est pas conservé avec votre réponse : il sert uniquement à retrouver votre carte de fidélité.
+                <a href="{{ path('app_confidentialite') }}">Politique de confidentialité</a>.
+            </p>
+
+            <button type="submit" class="bouton">Envoyer mes réponses</button>
+        {{ form_end(formulaire) }}
+    </div>
+{% endblock %}

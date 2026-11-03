@@ -7,6 +7,7 @@ namespace App\Service\Compte;
 use App\Entity\CarteFidelite;
 use App\Entity\Client;
 use App\Entity\MouvementPoints;
+use App\Entity\RetourCliente;
 use App\Enum\StatutReservation;
 use App\Repository\ReservationRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -54,6 +55,9 @@ final class SuppressionCliente
             $carte->desactiver();
         }
         $this->entityManager->createQuery('UPDATE App\Entity\CarteFidelite c SET c.client = NULL WHERE c.client = :c')->setParameter('c', $client)->execute();
+
+        // Réponses au questionnaire de satisfaction : supprimées avec la cliente (le commentaire peut l'identifier).
+        $this->entityManager->createQuery('DELETE FROM '.RetourCliente::class.' r WHERE r.client = :c')->setParameter('c', $client)->execute();
 
         $id = $client->getId();
         $definitive = [] === $reservations;
