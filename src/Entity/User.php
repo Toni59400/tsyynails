@@ -63,6 +63,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TwoFact
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $emailVerifieAt = null;
 
+    /** Jeton secret du lien d'abonnement à l'agenda (flux iCal), admin seulement ; null = synchronisation désactivée. */
+    #[ORM\Column(length: 64, unique: true, nullable: true)]
+    private ?string $jetonAgenda = null;
+
     public function __construct(string $email)
     {
         $this->email = mb_strtolower(trim($email));
@@ -199,6 +203,22 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, TwoFact
     public function isEmailVerifie(): bool
     {
         return null !== $this->emailVerifieAt;
+    }
+
+    public function getJetonAgenda(): ?string
+    {
+        return $this->jetonAgenda;
+    }
+
+    /** Nouveau lien d'abonnement : l'ancien cesse aussitôt de fonctionner. */
+    public function regenererJetonAgenda(): string
+    {
+        return $this->jetonAgenda = bin2hex(random_bytes(32));
+    }
+
+    public function desactiverJetonAgenda(): void
+    {
+        $this->jetonAgenda = null;
     }
 
     public function verifierEmail(\DateTimeImmutable $at): void

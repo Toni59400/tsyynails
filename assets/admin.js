@@ -105,3 +105,21 @@ document.addEventListener('change', (evenement) => {
         basculerBlocs(conteneur);
     }
 });
+
+// Boutons dont l'action se confirme (un formulaire peut en avoir plusieurs) et bouton « Copier » d'un champ.
+document.addEventListener('click', (evenement) => {
+    const confirmer = evenement.target.closest?.('[data-confirmer]');
+    if (confirmer && !window.confirm(confirmer.dataset.confirmer)) {
+        evenement.preventDefault();
+        return;
+    }
+
+    const copier = evenement.target.closest?.('[data-copier]');
+    const champ = copier ? document.querySelector(copier.dataset.copier) : null;
+    if (champ) {
+        champ.select();
+        navigator.clipboard?.writeText(champ.value).then(() => {
+            copier.textContent = 'Copié ✓';
+        }, () => {});
+    }
+});
