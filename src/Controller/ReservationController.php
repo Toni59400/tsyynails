@@ -121,6 +121,7 @@ final class ReservationController extends AbstractController
             'duo' => $duo,
             'reconstruction' => $reconstruction,
             'choix_reconstruction' => $this->tarification->choixReconstruction(),
+            'grille_reconstruction' => $this->tarification->grilleReconstruction(),
             'parametres_choix' => self::parametresChoix($supplement, $duo, $reconstruction),
             'heure_majoration' => $this->tarification->heureMajoration(),
             'majoration' => $this->tarification->majorationCentimes(new \DateTimeImmutable('today 23:00')),

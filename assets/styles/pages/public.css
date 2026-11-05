@@ -1788,3 +1788,7 @@ a.jour:hover {
     outline: none;
     box-shadow: var(--focus-ring);
 }
+
+.options-resa__degressif strong {
+    color: var(--color-primary-ink);
+}

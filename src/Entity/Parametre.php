@@ -57,6 +57,14 @@ class Parametre
     public const RECONSTRUCTION_ACTIVE = 'reconstruction.active';
     /** Prix de la reconstruction, en euros par ongle. */
     public const RECONSTRUCTION_PRIX_ONGLE = 'reconstruction.prix_ongle';
+    /** Tarif dégressif : à partir de ce numéro d'ongle, prix du 2e palier (0 = pas de tarif dégressif). */
+    public const RECONSTRUCTION_PALIER2_DES = 'reconstruction.palier2_des';
+    /** Prix par ongle du 2e palier, en euros. */
+    public const RECONSTRUCTION_PALIER2_PRIX = 'reconstruction.palier2_prix';
+    /** Tarif dégressif : à partir de ce numéro d'ongle, prix du 3e palier (0 = pas de 3e palier). */
+    public const RECONSTRUCTION_PALIER3_DES = 'reconstruction.palier3_des';
+    /** Prix par ongle du 3e palier, en euros. */
+    public const RECONSTRUCTION_PALIER3_PRIX = 'reconstruction.palier3_prix';
     /** Durée ajoutée au rendez-vous, en minutes par ongle. */
     public const RECONSTRUCTION_MINUTES_ONGLE = 'reconstruction.minutes_ongle';
     /** Nombre maximum d'ongles à reconstruire choisi en ligne. */
@@ -98,7 +106,11 @@ class Parametre
         self::DUO_ACTIF => ['Proposer le RDV duo', 'Affiche l\'offre « RDV duo » (deux personnes à la suite) dans les prestations et la réservation en ligne.', 0, 0, 1],
         self::DUO_REDUCTION_POURCENTAGE => ['RDV duo : réduction (%)', 'Sur le prix total des prestations du duo (hors majoration du soir).', 10, 0, 50],
         self::RECONSTRUCTION_ACTIVE => ['Proposer la reconstruction d\'ongles', 'En réservant en ligne, la cliente peut ajouter une reconstruction et choisir le nombre d\'ongles : le prix et la durée du rendez-vous s\'ajustent.', 0, 0, 1],
-        self::RECONSTRUCTION_PRIX_ONGLE => ['Reconstruction : prix par ongle (euros)', 'Multiplié par le nombre d\'ongles choisi. La remise duo ou VIP s\'applique aussi sur ce montant.', 5, 0, 50],
+        self::RECONSTRUCTION_PRIX_ONGLE => ['Reconstruction : prix par ongle (euros)', 'Prix normal de chaque ongle (les premiers, si un tarif dégressif est réglé ci-dessous). Multiplié par le nombre d\'ongles choisi. La remise duo ou VIP s\'applique aussi sur ce montant.', 5, 0, 50],
+        self::RECONSTRUCTION_PALIER2_DES => ['Reconstruction dégressive : 2e tarif à partir du … ongle', 'Ex. 4 : à partir du 4e ongle, chaque ongle coûte le 2e tarif (les premiers gardent le prix normal). 0 = pas de tarif dégressif.', 4, 0, 10],
+        self::RECONSTRUCTION_PALIER2_PRIX => ['Reconstruction dégressive : 2e tarif par ongle (euros)', 'Prix de chaque ongle à partir du seuil ci-dessus.', 4, 0, 50],
+        self::RECONSTRUCTION_PALIER3_DES => ['Reconstruction dégressive : 3e tarif à partir du … ongle', 'Ex. 7 : à partir du 7e ongle, chaque ongle coûte le 3e tarif. Doit être après le seuil du 2e tarif. 0 = pas de 3e tarif.', 7, 0, 10],
+        self::RECONSTRUCTION_PALIER3_PRIX => ['Reconstruction dégressive : 3e tarif par ongle (euros)', 'Prix de chaque ongle à partir du seuil ci-dessus.', 3, 0, 50],
         self::RECONSTRUCTION_MINUTES_ONGLE => ['Reconstruction : durée par ongle (minutes)', 'Ajoutée à la durée du rendez-vous, pour ne proposer que les créneaux assez longs.', 10, 0, 60],
         self::RECONSTRUCTION_MAX_ONGLES => ['Reconstruction : nombre maximum d\'ongles', 'Au-delà, la cliente vous appelle (ou choisit une pose complète).', 10, 1, 10],
         self::PRIVILEGE_SEUIL_POINTS => ['Statut VIP : points cumulés pour le débloquer', 'Total des points gagnés depuis toujours (rendez-vous, bienvenue, parrainage, corrections), même s\'ils ont été utilisés. 0 = désactivé.', 480, 0, 5000],

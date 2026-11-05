@@ -52,6 +52,14 @@
                     <div class="options-resa__reconstruction">
                         <label class="options-resa__titre" for="ongles">Des ongles à reconstruire ?</label>
                         <p class="options-resa__aide">Ongle cassé ou abîmé : indiquez combien d'ongles reconstruire, le temps est prévu dans votre rendez-vous.</p>
+                        {% if grille_reconstruction|length > 1 %}
+                            <p class="options-resa__aide options-resa__degressif">
+                                <strong>Tarif dégressif :</strong>
+                                {% for tranche in grille_reconstruction -%}
+                                    {{ tranche.prix_centimes|euros }} l'ongle{% if loop.first %}{% else %} dès le {{ tranche.des }}<sup>e</sup>{% endif %}{{ loop.last ? '.' : ', ' }}
+                                {%- endfor %}
+                            </p>
+                        {% endif %}
                         <select id="ongles" name="ongles" data-action="envoi-auto#envoyer">
                             <option value="0">Aucune reconstruction</option>
                             {% for r in choix_reconstruction %}

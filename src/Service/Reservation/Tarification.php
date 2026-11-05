@@ -67,11 +67,44 @@ final class Tarification
             return null;
         }
 
+        // Tarif dégressif par tranches : chaque ongle est payé au prix de la tranche où il tombe
+        // (ex. 5 € les 3 premiers, 4 € du 4e au 6e, 3 € ensuite) : le total augmente toujours, le prix moyen baisse.
+        $prix = 0;
+        $grille = $this->grilleReconstruction();
+        for ($numero = 1; $numero <= $ongles; ++$numero) {
+            $prixOngle = 0;
+            foreach ($grille as $tranche) {
+                if ($numero >= $tranche['des']) {
+                    $prixOngle = $tranche['prix_centimes'];
+                }
+            }
+            $prix += $prixOngle;
+        }
+
         return new Reconstruction(
             $ongles,
-            $ongles * $this->parametres->valeur(Parametre::RECONSTRUCTION_PRIX_ONGLE) * 100,
+            $prix,
             $ongles * $this->parametres->valeur(Parametre::RECONSTRUCTION_MINUTES_ONGLE),
         );
+    }
+
+    /**
+     * Tranches du tarif de reconstruction, dans l'ordre : à partir de quel ongle, et à quel prix.
+     * Un palier à 0 (ou pas après le précédent) est ignoré.
+     *
+     * @return list<array{des: int, prix_centimes: int}>
+     */
+    public function grilleReconstruction(): array
+    {
+        $grille = [['des' => 1, 'prix_centimes' => $this->parametres->valeur(Parametre::RECONSTRUCTION_PRIX_ONGLE) * 100]];
+        foreach ([[Parametre::RECONSTRUCTION_PALIER2_DES, Parametre::RECONSTRUCTION_PALIER2_PRIX], [Parametre::RECONSTRUCTION_PALIER3_DES, Parametre::RECONSTRUCTION_PALIER3_PRIX]] as [$cleDes, $clePrix]) {
+            $des = $this->parametres->valeur($cleDes);
+            if ($des > end($grille)['des']) {
+                $grille[] = ['des' => $des, 'prix_centimes' => $this->parametres->valeur($clePrix) * 100];
+            }
+        }
+
+        return $grille;
     }
 
     /**

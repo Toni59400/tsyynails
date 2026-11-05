@@ -11,6 +11,7 @@ use App\Enum\StatutReservation;
 use App\Repository\PrestationRepository;
 use App\Repository\ReservationRepository;
 use App\Service\Reservation\ReservationWorkflow;
+use App\Service\Reservation\Tarification;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -83,6 +84,30 @@ final class ReconstructionOnglesTest extends WebTestCase
         self::assertSame(3, $reservation->getReconstructionOngles());
         self::assertSame(4500, $reservation->getPrixCentimes());
         self::assertSame(90, $this->dureeMinutes($reservation));
+    }
+
+    public function testLeTarifEstDegressifParTranches(): void
+    {
+        $this->regler([
+            Parametre::RECONSTRUCTION_ACTIVE => 1, Parametre::RECONSTRUCTION_PRIX_ONGLE => 5, Parametre::RECONSTRUCTION_MAX_ONGLES => 10,
+            Parametre::RECONSTRUCTION_PALIER2_DES => 4, Parametre::RECONSTRUCTION_PALIER2_PRIX => 4,
+            Parametre::RECONSTRUCTION_PALIER3_DES => 7, Parametre::RECONSTRUCTION_PALIER3_PRIX => 3,
+        ]);
+        $tarification = static::getContainer()->get(Tarification::class);
+        $prix = static fn (int $ongles): ?int => $tarification->reconstruction($ongles)?->prixCentimes;
+
+        // 5 € les 3 premiers, 4 € du 4e au 6e, 3 € à partir du 7e.
+        self::assertSame([500, 1500, 1900, 2700, 3000, 3900], [$prix(1), $prix(3), $prix(4), $prix(6), $prix(7), $prix(10)]);
+
+        $this->client->request('GET', '/reservation/'.$this->prestation('Semi-permanent mains')->getId());
+        self::assertSelectorTextContains('.options-resa__degressif', 'Tarif dégressif');
+        self::assertSelectorTextContains('.options-resa__degressif', 'dès le 7');
+
+        // 3e palier pas après le 2e : ignoré. Sans 2e palier : prix unique.
+        $this->regler([Parametre::RECONSTRUCTION_PALIER3_DES => 3]);
+        self::assertCount(2, $tarification->grilleReconstruction());
+        $this->regler([Parametre::RECONSTRUCTION_PALIER2_DES => 0, Parametre::RECONSTRUCTION_PALIER3_DES => 0]);
+        self::assertSame(5000, $prix(10));
     }
 
     public function testUnNombreDOnglesHorsLimitesEstRefuse(): void
