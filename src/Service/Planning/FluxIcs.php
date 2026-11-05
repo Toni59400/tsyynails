@@ -79,6 +79,9 @@ final class FluxIcs
         if (null !== $reservation->getSupplementNom()) {
             $titre .= ' + '.$reservation->getSupplementNom();
         }
+        if ($reservation->getReconstructionOngles() > 0) {
+            $titre .= ' + reconstruction '.$reservation->getReconstructionOngles().' ongle'.($reservation->getReconstructionOngles() > 1 ? 's' : '');
+        }
         $statut = $reservation->getStatut();
         if (StatutReservation::EN_ATTENTE === $statut) {
             $titre = 'À valider · '.$titre;

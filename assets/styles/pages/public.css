@@ -1756,3 +1756,35 @@ a.jour:hover {
     margin-top: 0;
     color: var(--color-or-clair);
 }
+
+/* Reconstruction d'ongles : nombre d'ongles choisi avant le créneau */
+.options-resa__reconstruction {
+    margin-top: calc(var(--space) * 2.5);
+}
+
+.options-resa__reconstruction .options-resa__titre {
+    display: block;
+}
+
+.options-resa__aide {
+    margin: 0 0 var(--space);
+    color: var(--color-muted);
+    font-size: 0.95rem;
+}
+
+.options-resa__reconstruction select {
+    width: 100%;
+    max-width: 28rem;
+    min-height: 44px;
+    padding: var(--space) calc(var(--space) * 1.5);
+    border: 1px solid var(--color-muted);
+    border-radius: calc(var(--radius) / 2);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
+}
+
+.options-resa__reconstruction select:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+}

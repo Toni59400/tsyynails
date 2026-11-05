@@ -6,6 +6,7 @@ namespace App\Entity;
 
 use App\Enum\StatutReservation;
 use App\Repository\ReservationRepository;
+use App\Service\Reservation\Reconstruction;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -54,6 +55,16 @@ class Reservation
 
     #[ORM\Column]
     private int $supplementPrixCentimes = 0;
+
+    /** Reconstruction d'ongles choisie en ligne (0 = aucune) ; prix et durée totaux copiés à la réservation. */
+    #[ORM\Column]
+    private int $reconstructionOngles = 0;
+
+    #[ORM\Column]
+    private int $reconstructionPrixCentimes = 0;
+
+    #[ORM\Column]
+    private int $reconstructionMinutes = 0;
 
     /** RDV duo : prestation de la deuxième personne, enchaînée après la première. */
     #[ORM\ManyToOne]
@@ -165,12 +176,13 @@ class Reservation
         int $majorationCentimes = 0,
         int $remisePourcentage = 0,
         ?string $remiseMotif = null,
+        ?Reconstruction $reconstruction = null,
     ) {
         $this->client = $client;
         $this->acompteCentimes = $acompteCentimes;
         $this->reductionCentimes = $reductionCentimes;
         $this->pointsUtilises = $pointsUtilises;
-        $this->appliquerTarif($prestation, $debut, $supplement, $prestationDuo, $majorationCentimes, $remisePourcentage, $remiseMotif);
+        $this->appliquerTarif($prestation, $debut, $supplement, $prestationDuo, $majorationCentimes, $remisePourcentage, $remiseMotif, $reconstruction);
         $this->createdAt = new \DateTimeImmutable();
         $this->jetonSuivi = rtrim(strtr(base64_encode(random_bytes(16)), '+/', '-_'), '=');
     }
@@ -188,11 +200,12 @@ class Reservation
         int $majorationCentimes = 0,
         int $remisePourcentage = 0,
         ?string $remiseMotif = null,
+        ?Reconstruction $reconstruction = null,
     ): void {
         if ($majorationCentimes < 0 || $remisePourcentage < 0 || $remisePourcentage > 100) {
             throw new \InvalidArgumentException('Majoration ou remise invalide.');
         }
-        $base = $prestation->getPrixCentimes() + ($prestationDuo?->getPrixCentimes() ?? 0) + ($supplement?->getPrixCentimes() ?? 0);
+        $base = $prestation->getPrixCentimes() + ($prestationDuo?->getPrixCentimes() ?? 0) + ($supplement?->getPrixCentimes() ?? 0) + ($reconstruction->prixCentimes ?? 0);
         $remise = self::calculerRemise($base, $remisePourcentage);
         $prix = $base + $majorationCentimes;
         if ($this->reductionCentimes < 0 || $this->reductionCentimes > $prix - $remise) {
@@ -204,7 +217,10 @@ class Reservation
 
         $this->prestation = $prestation;
         $this->debut = $debut;
-        $this->fin = $debut->modify(\sprintf('+%d minutes', $prestation->getDureeMinutes() + ($prestationDuo?->getDureeMinutes() ?? 0) + ($supplement?->getDureeMinutes() ?? 0)));
+        $this->fin = $debut->modify(\sprintf('+%d minutes', $prestation->getDureeMinutes() + ($prestationDuo?->getDureeMinutes() ?? 0) + ($supplement?->getDureeMinutes() ?? 0) + ($reconstruction->minutes ?? 0)));
+        $this->reconstructionOngles = $reconstruction->ongles ?? 0;
+        $this->reconstructionPrixCentimes = $reconstruction->prixCentimes ?? 0;
+        $this->reconstructionMinutes = $reconstruction->minutes ?? 0;
         $this->prixCentimes = $prix;
         $this->supplement = $supplement;
         $this->supplementNom = $supplement?->getNom();
@@ -410,6 +426,21 @@ class Reservation
     public function getSupplementPrixCentimes(): int
     {
         return $this->supplementPrixCentimes;
+    }
+
+    public function getReconstructionOngles(): int
+    {
+        return $this->reconstructionOngles;
+    }
+
+    public function getReconstructionPrixCentimes(): int
+    {
+        return $this->reconstructionPrixCentimes;
+    }
+
+    public function getReconstructionMinutes(): int
+    {
+        return $this->reconstructionMinutes;
     }
 
     public function getFin(): \DateTimeImmutable

@@ -53,6 +53,14 @@ class Parametre
     public const DUO_ACTIF = 'duo.actif';
     /** Réduction du RDV duo, en % du prix des prestations. */
     public const DUO_REDUCTION_POURCENTAGE = 'duo.reduction_pourcentage';
+    /** Option « Reconstruction d'ongles » proposée en réservant en ligne (0/1). */
+    public const RECONSTRUCTION_ACTIVE = 'reconstruction.active';
+    /** Prix de la reconstruction, en euros par ongle. */
+    public const RECONSTRUCTION_PRIX_ONGLE = 'reconstruction.prix_ongle';
+    /** Durée ajoutée au rendez-vous, en minutes par ongle. */
+    public const RECONSTRUCTION_MINUTES_ONGLE = 'reconstruction.minutes_ongle';
+    /** Nombre maximum d'ongles à reconstruire choisi en ligne. */
+    public const RECONSTRUCTION_MAX_ONGLES = 'reconstruction.max_ongles';
     /** Statut VIP : points gagnés au total (depuis toujours) pour le débloquer (0 = désactivé). */
     public const PRIVILEGE_SEUIL_POINTS = 'privilege.seuil_points';
     /** Réduction VIP la première année, en %. */
@@ -89,6 +97,10 @@ class Parametre
         self::MAJORATION_SOIR_EUROS => ['Majoration du soir (euros)', 'Ajoutée au prix, jamais réduite par les remises. 0 = pas de majoration.', 0, 0, 100],
         self::DUO_ACTIF => ['Proposer le RDV duo', 'Affiche l\'offre « RDV duo » (deux personnes à la suite) dans les prestations et la réservation en ligne.', 0, 0, 1],
         self::DUO_REDUCTION_POURCENTAGE => ['RDV duo : réduction (%)', 'Sur le prix total des prestations du duo (hors majoration du soir).', 10, 0, 50],
+        self::RECONSTRUCTION_ACTIVE => ['Proposer la reconstruction d\'ongles', 'En réservant en ligne, la cliente peut ajouter une reconstruction et choisir le nombre d\'ongles : le prix et la durée du rendez-vous s\'ajustent.', 0, 0, 1],
+        self::RECONSTRUCTION_PRIX_ONGLE => ['Reconstruction : prix par ongle (euros)', 'Multiplié par le nombre d\'ongles choisi. La remise duo ou VIP s\'applique aussi sur ce montant.', 5, 0, 50],
+        self::RECONSTRUCTION_MINUTES_ONGLE => ['Reconstruction : durée par ongle (minutes)', 'Ajoutée à la durée du rendez-vous, pour ne proposer que les créneaux assez longs.', 10, 0, 60],
+        self::RECONSTRUCTION_MAX_ONGLES => ['Reconstruction : nombre maximum d\'ongles', 'Au-delà, la cliente vous appelle (ou choisit une pose complète).', 10, 1, 10],
         self::PRIVILEGE_SEUIL_POINTS => ['Statut VIP : points cumulés pour le débloquer', 'Total des points gagnés depuis toujours (rendez-vous, bienvenue, parrainage, corrections), même s\'ils ont été utilisés. 0 = désactivé.', 480, 0, 5000],
         self::PRIVILEGE_REDUCTION_DEPART => ['Statut VIP : réduction de départ (%)', 'Accordée dès que le seuil est atteint, à vie.', 5, 0, 50],
         self::PRIVILEGE_REDUCTION_PAS => ['Statut VIP : bonus par année confirmée (%)', 'Ajouté à chaque anniversaire si la cliente a fait assez de rendez-vous dans l\'année.', 5, 0, 20],

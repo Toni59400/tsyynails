@@ -95,6 +95,8 @@ final class ReservationCrudController extends AbstractCrudController
         yield AssociationField::new('prestation');
         yield TextField::new('prestationDuoNom', 'Duo (2e personne)')->onlyOnDetail()->formatValue(static fn (?string $nom): string => $nom ?? '—');
         yield TextField::new('supplementNom', 'Supplément')->formatValue(static fn (?string $nom): string => $nom ?? '—');
+        yield IntegerField::new('reconstructionOngles', 'Reconstruction')->onlyOnDetail()
+            ->formatValue(static fn (int $ongles): string => 0 === $ongles ? '—' : \sprintf('%d ongle%s', $ongles, $ongles > 1 ? 's' : ''));
         yield ChoiceField::new('statut')->setChoices($this->choixStatuts())->renderAsBadges([
             StatutReservation::PAIEMENT_EN_COURS->value => 'secondary',
             StatutReservation::EN_ATTENTE->value => 'warning',

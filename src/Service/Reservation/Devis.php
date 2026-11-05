@@ -7,18 +7,19 @@ namespace App\Service\Reservation;
 /**
  * Détail du prix d'un rendez-vous, calculé côté serveur (Tarification::devis).
  *
- * prix total = prestations + supplément + majoration du soir ;
- * la remise (duo, réduction VIP ou fixée par l'admin) porte sur les prestations et le supplément seulement.
+ * prix total = prestations + supplément + reconstruction + majoration du soir ;
+ * la remise (duo, réduction VIP ou fixée par l'admin) porte sur tout sauf la majoration.
  */
 final class Devis
 {
     public function __construct(
-        /** Prestation(s) et supplément. */
+        /** Prestation(s), supplément et reconstruction. */
         public readonly int $baseCentimes,
         public readonly int $majorationCentimes,
         public readonly int $remisePourcentage,
         public readonly ?string $remiseMotif,
         public readonly int $dureeMinutes,
+        public readonly ?Reconstruction $reconstruction = null,
     ) {
     }
 

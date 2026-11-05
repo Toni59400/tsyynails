@@ -36,18 +36,60 @@ final class Tarification
         \DateTimeImmutable $debut,
         ?Client $cliente,
         ?int $remiseForcee = null,
+        ?Reconstruction $reconstruction = null,
     ): Devis {
         [$pourcentage, $motif] = null !== $remiseForcee
             ? [max(0, min(100, $remiseForcee)), 'manuelle']
             : $this->remise($cliente, null !== $prestationDuo);
 
         return new Devis(
-            $prestation->getPrixCentimes() + ($prestationDuo?->getPrixCentimes() ?? 0) + ($supplement?->getPrixCentimes() ?? 0),
+            $prestation->getPrixCentimes() + ($prestationDuo?->getPrixCentimes() ?? 0) + ($supplement?->getPrixCentimes() ?? 0) + ($reconstruction->prixCentimes ?? 0),
             $this->majorationCentimes($debut),
             $pourcentage,
             $pourcentage > 0 ? $motif : null,
-            $prestation->getDureeMinutes() + ($prestationDuo?->getDureeMinutes() ?? 0) + ($supplement?->getDureeMinutes() ?? 0),
+            $prestation->getDureeMinutes() + ($prestationDuo?->getDureeMinutes() ?? 0) + ($supplement?->getDureeMinutes() ?? 0) + ($reconstruction->minutes ?? 0),
+            $reconstruction,
         );
+    }
+
+    /** Option « Reconstruction d'ongles » proposée en ligne (réglages). */
+    public function reconstructionActive(): bool
+    {
+        return 1 === $this->parametres->valeur(Parametre::RECONSTRUCTION_ACTIVE);
+    }
+
+    /**
+     * Reconstruction de ce nombre d'ongles au tarif en vigueur ; null si l'option est désactivée ou le nombre hors limites.
+     */
+    public function reconstruction(int $ongles): ?Reconstruction
+    {
+        if (!$this->reconstructionActive() || $ongles < 1 || $ongles > $this->parametres->valeur(Parametre::RECONSTRUCTION_MAX_ONGLES)) {
+            return null;
+        }
+
+        return new Reconstruction(
+            $ongles,
+            $ongles * $this->parametres->valeur(Parametre::RECONSTRUCTION_PRIX_ONGLE) * 100,
+            $ongles * $this->parametres->valeur(Parametre::RECONSTRUCTION_MINUTES_ONGLE),
+        );
+    }
+
+    /**
+     * Choix proposés en ligne : 1 à N ongles, avec prix et durée (vide si l'option est désactivée).
+     *
+     * @return list<Reconstruction>
+     */
+    public function choixReconstruction(): array
+    {
+        $choix = [];
+        for ($ongles = 1; $ongles <= $this->parametres->valeur(Parametre::RECONSTRUCTION_MAX_ONGLES); ++$ongles) {
+            $reconstruction = $this->reconstruction($ongles);
+            if (null !== $reconstruction) {
+                $choix[] = $reconstruction;
+            }
+        }
+
+        return $choix;
     }
 
     /**

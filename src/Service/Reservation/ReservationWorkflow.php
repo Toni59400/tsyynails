@@ -68,6 +68,7 @@ final class ReservationWorkflow
         ?Supplement $supplement = null,
         ?Prestation $prestationDuo = null,
         string $modePaiement = Reservation::MODE_CARTE,
+        int $ongles = 0,
     ): Reservation {
         if (null !== $recompense && null === $clienteConnectee) {
             throw new \LogicException('Les points ne s\'utilisent qu\'avec un compte.');
@@ -93,9 +94,11 @@ final class ReservationWorkflow
             if (null !== $prestationDuo && (!$this->tarification->duoActif() || !$prestationDuo->isActive())) {
                 throw new \LogicException('Le RDV duo n\'est plus proposé pour cette prestation : choisissez à nouveau.');
             }
+            $reconstruction = 0 === $ongles ? null : ($this->tarification->reconstruction($ongles)
+                ?? throw new \LogicException('La reconstruction d\'ongles n\'est plus proposée ainsi : choisissez à nouveau vos options.'));
             // Réduction VIP : seulement pour une cliente connectée (le prix affiché avant l'envoi en tient compte).
             // Une récompense de points n'est pas cumulable : elle remplace la réduction VIP et le duo sur ce rendez-vous.
-            $devis = $this->tarification->devis($prestation, $supplement, $prestationDuo, $debut, $clienteConnectee, null !== $recompense ? 0 : null);
+            $devis = $this->tarification->devis($prestation, $supplement, $prestationDuo, $debut, $clienteConnectee, null !== $recompense ? 0 : null, $reconstruction);
             $minutesEnPlus = $devis->dureeMinutes - $prestation->getDureeMinutes();
             if (!$prestation->isActive() || !$this->calculateur->estDisponible($prestation, $debut, $minutesEnPlus)) {
                 throw new CreneauIndisponibleException();
@@ -125,6 +128,7 @@ final class ReservationWorkflow
                 $devis->majorationCentimes,
                 $devis->remisePourcentage,
                 $devis->remiseMotif,
+                $reconstruction,
             );
             $reservation->setEmailContact($coordonnees->email);
             $reservation->setModeAcompte($modePaiement);
@@ -331,7 +335,9 @@ final class ReservationWorkflow
             throw new CreneauIndisponibleException();
         }
         try {
-            $duree = $prestation->getDureeMinutes() + ($prestationDuo?->getDureeMinutes() ?? 0) + ($supplement?->getDureeMinutes() ?? 0);
+            // La reconstruction choisie en ligne est conservée telle quelle (nombre d'ongles, prix et durée).
+            $reconstruction = Reconstruction::depuisReservation($reservation);
+            $duree = $prestation->getDureeMinutes() + ($prestationDuo?->getDureeMinutes() ?? 0) + ($supplement?->getDureeMinutes() ?? 0) + ($reconstruction->minutes ?? 0);
             if (!$this->calculateur->estLibre($debut, $debut->modify(\sprintf('+%d minutes', $duree)), $reservation)) {
                 throw new CreneauIndisponibleException();
             }
@@ -339,7 +345,7 @@ final class ReservationWorkflow
             $ancienDebut = $reservation->getDebut();
             // Même pourcentage : on garde l'origine de la remise (duo, réduction VIP) ; sinon elle devient « saisie ».
             $motif = $remisePourcentage === $reservation->getRemisePourcentage() ? ($reservation->getRemiseMotif() ?? 'manuelle') : 'manuelle';
-            $reservation->appliquerTarif($prestation, $debut, $supplement, $prestationDuo, $this->tarification->majorationCentimes($debut), $remisePourcentage, $motif);
+            $reservation->appliquerTarif($prestation, $debut, $supplement, $prestationDuo, $this->tarification->majorationCentimes($debut), $remisePourcentage, $motif, $reconstruction);
             if ($debut != $ancienDebut) {
                 $reservation->reinitialiserRappel();
             }

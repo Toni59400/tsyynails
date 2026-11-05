@@ -14,11 +14,11 @@
         {% if horizon_fidele %}
             <p class="alerte alerte--succes">Cliente fidèle : vous pouvez réserver plus longtemps à l'avance.</p>
         {% endif %}
-        {% set duree_totale = prestation.dureeMinutes + (supplement ? supplement.dureeMinutes : 0) + (duo ? duo.dureeMinutes : 0) %}
-        {% set prix_total = prestation.prixCentimes + (supplement ? supplement.prixCentimes : 0) + (duo ? duo.prixCentimes : 0) %}
+        {% set duree_totale = prestation.dureeMinutes + (supplement ? supplement.dureeMinutes : 0) + (duo ? duo.dureeMinutes : 0) + (reconstruction ? reconstruction.minutes : 0) %}
+        {% set prix_total = prestation.prixCentimes + (supplement ? supplement.prixCentimes : 0) + (duo ? duo.prixCentimes : 0) + (reconstruction ? reconstruction.prixCentimes : 0) %}
         <p class="recap-court">
             {% if duo %}<span class="badge-duo">RDV duo</span>{% endif %}
-            <strong>{{ prestation.nom }}</strong>{% if duo %} + {{ duo.nom }}{% endif %}{% if supplement %} + {{ supplement.nom }}{% endif %}
+            <strong>{{ prestation.nom }}</strong>{% if duo %} + {{ duo.nom }}{% endif %}{% if supplement %} + {{ supplement.nom }}{% endif %}{% if reconstruction %} + reconstruction de {{ reconstruction.ongles }} ongle{{ reconstruction.ongles > 1 ? 's' }}{% endif %}
             · {{ duree_totale|duree }} · {{ prix_total|euros }}{% if duo %} avant remise duo{% endif %}
             · <a href="{{ path(duo ? 'app_reservation_duo' : 'app_reservation') }}">changer</a>
         </p>
@@ -26,9 +26,10 @@
             <p class="aide-majoration">Les rendez-vous qui commencent à partir de {{ heure_majoration }} h sont majorés de {{ majoration|euros }}.</p>
         {% endif %}
 
-        {% if supplements is not empty %}
-            {# Choix avant le créneau : un supplément allonge le rendez-vous. Sans JavaScript, le bouton recharge les créneaux. #}
+        {% if supplements is not empty or choix_reconstruction is not empty %}
+            {# Choix avant le créneau : un supplément ou une reconstruction allonge le rendez-vous. Sans JavaScript, le bouton recharge les créneaux. #}
             <form method="get" action="{{ path('app_reservation_creneau', {id: prestation.id}) }}" class="options-resa" data-controller="envoi-auto">
+                {% if supplements is not empty %}
                 <fieldset>
                     <legend class="options-resa__titre">Envie d'un nail art ?</legend>
                     <div class="options-resa__liste">
@@ -46,6 +47,21 @@
                         {% endfor %}
                     </div>
                 </fieldset>
+                {% endif %}
+                {% if choix_reconstruction is not empty %}
+                    <div class="options-resa__reconstruction">
+                        <label class="options-resa__titre" for="ongles">Des ongles à reconstruire ?</label>
+                        <p class="options-resa__aide">Ongle cassé ou abîmé : indiquez combien d'ongles reconstruire, le temps est prévu dans votre rendez-vous.</p>
+                        <select id="ongles" name="ongles" data-action="envoi-auto#envoyer">
+                            <option value="0">Aucune reconstruction</option>
+                            {% for r in choix_reconstruction %}
+                                <option value="{{ r.ongles }}" {% if reconstruction and reconstruction.ongles == r.ongles %}selected{% endif %}>
+                                    {{ r.ongles }} ongle{{ r.ongles > 1 ? 's' }} · + {{ r.prixCentimes|euros }}{% if r.minutes > 0 %} · + {{ r.minutes|duree }}{% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                {% endif %}
                 {% if duo %}<input type="hidden" name="duo" value="{{ duo.id }}">{% endif %}
                 <button type="submit" class="bouton bouton--secondaire bouton--compact" data-envoi-auto-target="bouton">Mettre à jour les créneaux</button>
             </form>

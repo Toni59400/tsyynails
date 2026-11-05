@@ -10,7 +10,7 @@ use App\Entity\Supplement;
 
 /**
  * Lignes du détail de prix affichées à la cliente (récapitulatif, paiement, suivi, emails) :
- * prestations, supplément, majoration du soir, remise, récompense de points.
+ * prestations, reconstruction, supplément, majoration du soir, remise, récompense de points.
  * Les montants négatifs sont des réductions.
  */
 final class DetailPrix
@@ -32,6 +32,10 @@ final class DetailPrix
             $lignes[] = ['libelle' => 'Duo, 2e personne : '.$reservation->getPrestationDuoNom(), 'montant' => $reservation->getPrestationDuoPrixCentimes()];
         }
 
+        if ($reservation->getReconstructionOngles() > 0) {
+            $lignes[] = ['libelle' => Reconstruction::libelle($reservation->getReconstructionOngles()), 'montant' => $reservation->getReconstructionPrixCentimes()];
+        }
+
         return self::completer($lignes, $reservation->getSupplementNom(), $reservation->getSupplementPrixCentimes(), $reservation->getMajorationCentimes(),
             $reservation->getRemiseMotif(), $reservation->getRemisePourcentage(), $reservation->getRemiseCentimes(), $reservation->getReductionCentimes());
     }
@@ -44,6 +48,10 @@ final class DetailPrix
         $lignes = [['libelle' => $prestation->getNom(), 'montant' => $prestation->getPrixCentimes()]];
         if (null !== $prestationDuo) {
             $lignes[] = ['libelle' => 'Duo, 2e personne : '.$prestationDuo->getNom(), 'montant' => $prestationDuo->getPrixCentimes()];
+        }
+
+        if (null !== $devis->reconstruction) {
+            $lignes[] = ['libelle' => Reconstruction::libelle($devis->reconstruction->ongles), 'montant' => $devis->reconstruction->prixCentimes];
         }
 
         return self::completer($lignes, $supplement?->getNom(), $supplement?->getPrixCentimes() ?? 0, $devis->majorationCentimes,

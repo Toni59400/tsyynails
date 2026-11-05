@@ -23,6 +23,7 @@ use App\Service\Planning\CalculateurCreneaux;
 use App\Service\Reservation\CoordonneesCliente;
 use App\Service\Reservation\CreneauIndisponibleException;
 use App\Service\Reservation\DetailPrix;
+use App\Service\Reservation\Reconstruction;
 use App\Service\Reservation\ReservationWorkflow;
 use App\Service\Reservation\Tarification;
 use Doctrine\ORM\EntityManagerInterface;
@@ -102,10 +103,10 @@ final class ReservationController extends AbstractController
         if ($choix instanceof Response) {
             return $choix;
         }
-        [$supplement, $duo] = $choix;
+        [$supplement, $duo, $reconstruction] = $choix;
         $horizon = $this->fidelite->horizonJours($this->ficheConnectee());
         $aujourdhui = $this->clock->now()->setTime(0, 0);
-        $creneauxParJour = $this->calculateur->creneauxParJour($prestation, $aujourdhui, $horizon, self::minutesEnPlus($supplement, $duo));
+        $creneauxParJour = $this->calculateur->creneauxParJour($prestation, $aujourdhui, $horizon, self::minutesEnPlus($supplement, $duo, $reconstruction));
 
         $jourDemande = $request->query->getString('jour');
         if (!\array_key_exists($jourDemande, $creneauxParJour)) {
@@ -118,7 +119,9 @@ final class ReservationController extends AbstractController
             'supplements' => $this->supplements->findProposesPour($prestation),
             'supplement' => $supplement,
             'duo' => $duo,
-            'parametres_choix' => self::parametresChoix($supplement, $duo),
+            'reconstruction' => $reconstruction,
+            'choix_reconstruction' => $this->tarification->choixReconstruction(),
+            'parametres_choix' => self::parametresChoix($supplement, $duo, $reconstruction),
             'heure_majoration' => $this->tarification->heureMajoration(),
             'majoration' => $this->tarification->majorationCentimes(new \DateTimeImmutable('today 23:00')),
             'creneaux_par_jour' => $creneauxParJour,
@@ -148,17 +151,17 @@ final class ReservationController extends AbstractController
         if ($choix instanceof Response) {
             return $choix;
         }
-        [$supplement, $duo] = $choix;
-        $minutesEnPlus = self::minutesEnPlus($supplement, $duo);
+        [$supplement, $duo, $reconstruction] = $choix;
+        $minutesEnPlus = self::minutesEnPlus($supplement, $duo, $reconstruction);
 
         // L'horizon (28 jours, plus pour les fidèles) est vérifié ici aussi : l'URL peut être forgée.
         $debut = \DateTimeImmutable::createFromFormat('!'.self::FORMAT_CRENEAU, $creneau);
         $limite = $this->clock->now()->setTime(0, 0)->modify(\sprintf('+%d days', $this->fidelite->horizonJours($cliente)));
         if (false === $debut || $debut >= $limite || !$this->calculateur->estDisponible($prestation, $debut, $minutesEnPlus)) {
-            return $this->creneauPris($prestation, $supplement, $duo);
+            return $this->creneauPris($prestation, $supplement, $duo, $reconstruction);
         }
         // Prix affiché : remise duo ou réduction VIP (cliente connectée), majoration du soir.
-        $devis = $this->tarification->devis($prestation, $supplement, $duo, $debut, $cliente);
+        $devis = $this->tarification->devis($prestation, $supplement, $duo, $debut, $cliente, null, $reconstruction);
 
         // Modes de paiement proposés (réglages) : aucun = réservation en ligne fermée.
         $modes = $this->tarification->modesPaiementEnLigne();
@@ -175,7 +178,7 @@ final class ReservationController extends AbstractController
             $coordonnees->telephone = (string) $cliente->getTelephone();
             $coordonnees->email = $user->getEmail();
             // Une récompense remplace la réduction VIP et le duo : son plafond se calcule sur le prix sans remise.
-            $sansRemise = $this->tarification->devis($prestation, $supplement, $duo, $debut, $cliente, 0);
+            $sansRemise = $this->tarification->devis($prestation, $supplement, $duo, $debut, $cliente, 0, $reconstruction);
             $recompenses = $this->fidelite->utilisablesEnLigne($cliente, $sansRemise->aPayerCentimes(), $supplement);
         } elseif ($user instanceof User) {
             $coordonnees->email = $user->getEmail();
@@ -195,7 +198,7 @@ final class ReservationController extends AbstractController
         $formulaire->handleRequest($request);
 
         if ($formulaire->isSubmitted() && $formulaire->isValid()) {
-            $retour = $this->redirectToRoute('app_reservation_recapitulatif', ['id' => $prestation->getId(), 'creneau' => $creneau] + self::parametresChoix($supplement, $duo));
+            $retour = $this->redirectToRoute('app_reservation_recapitulatif', ['id' => $prestation->getId(), 'creneau' => $creneau] + self::parametresChoix($supplement, $duo, $reconstruction));
             if (!$limiteur->create($request->getClientIp())->consume()->isAccepted()) {
                 $this->addFlash('erreur', 'Trop de demandes depuis votre connexion. Réessayez dans une heure ou appelez-moi.');
 
@@ -214,9 +217,9 @@ final class ReservationController extends AbstractController
             $recompense = null !== $cliente ? $formulaire->get('recompense')->getData() : null;
 
             try {
-                $reservation = $this->workflow->demander($prestation, $debut, $coordonnees, $cliente, $recompense instanceof RecompenseFidelite ? $recompense : null, $supplement, $duo, $coordonnees->modePaiement);
+                $reservation = $this->workflow->demander($prestation, $debut, $coordonnees, $cliente, $recompense instanceof RecompenseFidelite ? $recompense : null, $supplement, $duo, $coordonnees->modePaiement, $reconstruction->ongles ?? 0);
             } catch (CreneauIndisponibleException) {
-                return $this->creneauPris($prestation, $supplement, $duo);
+                return $this->creneauPris($prestation, $supplement, $duo, $reconstruction);
             } catch (\LogicException $erreur) {
                 $this->addFlash('erreur', $erreur->getMessage());
 
@@ -250,7 +253,7 @@ final class ReservationController extends AbstractController
             'prestation' => $prestation,
             'supplement' => $supplement,
             'duo' => $duo,
-            'parametres_choix' => self::parametresChoix($supplement, $duo),
+            'parametres_choix' => self::parametresChoix($supplement, $duo, $reconstruction),
             'lignes_prix' => DetailPrix::pourDevis($devis, $prestation, $supplement, $duo),
             'a_payer' => $devis->aPayerCentimes(),
             'debut' => $debut,
@@ -403,18 +406,19 @@ final class ReservationController extends AbstractController
         return null;
     }
 
-    private function creneauPris(Prestation $prestation, ?Supplement $supplement = null, ?Prestation $duo = null): Response
+    private function creneauPris(Prestation $prestation, ?Supplement $supplement = null, ?Prestation $duo = null, ?Reconstruction $reconstruction = null): Response
     {
         $this->addFlash('erreur', 'Ce créneau n\'est plus disponible. Choisissez-en un autre.');
 
-        return $this->redirectToRoute('app_reservation_creneau', ['id' => $prestation->getId()] + self::parametresChoix($supplement, $duo));
+        return $this->redirectToRoute('app_reservation_creneau', ['id' => $prestation->getId()] + self::parametresChoix($supplement, $duo, $reconstruction));
     }
 
     /**
-     * Options lues dans l'adresse (?supplement=ID&duo=ID) et revérifiées : supplément proposé pour la prestation,
-     * RDV duo activé et 2e prestation active. Une option qui n'est plus valable renvoie au choix du créneau.
+     * Options lues dans l'adresse (?supplement=ID&duo=ID&ongles=N) et revérifiées : supplément proposé pour la prestation,
+     * RDV duo activé et 2e prestation active, reconstruction proposée et nombre d'ongles autorisé.
+     * Une option qui n'est plus valable renvoie au choix du créneau.
      *
-     * @return array{0: ?Supplement, 1: ?Prestation}|Response
+     * @return array{0: ?Supplement, 1: ?Prestation, 2: ?Reconstruction}|Response
      */
     private function choix(Prestation $prestation, Request $request): array|Response
     {
@@ -425,28 +429,33 @@ final class ReservationController extends AbstractController
         $duo = '' !== $idDuo && ctype_digit($idDuo) && $this->tarification->duoActif() ? $this->prestations->find((int) $idDuo) : null;
         $duo = $duo instanceof Prestation && $duo->isActive() ? $duo : null;
 
-        if (('' !== $idSupplement && null === $supplement) || ('' !== $idDuo && null === $duo)) {
+        // « 0 » ou vide : sans reconstruction.
+        $ongles = $request->query->getString('ongles');
+        $reconstruction = ctype_digit($ongles) && (int) $ongles > 0 ? $this->tarification->reconstruction((int) $ongles) : null;
+        $onglesInvalides = '' !== $ongles && '0' !== $ongles && null === $reconstruction;
+
+        if (('' !== $idSupplement && null === $supplement) || ('' !== $idDuo && null === $duo) || $onglesInvalides) {
             $this->addFlash('erreur', 'Cette option n\'est plus proposée. Choisissez à nouveau vos options et votre créneau.');
 
             return $this->redirectToRoute('app_reservation_creneau', ['id' => $prestation->getId()]);
         }
 
-        return [$supplement, $duo];
+        return [$supplement, $duo, $reconstruction];
     }
 
-    private static function minutesEnPlus(?Supplement $supplement, ?Prestation $duo): int
+    private static function minutesEnPlus(?Supplement $supplement, ?Prestation $duo, ?Reconstruction $reconstruction): int
     {
-        return ($supplement?->getDureeMinutes() ?? 0) + ($duo?->getDureeMinutes() ?? 0);
+        return ($supplement?->getDureeMinutes() ?? 0) + ($duo?->getDureeMinutes() ?? 0) + ($reconstruction->minutes ?? 0);
     }
 
     /**
-     * Les options suivent la cliente d'étape en étape dans l'adresse (?supplement=ID&duo=ID).
+     * Les options suivent la cliente d'étape en étape dans l'adresse (?supplement=ID&duo=ID&ongles=N).
      *
      * @return array<string, int>
      */
-    private static function parametresChoix(?Supplement $supplement, ?Prestation $duo): array
+    private static function parametresChoix(?Supplement $supplement, ?Prestation $duo, ?Reconstruction $reconstruction): array
     {
-        return array_filter(['supplement' => $supplement?->getId(), 'duo' => $duo?->getId()], static fn (?int $id): bool => null !== $id);
+        return array_filter(['supplement' => $supplement?->getId(), 'duo' => $duo?->getId(), 'ongles' => $reconstruction?->ongles], static fn (?int $valeur): bool => null !== $valeur);
     }
 
     private function exigerActive(Prestation $prestation): void
