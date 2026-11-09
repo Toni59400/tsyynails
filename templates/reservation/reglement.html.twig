@@ -32,6 +32,8 @@
                           data-stripe-payment-secret-client-value="{{ secret_client }}"
                           data-stripe-payment-url-retour-value="{{ url('app_reservation_suivi', {jeton: reservation.jetonSuivi, reglement: 1}) }}"
                           data-action="stripe-payment#payer">
+                        <div data-stripe-payment-target="portefeuille" class="paiement__portefeuille"></div>
+                        <p data-stripe-payment-target="separation" class="paiement__separation" hidden><span>ou par carte</span></p>
                         <div data-stripe-payment-target="element" class="paiement__element">
                             <p class="champ__aide">Chargement du formulaire de paiement sécurisé…</p>
                         </div>

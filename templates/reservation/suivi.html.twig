@@ -41,7 +41,7 @@
                 {% elseif statut == 'confirmee' %}
                     <p class="alerte alerte--succes" role="status">À très vite, {{ reservation.client.prenom }} !</p>
                     {% if reservation.soldeEstRegle %}
-                        <p class="alerte alerte--succes">Règlement reçu ({{ reservation.soldeMode == 'carte' ? 'carte' : 'espèces' }}), merci !</p>
+                        <p class="alerte alerte--succes">Règlement reçu ({{ reservation.soldeModeLibelle }}), merci !</p>
                     {% else %}
                         <p>{{ reservation.acompteCentimes > 0 ? 'Reste à régler au salon' : 'À régler au salon' }} : <strong>{{ reservation.resteAPayerCentimes|euros }}</strong>.</p>
                     {% endif %}

@@ -47,6 +47,7 @@ final class ReservationCrudController extends AbstractCrudController
         'honorer' => ['honorer', 'Rendez-vous honoré : les points de fidélité sont crédités.'],
         'non-honorer' => ['nonHonorer', 'Absence enregistrée.'],
         'regler-especes' => ['reglerSoldeEnEspeces', 'Règlement en espèces enregistré.'],
+        'regler-tap-to-pay' => ['reglerSoldeParTapToPay', 'Règlement sans contact (Tap to Pay) enregistré.'],
         'regler-carte' => ['preparerSoldeParCarte', 'Lien de paiement par carte prêt : faites scanner le QR code ou envoyez le lien à la cliente.'],
         'abandonner-carte' => ['abandonnerSoldeParCarte', 'Lien de paiement par carte annulé.'],
         'supprimer' => ['supprimer', 'Réservation supprimée.'],
@@ -125,7 +126,7 @@ final class ReservationCrudController extends AbstractCrudController
      *
      * @param AdminContext<Reservation> $context
      */
-    #[AdminRoute('/{entityId}/{action}', name: 'workflow', options: ['methods' => ['POST'], 'requirements' => ['action' => 'valider|refuser|annuler|annuler-salon|honorer|non-honorer|regler-especes|regler-carte|abandonner-carte|supprimer']])]
+    #[AdminRoute('/{entityId}/{action}', name: 'workflow', options: ['methods' => ['POST'], 'requirements' => ['action' => 'valider|refuser|annuler|annuler-salon|honorer|non-honorer|regler-especes|regler-tap-to-pay|regler-carte|abandonner-carte|supprimer']])]
     public function executerAction(AdminContext $context, Request $request, string $action): RedirectResponse
     {
         $reservation = $context->getEntity()->getInstance();

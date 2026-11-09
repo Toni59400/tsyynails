@@ -113,13 +113,34 @@ final class PaiementEtGestionRendezVousTest extends WebTestCase
         self::assertNotNull($reservation->getSoldePayeAt());
     }
 
+    public function testLeResteSeRegleSansContactDepuisUnBoutonAPart(): void
+    {
+        $reservation = $this->reservationCarteConfirmee();
+        $this->workflow()->preparerSoldeParCarte($reservation, 'test');
+        $this->connecterAdmin();
+
+        $crawler = $this->client->request('GET', '/admin/reservation/'.$reservation->getId());
+        self::assertSelectorTextContains('.reglement__tap summary', 'Tap to Pay');
+        self::assertSelectorTextContains('.reglement__tap .reglement__montant', '21');
+        $this->client->submit($crawler->selectButton('Paiement accepté')->form());
+
+        $reservation = $this->recharger($reservation);
+        self::assertSame(Reservation::MODE_TAP_TO_PAY, $reservation->getSoldeMode());
+        self::assertSame(2100, $reservation->getSoldeCentimes());
+        self::assertNull($reservation->getSoldePaymentIntentId(), 'Lien de paiement par QR code annulé.');
+        self::assertTrue($reservation->aUnPaiementParCarte(), 'Un paiement sans contact empêche la suppression du rendez-vous.');
+
+        $this->client->request('GET', '/admin/reservation/'.$reservation->getId());
+        self::assertSelectorTextContains('.reglement__fait', 'sans contact (Tap to Pay)');
+    }
+
     public function testLeResteSeRegleParCarteAvecUnLienEtUnQrCode(): void
     {
         $reservation = $this->reservationCarteConfirmee();
         $this->connecterAdmin();
 
         $crawler = $this->client->request('GET', '/admin/reservation/'.$reservation->getId());
-        $this->client->submit($crawler->selectButton('Paiement par carte')->form());
+        $this->client->submit($crawler->selectButton('QR code : carte, Apple Pay, Google Pay')->form());
         $crawler = $this->client->followRedirect();
         self::assertSelectorExists('.reglement__lien img[alt="QR code du paiement par carte"]');
         $lien = (string) $crawler->filter('.reglement__lien input')->attr('value');

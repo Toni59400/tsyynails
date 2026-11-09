@@ -237,11 +237,25 @@ final class ReservationWorkflow
     /** Reste encaissé en espèces au salon (un éventuel lien de paiement par carte est annulé). */
     public function reglerSoldeEnEspeces(Reservation $reservation, string $auteur): void
     {
+        $this->encaisserAuSalon($reservation, Reservation::MODE_ESPECES, $auteur);
+    }
+
+    /**
+     * Reste encaissé sans contact dans l'application Stripe du téléphone du salon : Tap to Pay ne se lance pas depuis
+     * un site web et ce paiement n'est pas relié au rendez-vous chez Stripe, la prothésiste le confirme donc ici.
+     */
+    public function reglerSoldeParTapToPay(Reservation $reservation, string $auteur): void
+    {
+        $this->encaisserAuSalon($reservation, Reservation::MODE_TAP_TO_PAY, $auteur);
+    }
+
+    private function encaisserAuSalon(Reservation $reservation, string $mode, string $auteur): void
+    {
         $this->exigerResteAPayer($reservation);
         $this->abandonnerLienCarte($reservation);
-        $reservation->marquerSoldeRegle(Reservation::MODE_ESPECES, $reservation->getResteAPayerCentimes(), $this->clock->now());
+        $reservation->marquerSoldeRegle($mode, $reservation->getResteAPayerCentimes(), $this->clock->now());
         $this->entityManager->flush();
-        $this->logger->notice('Reste réglé en espèces.', ['reservation' => $reservation->getId(), 'montant' => $reservation->getSoldeCentimes(), 'par' => $auteur]);
+        $this->logger->notice('Reste réglé au salon.', ['reservation' => $reservation->getId(), 'mode' => $mode, 'montant' => $reservation->getSoldeCentimes(), 'par' => $auteur]);
     }
 
     /**

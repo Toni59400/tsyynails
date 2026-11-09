@@ -25,7 +25,7 @@ function chargerStripe() {
 }
 
 export default class extends Controller {
-    static targets = ['element', 'erreur', 'bouton'];
+    static targets = ['element', 'erreur', 'bouton', 'portefeuille', 'separation'];
     static values = { clePublique: String, secretClient: String, urlRetour: String };
 
     async connect() {
@@ -38,11 +38,50 @@ export default class extends Controller {
                 appearance: { theme: 'stripe', variables: { colorPrimary: '#7a4747', borderRadius: '8px' } },
             });
             this.elementTarget.replaceChildren();
-            this.elements.create('payment').mount(this.elementTarget);
+            this.elements.create('payment', { wallets: { applePay: 'never', googlePay: 'never' } }).mount(this.elementTarget);
             this.boutonTarget.disabled = false;
+            this.monterPortefeuilles();
         } catch (erreur) {
             this.afficherErreur('Le paiement sécurisé ne peut pas se charger. Vérifiez votre connexion, puis rechargez la page.');
         }
+    }
+
+    /*
+     * Boutons Apple Pay et Google Pay, affichés seulement si l'appareil de la cliente les propose.
+     * Groupe d'Elements séparé : valider un portefeuille ne doit pas exiger le formulaire de carte resté vide.
+     */
+    monterPortefeuilles() {
+        if (!this.hasPortefeuilleTarget) {
+            return;
+        }
+
+        const elements = this.stripe.elements({ clientSecret: this.secretClientValue, locale: 'fr' });
+        const boutons = elements.create('expressCheckout', {
+            paymentMethods: { applePay: 'auto', googlePay: 'auto', link: 'never', paypal: 'never', amazonPay: 'never', klarna: 'never' },
+            buttonHeight: 48,
+        });
+        boutons.on('ready', ({ availablePaymentMethods }) => {
+            if (availablePaymentMethods && this.hasSeparationTarget) {
+                this.separationTarget.hidden = false;
+            }
+        });
+        boutons.on('confirm', async () => {
+            this.erreurTarget.hidden = true;
+            const { error: erreurPortefeuille } = await elements.submit();
+            if (erreurPortefeuille) {
+                this.afficherErreur(erreurPortefeuille.message);
+
+                return;
+            }
+
+            const { error } = await this.stripe.confirmPayment({
+                elements,
+                confirmParams: { return_url: this.urlRetourValue },
+            });
+            // En cas de succès, Stripe redirige vers la page de suivi.
+            this.afficherErreur(error.message);
+        });
+        boutons.mount(this.portefeuilleTarget);
     }
 
     async payer(evenement) {

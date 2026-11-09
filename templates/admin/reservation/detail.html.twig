@@ -63,7 +63,7 @@
                 {% if reservation.soldeEstRegle %}
                     <p class="reglement__fait">
                         <i class="fa fa-circle-check" aria-hidden="true"></i>
-                        {{ reservation.soldeCentimes|euros }} réglés {{ reservation.soldeMode == 'carte' ? 'par carte' : 'en espèces' }}
+                        {{ reservation.soldeCentimes|euros }} réglés {{ reservation.soldeModeLibelle }}
                         le {{ reservation.soldePayeAt|date('d/m/Y à H:i') }}.
                     </p>
                 {% else %}
@@ -97,10 +97,27 @@
                         {% if not lien_reglement %}
                             <form method="post" action="{{ path('admin_reservation_workflow', {entityId: reservation.id, action: 'regler-carte'}) }}">
                                 <input type="hidden" name="_token" value="{{ csrf_token('reservation_regler-carte_' ~ reservation.id) }}">
-                                <button type="submit" class="btn btn-primary btn-lg"><i class="fa fa-credit-card" aria-hidden="true"></i> Paiement par carte</button>
+                                <button type="submit" class="btn btn-primary btn-lg"><i class="fa fa-qrcode" aria-hidden="true"></i> QR code : carte, Apple Pay, Google Pay</button>
                             </form>
                         {% endif %}
                     </div>
+                    <details class="reglement__tap">
+                        <summary class="btn btn-secondary btn-lg"><i class="fa fa-mobile-screen" aria-hidden="true"></i> Sans contact sur mon téléphone (Tap to Pay)</summary>
+                        <p class="reglement__montant">Montant à encaisser : <strong>{{ reservation.resteAPayerCentimes|euros }}</strong></p>
+                        <ol>
+                            <li>Ouvrez l'application <strong>Stripe</strong> sur votre téléphone (NFC activé).</li>
+                            <li>Touchez <strong>+</strong>, puis l'option pour encaisser une carte.</li>
+                            <li>Saisissez <strong>{{ reservation.resteAPayerCentimes|euros }}</strong> et choisissez <strong>Tap to Pay</strong>.</li>
+                            <li>La cliente approche sa carte ou son téléphone de l'écran.</li>
+                            <li>Une fois le paiement accepté, revenez ici et confirmez :</li>
+                        </ol>
+                        <form method="post" action="{{ path('admin_reservation_workflow', {entityId: reservation.id, action: 'regler-tap-to-pay'}) }}"
+                              data-confirmation="Stripe a bien accepté {{ reservation.resteAPayerCentimes|euros }} en Tap to Pay ?">
+                            <input type="hidden" name="_token" value="{{ csrf_token('reservation_regler-tap-to-pay_' ~ reservation.id) }}">
+                            <button type="submit" class="btn btn-success btn-lg"><i class="fa fa-circle-check" aria-hidden="true"></i> Paiement accepté</button>
+                        </form>
+                        <p class="tdb-aide">Application à installer une seule fois : <a href="https://apps.apple.com/app/apple-store/id978516833" target="_blank" rel="noopener">iPhone</a> · <a href="https://play.google.com/store/apps/details?id=com.stripe.android.dashboard" target="_blank" rel="noopener">Android</a>. Ce paiement n'est pas relié automatiquement au rendez-vous : confirmez-le seulement après l'acceptation dans Stripe.</p>
+                    </details>
                 {% endif %}
             </section>
         {% endif %}

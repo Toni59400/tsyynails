@@ -1792,3 +1792,28 @@ a.jour:hover {
 .options-resa__degressif strong {
     color: var(--color-primary-ink);
 }
+
+/* Paiement : Apple Pay et Google Pay au-dessus du formulaire de carte */
+.paiement__portefeuille {
+    margin-bottom: calc(var(--space) * 2);
+}
+
+.paiement__separation {
+    display: flex;
+    gap: var(--space);
+    align-items: center;
+    margin: 0 0 calc(var(--space) * 2);
+    color: var(--color-muted);
+    font-size: 0.95rem;
+}
+
+.paiement__separation[hidden] {
+    display: none;
+}
+
+.paiement__separation::before,
+.paiement__separation::after {
+    flex: 1;
+    border-top: 1px solid var(--color-border);
+    content: "";
+}

@@ -115,11 +115,14 @@ document.addEventListener('click', (evenement) => {
     }
 
     const copier = evenement.target.closest?.('[data-copier]');
-    const champ = copier ? document.querySelector(copier.dataset.copier) : null;
+    // Sans valeur, l'attribut désigne le champ lui-même (copie au clic).
+    const champ = copier?.dataset.copier ? document.querySelector(copier.dataset.copier) : copier;
     if (champ) {
         champ.select();
         navigator.clipboard?.writeText(champ.value).then(() => {
-            copier.textContent = 'Copié ✓';
+            if (champ !== copier) {
+                copier.textContent = 'Copié ✓';
+            }
         }, () => {});
     }
 });

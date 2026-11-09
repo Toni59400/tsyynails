@@ -83,7 +83,9 @@ class Reservation
 
     public const MODE_CARTE = 'carte';
     public const MODE_ESPECES = 'especes';
-    public const MODES_PAIEMENT = [self::MODE_CARTE, self::MODE_ESPECES];
+    /** Reste encaissé sans contact sur le téléphone du salon (application Stripe), confirmé à la main dans l'admin. */
+    public const MODE_TAP_TO_PAY = 'tap_to_pay';
+    public const MODES_PAIEMENT = [self::MODE_CARTE, self::MODE_ESPECES, self::MODE_TAP_TO_PAY];
 
     /** Acompte : par carte (empreinte Stripe) ou rien en ligne, tout en espèces au rendez-vous ; null = pris par le salon. */
     #[ORM\Column(length: 10, nullable: true)]
@@ -268,7 +270,7 @@ class Reservation
     /** Un paiement par carte a eu lieu (acompte débité, même remboursé ensuite, ou reste réglé par carte). */
     public function aUnPaiementParCarte(): bool
     {
-        return null !== $this->acompteDebiteAt || (self::MODE_CARTE === $this->soldeMode && null !== $this->soldePayeAt);
+        return null !== $this->acompteDebiteAt || (\in_array($this->soldeMode, [self::MODE_CARTE, self::MODE_TAP_TO_PAY], true) && null !== $this->soldePayeAt);
     }
 
     /** Empreinte ou acompte par carte : la prestation est alors figée (l'acompte a été calculé pour elle). */
@@ -280,6 +282,15 @@ class Reservation
     public function getSoldeMode(): ?string
     {
         return $this->soldeMode;
+    }
+
+    public function getSoldeModeLibelle(): string
+    {
+        return match ($this->soldeMode) {
+            self::MODE_CARTE => 'par carte',
+            self::MODE_TAP_TO_PAY => 'sans contact (Tap to Pay)',
+            default => 'en espèces',
+        };
     }
 
     public function getSoldeCentimes(): int
@@ -321,7 +332,7 @@ class Reservation
         }
     }
 
-    /** Reste à payer encaissé (espèces au salon, ou carte confirmée par Stripe). Idempotent. */
+    /** Reste à payer encaissé (espèces ou Tap to Pay au salon, ou carte confirmée par Stripe). Idempotent. */
     public function marquerSoldeRegle(string $mode, int $montantCentimes, \DateTimeImmutable $at): void
     {
         if ($this->soldeEstRegle()) {

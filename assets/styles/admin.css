@@ -1069,3 +1069,18 @@ a.tdb-tuile:hover {
 .gestion-cliente {
     margin-bottom: 1rem;
 }
+
+/* Tap to Pay : marche à suivre repliée sous le bouton */
+.reglement__tap {
+    margin-top: 16px;
+}
+
+.reglement__tap summary {
+    display: inline-block;
+    list-style: none;
+}
+
+.reglement__tap ol {
+    margin-block: 12px;
+    padding-left: 1.25rem;
+}
